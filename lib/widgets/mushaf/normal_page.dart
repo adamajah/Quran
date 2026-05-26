@@ -1,21 +1,18 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// NormalPage  (extracted from home_screen.dart)
-// ─────────────────────────────────────────────────────────────────────────────
-
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as q;
 import 'package:quran_library/quran_library.dart';
+
 import '../../constants/app_colors.dart';
 import '../../models/verse_ref.dart';
+import '../../utils/quran_utils.dart';
 import '../../utils/tajwid_utils.dart';
-import 'page_elements.dart';
+import './page_elements.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NormalPage
-// ─────────────────────────────────────────────────────────────────────────────
 class NormalPage extends StatelessWidget {
   final PageData data;
-  final int playVerse, tappedSurah, tappedVerse;
+  final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
   final double fontScale;
   final Set<String> bookmarkedVerses;
@@ -23,39 +20,71 @@ class NormalPage extends StatelessWidget {
 
   const NormalPage({
     super.key,
-    required this.data, required this.playVerse,
-    required this.tappedSurah, required this.tappedVerse,
-    required this.isPlayingPage, required this.fontScale,
-    required this.showTajwid, required this.bookmarkedVerses,
-    required this.onTapVerse, required this.onBookmarkVerse,
+    required this.data,
+    required this.playSurah,
+    required this.playVerse,
+    required this.tappedSurah,
+    required this.tappedVerse,
+    required this.isPlayingPage,
+    required this.fontScale,
+    required this.showTajwid,
+    required this.bookmarkedVerses,
+    required this.onTapVerse,
+    required this.onBookmarkVerse,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      PageHeader(data: data),
-      const Rule(thick: true),
-      Expanded(
-        child: NormalBody(
-          data: data, playVerse: playVerse,
-          tappedSurah: tappedSurah, tappedVerse: tappedVerse,
-          isPlayingPage: isPlayingPage, fontScale: fontScale,
-          showTajwid: showTajwid, bookmarkedVerses: bookmarkedVerses,
-          onTapVerse: onTapVerse, onBookmarkVerse: onBookmarkVerse,
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.stretch,
+
+      children: [
+
+        PageHeader(data: data),
+
+        const MushafRule(thick: true),
+
+        Expanded(
+
+          child: NormalBody(
+            data: data,
+            playSurah: playSurah,
+            playVerse: playVerse,
+            tappedSurah: tappedSurah,
+
+            tappedVerse: tappedVerse,
+
+            isPlayingPage:
+                isPlayingPage,
+
+            fontScale: fontScale,
+
+            showTajwid: showTajwid,
+
+            bookmarkedVerses:
+                bookmarkedVerses,
+
+            onTapVerse:
+                onTapVerse,
+
+            onBookmarkVerse:
+                onBookmarkVerse,
+          ),
         ),
-      ),
-      const Rule(thick: true),
-      PageNum(n: data.pageNum),
-    ]);
+
+        const MushafRule(thick: true),
+
+        PageNum(n: data.pageNum),
+      ],
+    );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NormalBody
-// ─────────────────────────────────────────────────────────────────────────────
 class NormalBody extends StatelessWidget {
+
   final PageData data;
-  final int playVerse, tappedSurah, tappedVerse;
+  final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
   final double fontScale;
   final Set<String> bookmarkedVerses;
@@ -63,22 +92,34 @@ class NormalBody extends StatelessWidget {
 
   const NormalBody({
     super.key,
-    required this.data, required this.playVerse,
-    required this.tappedSurah, required this.tappedVerse,
-    required this.isPlayingPage, required this.fontScale,
-    required this.showTajwid, required this.bookmarkedVerses,
-    required this.onTapVerse, required this.onBookmarkVerse,
+    required this.data,
+    required this.playSurah,
+    required this.playVerse,
+    required this.tappedSurah,
+    required this.tappedVerse,
+    required this.isPlayingPage,
+    required this.fontScale,
+    required this.showTajwid,
+    required this.bookmarkedVerses,
+    required this.onTapVerse,
+    required this.onBookmarkVerse,
   });
 
   static String _ar(int n) {
-    const d = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
   }
 
-  static double _measureH(List<VerseRef> vv, double fs, double lh, double maxW) {
-    final s = QuranLibrary().hafsStyle.copyWith(fontSize: fs, height: lh, color: AppColors.ink);
+  static double _measureH(
+    List<VerseRef> vv,
+    double fs,
+    double lh,
+    double maxW,
+    Color inkColor,
+  ) {
+    final s = QuranLibrary().hafsStyle.copyWith(fontSize: fs, height: lh, color: inkColor);
     final spans = vv.map((v) {
-      final t = q.getVerse(v.surah, v.verse, verseEndSymbol: false);
+      final t = QuranUtils.getCleanVerse(v.surah, v.verse, verseEndSymbol: false);
       return TextSpan(text: '$t ${_ar(v.verse)} ', style: s);
     }).toList();
     final tp = TextPainter(
@@ -89,109 +130,226 @@ class NormalBody extends StatelessWidget {
     return tp.height;
   }
 
-  static double _bestFs(List<VerseRef> vv, double maxW, double maxH) {
+  static double _bestFs(
+    List<VerseRef> vv,
+    double maxW,
+    double maxH,
+    Color inkColor,
+  ) {
+
     if (maxH <= 20) return 7.0;
-    for (double fs = 22.0; fs >= 6.0; fs -= 0.2) {
-      if (_measureH(vv, fs, 1.85, maxW) <= maxH) return fs;
+
+    for (
+      double fs = 22.0;
+      fs >= 6.0;
+      fs -= 0.2
+    ) {
+
+      if (
+          _measureH(
+                vv,
+                fs,
+                1.85,
+                maxW,
+                inkColor,
+              ) <=
+              maxH
+      ) {
+
+        return fs;
+      }
     }
+
     return 6.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (ctx, bc) {
-      double reservedH = 0.0;
-      for (final g in data.groups) {
-        if (g.isFirstInMushaf) {
-          reservedH += 54.0;
-          if (g.surah != 9) reservedH += 42.0;
-        }
-      }
-      final availH = bc.maxHeight - reservedH;
-      final availW = bc.maxWidth - 28.0;
-      final fs = _bestFs(data.verses, availW, availH);
 
-      final List<Widget> children = [];
-      for (final g in data.groups) {
-        if (g.isFirstInMushaf)
-          children.add(SurahBanner(surahIndex: g.surah, surahNameAr: g.surahNameAr));
-        if (g.isFirstInMushaf && g.surah != 9) children.add(const Basmalah());
-        children.add(
-          TappableVerseBlock(
-            group: g,
-            fs: fs,
-            fontScale: fontScale,
-            showTajwid: showTajwid,
-            playVerse: playVerse,
-            tappedSurah: tappedSurah,
-            tappedVerse: tappedVerse,
-            isPlayingPage: isPlayingPage,
-            bookmarkedVerses: bookmarkedVerses,
-            onTapVerse: onTapVerse,
-            onBookmarkVerse: onBookmarkVerse,
+    return LayoutBuilder(
+
+      builder: (ctx, bc) {
+
+        double reservedH = 0.0;
+
+        for (final g in data.groups) {
+
+          if (g.isFirstInMushaf) {
+
+            reservedH += 54.0;
+
+            if (g.surah != 9) {
+              reservedH += 42.0;
+            }
+          }
+        }
+
+        final availH =
+            bc.maxHeight - reservedH;
+
+        final availW =
+            bc.maxWidth - 28.0;
+
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final inkColor = isDark ? Colors.white : AppColors.ink;
+
+        final fs = _bestFs(
+          data.verses,
+          availW,
+          availH,
+          inkColor,
+        );
+
+        final List<Widget>
+            children = [];
+
+        for (final g in data.groups) {
+
+          if (g.isFirstInMushaf) {
+
+            children.add(
+
+              SurahBanner(
+
+                surahIndex: g.surah,
+
+                surahNameAr:
+                    g.surahNameAr,
+              ),
+            );
+          }
+
+          if (
+              g.isFirstInMushaf &&
+              g.surah != 9
+          ) {
+
+            children.add(
+              const Basmalah(),
+            );
+          }
+
+          children.add(
+
+            TappableVerseBlock(
+
+              group: g,
+
+              fs: fs,
+
+              fontScale:
+                  fontScale,
+
+              showTajwid:
+                  showTajwid,
+              playSurah:
+                  playSurah,
+              playVerse:
+                  playVerse,
+
+              tappedSurah:
+                  tappedSurah,
+
+              tappedVerse:
+                  tappedVerse,
+
+              isPlayingPage:
+                  isPlayingPage,
+
+              bookmarkedVerses:
+                  bookmarkedVerses,
+
+              onTapVerse:
+                  onTapVerse,
+
+              onBookmarkVerse:
+                  onBookmarkVerse,
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+
+          physics:
+              const BouncingScrollPhysics(),
+
+          child: Column(
+
+            crossAxisAlignment:
+                CrossAxisAlignment
+                    .stretch,
+
+            mainAxisSize:
+                MainAxisSize.min,
+
+            children: children,
           ),
         );
-      }
-
-      return SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: children,
-        ),
-      );
-    });
+      },
+    );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TappableVerseBlock
-// ─────────────────────────────────────────────────────────────────────────────
-class TappableVerseBlock extends StatefulWidget {
+class TappableVerseBlock
+    extends StatefulWidget {
+
   final SurahGroup group;
   final double fs, fontScale;
   final bool showTajwid, isPlayingPage;
-  final int playVerse, tappedSurah, tappedVerse;
+  final int playSurah, playVerse, tappedSurah, tappedVerse;
   final Set<String> bookmarkedVerses;
   final void Function(int, int) onTapVerse, onBookmarkVerse;
 
   const TappableVerseBlock({
     super.key,
-    required this.group, required this.fs, required this.fontScale,
-    required this.showTajwid, required this.isPlayingPage,
-    required this.playVerse, required this.tappedSurah, required this.tappedVerse,
+    required this.group,
+    required this.fs,
+    required this.fontScale,
+    required this.showTajwid,
+    required this.isPlayingPage,
+    required this.playSurah,
+    required this.playVerse,
+    required this.tappedSurah,
+    required this.tappedVerse,
     required this.bookmarkedVerses,
-    required this.onTapVerse, required this.onBookmarkVerse,
+    required this.onTapVerse,
+    required this.onBookmarkVerse,
   });
 
   @override
-  State<TappableVerseBlock> createState() => _TappableVerseBlockState();
+  State<TappableVerseBlock>
+      createState() =>
+          _TappableVerseBlockState();
 }
 
 class _TappableVerseBlockState extends State<TappableVerseBlock> {
+
   int _hoveredVerse = 0;
 
   static String _ar(int n) {
-    const d = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
   }
 
-  List<InlineSpan> _buildSpans() {
+  List<InlineSpan> _buildSpans(Color inkColor, bool isDark) {
     final out = <InlineSpan>[];
     final numFs = (widget.fs * 0.72).clamp(10.0, 16.0);
+
     for (final v in widget.group.verses) {
-      final active = (widget.isPlayingPage && v.verse == widget.playVerse) ||
+      final active =
+          (widget.isPlayingPage && v.surah == widget.playSurah && v.verse == widget.playVerse) ||
           (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse) ||
           _hoveredVerse == v.verse;
-      final text = q.getVerse(v.surah, v.verse, verseEndSymbol: false);
-      out.addAll(buildTajwidSpans(
-          text, widget.fs * widget.fontScale, 1.85, active, widget.showTajwid));
-      out.add(TextSpan(
-          text: ' ',
-          style: QuranLibrary().hafsStyle.copyWith(
-              fontSize: widget.fs * widget.fontScale, height: 1.85)));
+
+      // Always use verseEndSymbol: false — verse number is rendered separately below
+      final text = QuranUtils.getCleanVerse(v.surah, v.verse, verseEndSymbol: false);
+
+      out.addAll(_buildTajwidSpans(text, widget.fs * widget.fontScale, 1.85, active, widget.showTajwid, inkColor));
+      out.add(TextSpan(text: ' ', style: QuranLibrary().hafsStyle.copyWith(fontSize: widget.fs * widget.fontScale, height: 1.85, color: inkColor)));
+
+      // ONE verse number badge — the only source of the verse symbol
       out.add(WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
         child: GestureDetector(
           onTap: () => widget.onTapVerse(v.surah, v.verse),
           onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
@@ -202,39 +360,131 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
             decoration: BoxDecoration(
-              color: active ? AppColors.hl.withOpacity(0.10) : Colors.transparent,
+              color: active ? (isDark ? Colors.white.withOpacity(0.12) : AppColors.hl.withOpacity(0.10)) : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               _ar(v.verse),
               style: QuranLibrary().hafsStyle.copyWith(
                 fontSize: numFs * widget.fontScale,
-                color: active ? AppColors.hl : AppColors.gold,
+                color: active ? (isDark ? Colors.white : AppColors.hl) : AppColors.gold,
                 fontWeight: FontWeight.bold,
                 height: 1.85,
               ),
             ),
           ),
         ),
-        alignment: PlaceholderAlignment.middle,
       ));
-      out.add(TextSpan(
-          text: ' ',
-          style: QuranLibrary().hafsStyle.copyWith(
-              fontSize: widget.fs * widget.fontScale, height: 1.85)));
+      out.add(TextSpan(text: ' ', style: QuranLibrary().hafsStyle.copyWith(fontSize: widget.fs * widget.fontScale, height: 1.85, color: inkColor)));
     }
     return out;
   }
 
+  void _showTajwidHint(String name, String desc, Color color) {
+    if (name.isEmpty) return;
+    HapticFeedback.selectionClick();
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Text('$name: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            Expanded(child: Text(desc, style: const TextStyle(fontSize: 12, color: Colors.white70))),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.dark.withOpacity(0.9),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 80),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  List<InlineSpan> _buildTajwidSpans(
+    String text,
+    double fontSize,
+    double height,
+    bool active,
+    bool showTajwid,
+    Color inkColor,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!showTajwid) {
+      return [
+        TextSpan(
+          text: text,
+          style: QuranLibrary().hafsStyle.copyWith(
+                fontSize: fontSize,
+                height: height,
+                color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
+                backgroundColor: active ? (isDark ? Colors.white.withOpacity(0.1) : AppColors.hl.withOpacity(0.06)) : null,
+              ),
+        ),
+      ];
+    }
+
+    final spans = <InlineSpan>[];
+    for (int i = 0; i < text.length; i++) {
+      final char = text[i];
+      final nextChar = i + 1 < text.length ? text[i + 1] : null;
+      final info = TajwidUtils.getTajwidInfo(char, nextChar);
+      final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
+      final color = active 
+          ? (isDark ? Colors.white : AppColors.hl) 
+          : (isDefaultColor ? inkColor : info.$1);
+
+      spans.add(
+        TextSpan(
+          text: char,
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
+          style: QuranLibrary().hafsStyle.copyWith(
+                fontSize: fontSize,
+                height: height,
+                color: color,
+                backgroundColor: active ? (isDark ? Colors.white.withOpacity(0.1) : AppColors.hl.withOpacity(0.06)) : null,
+              ),
+        ),
+      );
+    }
+    return spans;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inkColor = isDark ? Colors.white : AppColors.ink;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 14,
+      ),
+
       child: Text.rich(
-        TextSpan(children: _buildSpans()),
-        textAlign: TextAlign.justify,
-        textDirection: TextDirection.rtl,
-        overflow: TextOverflow.visible,
+
+        TextSpan(
+          children: _buildSpans(inkColor, isDark),
+        ),
+
+        textAlign:
+            TextAlign.justify,
+
+        textDirection:
+            TextDirection.rtl,
+
+        overflow:
+            TextOverflow.visible,
+
         softWrap: true,
       ),
     );

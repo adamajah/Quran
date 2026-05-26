@@ -1,735 +1,613 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// home_screen.dart  –  Mushaf Al-Quran Digital  (modularized)
-// ─────────────────────────────────────────────────────────────────────────────
-// ignore_for_file: deprecated_member_use
-
-import 'dart:async';
-import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran/quran.dart' as q;
-import 'package:quran_library/quran_library.dart';
+import 'package:quran/quran.dart' show Translation;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
+import '../services/bookmark_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_style.dart';
 import '../models/verse_ref.dart';
+import '../screens/translation_dialog.dart';
+import '../models/reciter.dart';
+import '../screens/reciter_dialog.dart';
+import '../utils/audio_utils.dart';
 import '../utils/mushaf_builder.dart';
 import '../widgets/common/bottom_bar.dart';
-import '../widgets/common/tajwid_legend.dart';
-import '../widgets/mushaf/fatihah_page.dart';
-import '../widgets/mushaf/normal_page.dart';
-import '../widgets/mushaf/page_elements.dart';
-import 'hafalan_screen.dart';
-import 'translation_dailog.dart';
+import '../widgets/common/mushaf_drawer.dart';
+import '../widgets/mushaf/mushaf_page.dart';
+import '../widgets/mushaf/tajwid_guide.dart';
+import '../widgets/mushaf/translation_panel.dart';
+import '../controllers/settings_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-  @override State<HomeScreen> createState() => _HomeScreenState();
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  late final List<PageData> _pages;
-  late final PageController _pageCtrl;
-  int _curPage = 0;
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _audio = AudioPlayer();
+  late PageController _pageCtrl;
+  late AnimationController _flipCtrl;
 
-  // Audio
-  final _audioPlayer = AudioPlayer();
+  // Playback
   bool _playing = false;
-  int _playSurah = 0, _playVerse = 0;
-  String _reciter = 'Mishary Rashid Alafasy';
+  int _pgIdx = 0;
+  int _playV = 0;
+  int _curS = 1;
 
-  // Translation
-  bool _showTranslation = false;
-  int _transLangIdx = 0;
-
-  // Tajwid
-  bool _showTajwid = true;
-
-  // Font scale
-  double _fontScale = 1.0;
-
-  // Tap tracking
-  int _tappedSurah = 0, _tappedVerse = 0;
-
-  // Page flip animation
-  bool _flipping = false;
-  double _flipAngle = 0;
-  int _flipFromPage = 0;
+  // Tap-to-play: which verse was tapped
+  int _tappedSurah = 0;
+  int _tappedVerse = 0;
 
   // Bookmarks
-  final List<BookmarkEntry> _bookmarks = [];
-  final Set<String> _bookmarkedVerses = {};
+  List<BookmarkEntry> _bookmarks = [];
+
+
+  // Translation
+  Translation _selectedTranslation = Translation.indonesian;
+  List<Map<String, dynamic>> _translationVerses = [];
+  String _selectedLanguageName = "Indonesian";
+  double _translationPanelHeight = 160.0;
+  static const double _minPanelH = 56.0;
+  static const double _maxPanelH = 420.0;
+
+  late final List<PageData> _pages;
+
+  // ── Page flip animation
+  bool _isAutoAdvancing = false;
+  double _flipAngle = 0.0;
+  int _flipDir = 1;
 
   @override
   void initState() {
     super.initState();
     _pages = buildMushafPages();
-    _pageCtrl = PageController(initialPage: _curPage);
-    _audioPlayer.playerStateStream.listen(_onAudioState);
-    _loadBookmarks();
-  }
+    _pageCtrl = PageController(initialPage: _pages.length * 500);
+    _flipCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _flipCtrl.addListener(() => setState(() => _flipAngle = _flipCtrl.value));
+    _flipCtrl.addStatusListener((s) {
+      if (s == AnimationStatus.completed) {
+        setState(() {
+          _flipAngle = 0;
+        });
+        _flipCtrl.reset();
+      }
+    });
+    _loadPrefs();
+    _audio.playerStateStream.listen((s) {
+      if (s.processingState != ProcessingState.completed) return;
+      
+      final settings = context.read<SettingsController>().settings;
+      if (!settings.autoPlay) {
+        setState(() => _playing = false);
+        return;
+      }
 
-  @override void dispose() { _audioPlayer.dispose(); _pageCtrl.dispose(); super.dispose(); }
-
-  // ─── Bookmarks ────────────────────────────────────────────────────────────
-  Future<void> _loadBookmarks() async {
-    final p = await SharedPreferences.getInstance();
-    final raw = p.getStringList('mushaf_bookmarks') ?? [];
-    for (final s in raw) {
-      try {
-        final bm = BookmarkEntry.fromJson(jsonDecode(s));
-        _bookmarks.add(bm);
-        _bookmarkedVerses.add('${bm.surah}:${bm.verse}');
-      } catch (_) {}
-    }
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _saveBookmarks() async {
-    final p = await SharedPreferences.getInstance();
-    await p.setStringList('mushaf_bookmarks',
-        _bookmarks.map((b) => jsonEncode(b.toJson())).toList());
-  }
-
-  void _toggleBookmark(int surah, int verse) {
-    final key = '$surah:$verse';
-    setState(() {
-      if (_bookmarkedVerses.contains(key)) {
-        _bookmarkedVerses.remove(key);
-        _bookmarks.removeWhere((b) => b.surah == surah && b.verse == verse);
-        _snack('Bookmark dihapus');
+      if (_pgIdx >= _pages.length) return;
+      
+      final pg = _pages[_pgIdx];
+      final currentVerseIdx = pg.verses.indexWhere((v) => v.surah == _curS && v.verse == _playV);
+      
+      if (currentVerseIdx != -1 && currentVerseIdx < pg.verses.length - 1) {
+        final nextV = pg.verses[currentVerseIdx + 1];
+        setState(() {
+          _playV = nextV.verse;
+          _curS = nextV.surah;
+        });
+        _doPlay(nextV);
       } else {
-        final pgIdx = _pages.indexWhere((p) =>
-            p.verses.any((v) => v.surah == surah && v.verse == verse));
-        _bookmarks.insert(0, BookmarkEntry(
-          surah: surah, verse: verse, pageIdx: pgIdx,
-          surahName: q.getSurahName(surah), surahNameAr: q.getSurahNameArabic(surah),
-        ));
-        _bookmarkedVerses.add(key);
-        _snack('Bookmark disimpan ✦ ${q.getSurahName(surah)} : $verse');
-      }
-    });
-    _saveBookmarks();
-    HapticFeedback.lightImpact();
-  }
+        if (_pgIdx + 1 < _pages.length) {
+          final nextPgIdx = _pgIdx + 1;
+          final nextPg = _pages[nextPgIdx];
+          final nextV = nextPg.verses.first;
 
-  // ─── Audio ────────────────────────────────────────────────────────────────
-  void _onAudioState(PlayerState st) {
-    if (st.processingState != ProcessingState.completed) return;
-    final pg = _pages[_curPage];
-    final idx = pg.verses.indexWhere((v) => v.surah == _playSurah && v.verse == _playVerse);
-    if (idx < 0 || idx >= pg.verses.length - 1) {
-      setState(() { _playing = false; _playVerse = 0; });
-      return;
-    }
-    final next = pg.verses[idx + 1];
-    _playSurah = next.surah; _playVerse = next.verse;
-    _audioPlayer.setUrl(q.getAudioURLByVerse(_playSurah, _playVerse));
-    _audioPlayer.play();
-    setState(() {});
-  }
+          setState(() {
+            _pgIdx = nextPgIdx;
+            _playV = nextV.verse;
+            _curS = nextV.surah;
+          });
 
-  void _play() {
-    if (_playing) { _audioPlayer.pause(); setState(() => _playing = false); return; }
-    final pg = _pages[_curPage];
-    _playSurah = pg.surah; _playVerse = pg.verses.first.verse;
-    _audioPlayer.setUrl(q.getAudioURLByVerse(_playSurah, _playVerse));
-    _audioPlayer.play();
-    setState(() => _playing = true);
-  }
+          _isAutoAdvancing = true;
 
-  void _stop() { _audioPlayer.stop(); setState(() { _playing = false; _playVerse = 0; }); }
+          if (_pageCtrl.hasClients) {
+            final currentVirtual = _pageCtrl.page?.round() ?? (_pages.length * 500);
+            _pageCtrl.animateToPage(
+              currentVirtual + 1,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOut,
+            ).then((_) => _isAutoAdvancing = false);
+          }
 
-  // ─── Taps ──────────────────────────────────────────────────────────────────
-  void _onTapVerse(int surah, int verse) {
-    setState(() { _tappedSurah = surah; _tappedVerse = verse; });
-    if (_playing) {
-      _playSurah = surah; _playVerse = verse;
-      _audioPlayer.setUrl(q.getAudioURLByVerse(surah, verse));
-      _audioPlayer.play();
-    }
-  }
-
-  // ─── Page flip animation ──────────────────────────────────────────────────
-  void _goToPage(int idx) {
-    if (idx == _curPage || idx < 0 || idx >= _pages.length) return;
-    setState(() { _flipping = true; _flipFromPage = _curPage; _flipAngle = 0; });
-    final ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
-    final anim = Tween(begin: 0.0, end: math.pi).animate(CurvedAnimation(parent: ctrl, curve: Curves.easeInOut));
-    bool jumped = false;
-    anim.addListener(() {
-      setState(() => _flipAngle = anim.value);
-      if (anim.value > math.pi / 2 && !jumped) {
-        jumped = true; _pageCtrl.jumpToPage(idx); _curPage = idx;
-      }
-    });
-    ctrl.addStatusListener((s) {
-      if (s == AnimationStatus.completed) { ctrl.dispose(); setState(() => _flipping = false); }
-    });
-    ctrl.forward();
-  }
-
-  // ─── Navigation helpers ───────────────────────────────────────────────────
-  void _goToSurah(int surah) {
-    final idx = _pages.indexWhere((p) => p.surah == surah);
-    if (idx >= 0) { Navigator.pop(context); _goToPage(idx); }
-  }
-
-  void _goToJuz(int juz) {
-    for (int s = 1; s <= q.totalSurahCount; s++) {
-      for (int v = 1; v <= q.getVerseCount(s); v++) {
-        if (q.getJuzNumber(s, v) == juz) {
-          final idx = _pages.indexWhere((p) => p.verses.any((vr) => vr.surah == s && vr.verse == v));
-          if (idx >= 0) { Navigator.pop(context); _goToPage(idx); return; }
+          _doPlay(nextV);
+        } else {
+          setState(() {
+            _playing = false;
+            _playV = 0;
+          });
         }
       }
+    });
+  }
+
+  Future<void> _loadPrefs() async {
+    final p = await SharedPreferences.getInstance();
+    final lastSurah = p.getInt('lastSurah') ?? 1;
+    final bookmarks = await BookmarkService.getBookmarks();
+
+    if (!mounted) return;
+    int idx = 0;
+    for (int i = 0; i < _pages.length; i++) {
+      if (_pages[i].verses.any((v) => v.surah == lastSurah && v.verse == 1)) {
+        idx = i;
+        break;
+      }
+    }
+    setState(() {
+      _curS = lastSurah;
+      _pgIdx = idx;
+      _bookmarks = bookmarks;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pageCtrl.hasClients) {
+        _pageCtrl.jumpToPage(_pages.length * 500 + idx);
+      }
+    });
+  }
+
+  Future<void> _savePrefs() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setInt('lastSurah', _curS);
+    await p.setInt('lastPage', _pgIdx);
+  }
+
+  void _doPlay(VerseRef r) {
+    final settings = context.read<SettingsController>().settings;
+    try {
+      _audio.setVolume(settings.defaultVolume);
+      _audio.setSpeed(settings.playbackSpeed);
+      final reciterId = settings.defaultReciterId.isNotEmpty ? settings.defaultReciterId : availableReciters[0].id;
+      _audio.setUrl(AudioUtils.getVerseAudioUrl(r.surah, r.verse, reciterId, 128));
+      _audio.play();
+    } catch (e) {
+      debugPrint('Audio: $e');
     }
   }
 
-  void _goToBookmark(BookmarkEntry bm) {
-    Navigator.pop(context);
-    if (bm.pageIdx >= 0 && bm.pageIdx < _pages.length) _goToPage(bm.pageIdx);
+  void _togglePlay() async {
+    try {
+      final r = await InternetAddress.lookup('example.com');
+      if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
+        if (_playing) {
+          _audio.pause();
+        } else {
+          final pg = _pages[_pgIdx];
+          if (_playV == 0) _playV = pg.verses.first.verse;
+          _doPlay(pg.verses.firstWhere((r) => r.verse == _playV,
+              orElse: () => pg.verses.first));
+        }
+        setState(() => _playing = !_playing);
+      } else {
+        _snack('Sambungkan ke Internet');
+      }
+    } on SocketException {
+      _snack('Sambungkan ke Internet');
+    }
   }
 
-  // ─── Font scale ───────────────────────────────────────────────────────────
-  void _zoomIn()    => setState(() => _fontScale = (_fontScale + 0.05).clamp(0.7, 1.5));
-  void _zoomOut()   => setState(() => _fontScale = (_fontScale - 0.05).clamp(0.7, 1.5));
-  void _zoomReset() => setState(() => _fontScale = 1.0);
+  void _tapVerse(int surah, int verse) async {
+    try {
+      final r = await InternetAddress.lookup('example.com');
+      if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
+        setState(() {
+          _tappedSurah = surah;
+          _tappedVerse = verse;
+          _playV = verse;
+          _curS = surah;
+          _playing = true;
+        });
+        _doPlay(VerseRef(surah, verse));
+      } else {
+        _snack('Sambungkan ke Internet');
+      }
+    } on SocketException {
+      _snack('Sambungkan ke Internet');
+    }
+  }
 
-  // ─── Tajwid ───────────────────────────────────────────────────────────────
-  void _toggleTajwid() => setState(() => _showTajwid = !_showTajwid);
+  void _loadTranslation() {
+    final pg = _pages[_pgIdx];
+    final results = <Map<String, dynamic>>[];
+    for (final v in pg.verses) {
+      final text = q.getVerseTranslation(
+        v.surah,
+        v.verse,
+        translation: _selectedTranslation,
+      );
+      results.add({'surah': v.surah, 'verse': v.verse, 'text': text});
+    }
+    setState(() => _translationVerses = results);
+  }
+
+  void _showTranslationDialog() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => TranslationDialog(
+        onSelect: (Translation selected) {
+          final name =
+              language.entries.firstWhere((e) => e.value == selected).key;
+          setState(() {
+            _selectedTranslation = selected;
+            _selectedLanguageName = name;
+          });
+          _loadTranslation();
+        },
+      ),
+    );
+  }
+
   void _showTajwidLegend() {
+    if (!mounted) return;
     showModalBottomSheet(
-      context: context, backgroundColor: Colors.transparent,
+      context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => const TajwidLegend(),
     );
   }
 
-  // ─── Utils ────────────────────────────────────────────────────────────────
-  void _snack(String msg) {
+  void _snack(String m) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg), behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.dark,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      duration: const Duration(seconds: 2),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(m),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.dark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action:
+            SnackBarAction(label: 'OK', textColor: AppColors.gold, onPressed: () {}),
+      ),
+    );
   }
 
-  // ─── BUILD ────────────────────────────────────────────────────────────────
-  @override
-  Widget build(BuildContext context) {
-    final pg = _pages[_curPage];
-    return Scaffold(
-      backgroundColor: AppColors.outerBg,
-      drawer: _Drawer(
-        pages: _pages, curSurah: pg.surah, curPageIdx: _curPage,
-        bookmarks: _bookmarks,
-        onSurah: _goToSurah, onJuz: _goToJuz,
-        onPage: (idx) { Navigator.pop(context); _goToPage(idx); },
-        onBookmark: _goToBookmark,
-        onTranslate: () {
-          showDialog(context: context, builder: (_) => TranslationDialog(
-            currentIndex: _transLangIdx,
-            onSelected: (idx) => setState(() { _transLangIdx = idx; _showTranslation = true; }),
-          ));
+  void _jumpToSurah(int s) {
+    int idx = 0;
+    for (int i = 0; i < _pages.length; i++) {
+      if (_pages[i].verses.any((v) => v.surah == s && v.verse == 1)) {
+        idx = i;
+        break;
+      }
+    }
+    _apply(idx);
+  }
+
+  void _goSurah(int s) {
+    _jumpToSurah(s);
+    if (Navigator.canPop(context)) Navigator.pop(context);
+  }
+
+  void _jumpToJuz(int juz) {
+    int idx = 0;
+    for (int i = 0; i < _pages.length; i++) {
+      if (_pages[i].verses.any((v) => q.getJuzNumber(v.surah, v.verse) == juz)) {
+        idx = i;
+        break;
+      }
+    }
+    _apply(idx);
+  }
+
+  void _goJuz(int juz) {
+    _jumpToJuz(juz);
+    if (Navigator.canPop(context)) Navigator.pop(context);
+  }
+
+  void _jumpToPage(int idx) {
+    _apply(idx.clamp(0, _pages.length - 1));
+  }
+
+  void _goPage(int idx) {
+    _jumpToPage(idx);
+    if (Navigator.canPop(context)) Navigator.pop(context);
+  }
+
+  void _jumpToBookmark(BookmarkEntry bm) {
+    _apply(bm.pageIdx);
+  }
+
+  void _goBookmark(BookmarkEntry bm) {
+    _jumpToBookmark(bm);
+    if (Navigator.canPop(context)) Navigator.pop(context);
+  }
+
+  void _apply(int pageIdx) {
+    setState(() {
+      _pgIdx = pageIdx;
+      _curS = _pages[pageIdx].surah;
+      _playV = 0;
+      _tappedSurah = 0;
+      _tappedVerse = 0;
+      if (_playing) {
+        _audio.stop();
+        _playing = false;
+      }
+    });
+    final currentVirtual = _pageCtrl.page?.round() ?? (_pages.length * 500);
+    final currentReal = currentVirtual % _pages.length;
+    final diff = pageIdx - currentReal;
+    _pageCtrl.jumpToPage(currentVirtual + diff);
+    _savePrefs();
+    if (_translationVerses.isNotEmpty) _loadTranslation();
+  }
+
+  void _toggleBookmark(int surah, int verse) async {
+    if (_isBookmarked(surah, verse)) {
+      await BookmarkService.removeBookmark(surah, verse);
+      setState(() => _bookmarks.removeWhere((b) => b.surah == surah && b.verse == verse));
+      _snack('Penanda dihapus');
+    } else {
+      final entry = BookmarkEntry(
+        surah: surah,
+        verse: verse,
+        pageIdx: _pgIdx,
+        surahName: q.getSurahName(surah),
+        surahNameAr: q.getSurahNameArabic(surah),
+        timestamp: DateTime.now(),
+      );
+      await BookmarkService.addBookmark(entry);
+      setState(() => _bookmarks.insert(0, entry));
+      HapticFeedback.lightImpact();
+      _snack('Penanda disimpan ✦');
+    }
+    _savePrefs();
+  }
+
+  bool _isBookmarked(int surah, int verse) =>
+      _bookmarks.any((b) => b.surah == surah && b.verse == verse);
+
+  void _showReciterDialog() {
+    final settings = context.read<SettingsController>().settings;
+    final currentReciter = availableReciters.firstWhere(
+      (r) => r.id == settings.defaultReciterId,
+      orElse: () => availableReciters[0],
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => ReciterDialog(
+        currentReciter: currentReciter,
+        onSelect: (Reciter selected) {
+          context.read<SettingsController>().updateDefaultReciter(selected.id);
+          if (_playing) {
+            _audio.stop();
+            _playing = false;
+          }
         },
       ),
-      body: Column(children: [
-        Expanded(child: _PageFlipWrapper(
-          flipping: _flipping, angle: _flipAngle,
-          child: GestureDetector(
-            onHorizontalDragEnd: (d) {
-              if (d.primaryVelocity == null) return;
-              if (d.primaryVelocity! < -200 && _curPage < _pages.length - 1) _goToPage(_curPage + 1);
-              if (d.primaryVelocity! > 200 && _curPage > 0) _goToPage(_curPage - 1);
-            },
-            child: PageView.builder(
-              controller: _pageCtrl,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _pages.length,
-              onPageChanged: (i) => setState(() { _curPage = i; _tappedSurah = 0; _tappedVerse = 0; }),
-              itemBuilder: (_, i) => _MushafPage(
-                data: _pages[i],
-                playVerse: _playSurah == _pages[i].surah ? _playVerse : 0,
-                tappedSurah: _tappedSurah, tappedVerse: _tappedVerse,
-                isPlayingPage: _playing && _playSurah == _pages[i].surah,
-                fontScale: _fontScale, showTajwid: _showTajwid,
-                bookmarkedVerses: _bookmarkedVerses,
-                onTapVerse: _onTapVerse, onBookmarkVerse: _toggleBookmark,
-              ),
-            ),
-          ),
-        )),
-        if (_showTranslation)
-          _TranslationPanel(
-            surah: pg.surah, verses: pg.verses,
-            langIdx: _transLangIdx,
-            tappedVerse: _tappedVerse,
-            onClose: () => setState(() => _showTranslation = false),
-          ),
-        SafeArea(top: false, child: BottomBar(
-          playing: _playing, reciter: _reciter, surahName: pg.surahName,
-          pageNum: pg.pageNum, playVerse: _playVerse,
-          onPlay: _play, onStop: _stop,
-          fontScale: _fontScale,
-          onZoomIn: _zoomIn, onZoomOut: _zoomOut, onZoomReset: _zoomReset,
-          showTajwid: _showTajwid, onToggleTajwid: _toggleTajwid,
-          onTajwidLongPress: _showTajwidLegend,
-        )),
-      ]),
     );
   }
-}
-// ─── MushafPage  (page shell) ────────────────────────────────────────────────
-class _MushafPage extends StatelessWidget {
-  final PageData data;
-  final int playVerse, tappedSurah, tappedVerse;
-  final bool isPlayingPage, showTajwid;
-  final double fontScale;
-  final Set<String> bookmarkedVerses;
-  final void Function(int, int) onTapVerse, onBookmarkVerse;
 
-  const _MushafPage({
-    required this.data, required this.playVerse,
-    required this.tappedSurah, required this.tappedVerse,
-    required this.isPlayingPage, required this.fontScale,
-    required this.showTajwid, required this.bookmarkedVerses,
-    required this.onTapVerse, required this.onBookmarkVerse,
-  });
+  @override
+  void dispose() {
+    _audio.dispose();
+    _pageCtrl.dispose();
+    _flipCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isFatihah = data.pageNum == 1;
-    final inner = isFatihah
-      ? FatihahPage(
-          data: data, playVerse: playVerse,
-          tappedSurah: tappedSurah, tappedVerse: tappedVerse,
-          isPlayingPage: isPlayingPage, fontScale: fontScale,
-          showTajwid: showTajwid, bookmarkedVerses: bookmarkedVerses,
-          onTapVerse: onTapVerse, onBookmarkVerse: onBookmarkVerse)
-      : NormalPage(
-          data: data, playVerse: playVerse,
-          tappedSurah: tappedSurah, tappedVerse: tappedVerse,
-          isPlayingPage: isPlayingPage, fontScale: fontScale,
-          showTajwid: showTajwid, bookmarkedVerses: bookmarkedVerses,
-          onTapVerse: onTapVerse, onBookmarkVerse: onBookmarkVerse);
+    return Consumer<SettingsController>(
+      builder: (context, controller, child) {
+        final settings = controller.settings;
+        final pg = _pages[_pgIdx];
+        final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.dark;
+        final fontScale = settings.arabicFontSize / 24.0;
 
-    return Container(
-      margin: const EdgeInsets.all(6),
-      child: CustomPaint(
-        painter: FramePainter(
-          gold: AppColors.gold, goldLt: AppColors.goldLt,
-          dark: AppColors.dark, bg: AppColors.frameBg),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.pageBg,
-              border: Border.all(color: AppColors.gold.withOpacity(0.3), width: 0.5),
-            ),
-            child: inner,
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          drawer: MushafDrawer(
+            curSurah: _curS,
+            curPageIdx: _pgIdx,
+            pages: _pages,
+            bookmarks: _bookmarks,
+            onSurah: _goSurah,
+            onJuz: _goJuz,
+            onPage: _goPage,
+            onPageJump: _jumpToPage,
+            onBookmark: _goBookmark,
+            onTranslate: _showTranslationDialog,
           ),
+          appBar: _appBar(pg, textColor),
+          body: Column(children: [
+            Expanded(
+              child: GestureDetector(
+                onScaleUpdate: (details) {
+                  if (details.pointerCount >= 2) {
+                    controller.updateArabicFontSize(
+                      (settings.arabicFontSize * details.scale).clamp(18.0, 40.0)
+                    );
+                  }
+                },
+                child: _PageFlipWrapper(
+                  flipAngle: _flipAngle * math.pi,
+                  flipDir: _flipDir,
+                  child: PageView.builder(
+                    controller: _pageCtrl,
+                    reverse: true,
+                    itemCount: null,
+                    onPageChanged: (virtualIdx) {
+                      final idx = virtualIdx % _pages.length;
+                      setState(() {
+                        _pgIdx = idx;
+                        _curS = _pages[idx].surah;
+                        _tappedSurah = 0;
+                        _tappedVerse = 0;
+
+                        if (!_isAutoAdvancing) {
+                          _playV = 0;
+                          if (_playing) {
+                            _audio.stop();
+                            _playing = false;
+                          }
+                        }
+                      });
+                      _savePrefs();
+                      if (_translationVerses.isNotEmpty) _loadTranslation();
+                    },
+                    itemBuilder: (_, virtualIdx) {
+                      final idx = virtualIdx % _pages.length;
+                      return MushafPage(
+                        data: _pages[idx],
+                        playSurah: _curS,
+                        playVerse: _playV,
+                        tappedSurah: _tappedSurah,
+                        tappedVerse: _tappedVerse,
+                        isPlayingPage: idx == _pgIdx && _playing,
+                        fontScale: fontScale,
+                        showTajwid: settings.showTajwid,
+                        bookmarkedVerses: _bookmarks
+                            .where((b) => _pages[idx]
+                                .verses
+                                .any((v) => v.surah == b.surah && v.verse == b.verse))
+                            .map((b) => '${b.surah}:${b.verse}')
+                            .toSet(),
+                        onTapVerse: _tapVerse,
+                        onBookmarkVerse: _toggleBookmark,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            if (_translationVerses.isNotEmpty)
+              TranslationPanel(
+                verses: _translationVerses,
+                languageName: _selectedLanguageName,
+                height: _translationPanelHeight,
+                minHeight: _minPanelH,
+                maxHeight: _maxPanelH,
+                onHeightChanged: (h) => setState(() => _translationPanelHeight = h),
+                onClose: () => setState(() => _translationVerses = []),
+              ),
+            BottomBar(
+              playing: _playing,
+              reciter: settings.defaultReciterId,
+              pageNum: pg.pageNum,
+              surahName: pg.surahName,
+              playVerse: _playV,
+              onPlay: _togglePlay,
+              onStop: () => setState(() {
+                _audio.stop();
+                _playing = false;
+                _playV = 0;
+                _tappedSurah = 0;
+                _tappedVerse = 0;
+              }),
+              fontScale: fontScale,
+              onZoomIn: () => controller.updateArabicFontSize((settings.arabicFontSize + 2).clamp(18.0, 40.0)),
+              onZoomOut: () => controller.updateArabicFontSize((settings.arabicFontSize - 2).clamp(18.0, 40.0)),
+              onZoomReset: () => controller.updateArabicFontSize(24.0),
+              showTajwid: settings.showTajwid,
+              onToggleTajwid: () => controller.toggleTajwid(!settings.showTajwid),
+              onTajwidLongPress: _showTajwidLegend,
+              onReciterTap: _showReciterDialog,
+            ),
+          ]),
+        );
+      },
+    );
+  }
+
+  AppBar _appBar(PageData pg, Color textColor) => AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(Icons.menu_rounded, color: textColor, size: 22),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-      ),
-    );
-  }
-}
-
-// ─── PageFlipWrapper ─────────────────────────────────────────────────────────
-class _PageFlipWrapper extends StatelessWidget {
-  final bool flipping; final double angle; final Widget child;
-  const _PageFlipWrapper({required this.flipping, required this.angle, required this.child});
-  @override
-  Widget build(BuildContext context) {
-    if (!flipping) return child;
-    return Transform(
-      alignment: Alignment.centerRight,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.001)
-        ..rotateY(angle),
-      child: child,
-    );
-  }
-}
-
-// ─── TranslationPanel ────────────────────────────────────────────────────────
-class _TranslationPanel extends StatelessWidget {
-  final int surah, langIdx, tappedVerse;
-  final List<VerseRef> verses;
-  final VoidCallback onClose;
-  const _TranslationPanel({
-    required this.surah, required this.verses, required this.langIdx,
-    required this.tappedVerse, required this.onClose,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final types = QuranLibrary().translationTypes;
-    final lang = types.isNotEmpty && langIdx < types.length ? types[langIdx] : null;
-    return Container(
-      height: 160,
-      decoration: BoxDecoration(
-        color: AppColors.pageBg,
-        border: Border(top: BorderSide(color: AppColors.gold.withOpacity(0.4))),
-      ),
-      child: Column(children: [
-        Padding(padding: const EdgeInsets.fromLTRB(12, 6, 4, 0),
-          child: Row(children: [
-            Text('Terjemah', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.dark)),
-            if (lang != null) ...[const SizedBox(width: 6),
-              Text('(${lang.name})', style: TextStyle(fontSize: 10, color: AppColors.dark.withOpacity(0.5)))],
-            const Spacer(),
-            IconButton(icon: const Icon(Icons.close_rounded, size: 16), onPressed: onClose),
-          ])),
-        Expanded(child: ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          itemCount: verses.length,
-          itemBuilder: (_, i) {
-            final v = verses[i];
-            final isActive = v.verse == tappedVerse;
-            String transText;
-            try { transText = lang != null
-                ? QuranLibrary().getTranslation(lang, v.surah, v.verse)
-                : q.getVerse(v.surah, v.verse); }
-            catch (_) { transText = q.getVerse(v.surah, v.verse); }
-            return Container(
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        title: Column(children: [
+          Text(pg.surahNameAr,
+              style: AppTextStyle.quranSurahNameStyle(
+                  fontSize: 18, color: textColor)),
+          Text(pg.surahName,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: textColor.withOpacity(0.5),
+                  letterSpacing: 0.5)),
+        ]),
+        centerTitle: true,
+        actions: [
+          if (_bookmarks.any((b) => _pages[_pgIdx]
+              .verses
+              .any((v) => v.surah == b.surah && v.verse == b.verse)))
+            const Padding(
+              padding: EdgeInsets.only(right: 4),
+              child: Icon(Icons.bookmark_rounded, color: AppColors.gold, size: 18),
+            ),
+          Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.gold.withOpacity(0.6)),
+                  borderRadius: BorderRadius.circular(5),
+                  color: AppColors.gold.withOpacity(0.08),
+                ),
+                child: Text('Juz ${pg.juz}',
+                    style: AppTextStyle.quranPageInfoStyle(
+                        fontSize: 11, color: textColor)),
+              )),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.5),
+          child: Container(
+              height: 1.5,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.hl.withOpacity(0.07) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: RichText(text: TextSpan(children: [
-                TextSpan(text: '${v.verse}. ',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
-                    color: isActive ? AppColors.hl : AppColors.gold)),
-                TextSpan(text: transText,
-                  style: TextStyle(fontSize: 12, color: AppColors.dark.withOpacity(0.8), height: 1.5)),
-              ])),
-            );
-          },
-        )),
-      ]),
+                  gradient: LinearGradient(colors: [
+                AppColors.gold.withOpacity(0),
+                AppColors.gold,
+                textColor.withOpacity(0.8),
+                AppColors.gold,
+                AppColors.gold.withOpacity(0),
+              ]))),
+        ),
+      );
+}
+
+class _PageFlipWrapper extends StatelessWidget {
+  final double flipAngle;
+  final int flipDir;
+  final Widget child;
+  const _PageFlipWrapper(
+      {required this.flipAngle, required this.flipDir, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([]),
+      builder: (context, _) {
+        return Transform(
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(flipAngle * flipDir),
+          alignment: Alignment.center,
+          child: child,
+        );
+      },
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Drawer
-// ─────────────────────────────────────────────────────────────────────────────
-class _Drawer extends StatefulWidget {
-  final List<PageData> pages; final int curSurah, curPageIdx;
-  final List<BookmarkEntry> bookmarks;
-  final Function(int) onSurah, onJuz, onPage;
-  final Function(BookmarkEntry) onBookmark;
-  final VoidCallback onTranslate;
-  const _Drawer({
-    required this.pages, required this.curSurah, required this.curPageIdx,
-    required this.bookmarks,
-    required this.onSurah, required this.onJuz, required this.onPage,
-    required this.onBookmark, required this.onTranslate,
-  });
-  @override State<_Drawer> createState() => _DrawerState();
-}
-
-class _DrawerState extends State<_Drawer> {
-  int _panel = 0;
-  final _ctrl = TextEditingController();
-  String _q = '';
-
-  static Map<int,int> _buildJuzFirstSurah() {
-    final map = <int,int>{};
-    for (int s = 1; s <= q.totalSurahCount; s++) {
-      final cnt = q.getVerseCount(s);
-      for (int v = 1; v <= cnt; v++) {
-        final juz = q.getJuzNumber(s, v);
-        if (!map.containsKey(juz)) map[juz] = s;
-      }
-    }
-    return map;
-  }
-  static final Map<int,int> _juzFirstSurah = _buildJuzFirstSurah();
-
-  String _type(int s) {
-    const m = [1,6,7,10,11,12,13,14,15,16,17,18,19,20,21,23,25,26,27,28,
-      29,30,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,50,51,52,53,54,
-      56,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,
-      88,89,90,91,92,93,94,95,96,97,100,101,102,103,104,105,106,107,108,
-      109,111,112,113,114];
-    return m.contains(s) ? 'Makkiyyah' : 'Madaniyyah';
-  }
-
-  List<int> get _surahs => List.generate(q.totalSurahCount,(i)=>i+1)
-    .where((i) => _q.isEmpty
-      || q.getSurahName(i).toLowerCase().contains(_q.toLowerCase())
-      || q.getSurahNameArabic(i).contains(_q)).toList();
-
-  List<int> get _juzs => List.generate(30,(i)=>i+1)
-    .where((j) {
-      if (_q.isEmpty) return true;
-      final surah = _juzFirstSurah[j] ?? 1;
-      return '$j'.contains(_q) ||
-        q.getSurahName(surah).toLowerCase().contains(_q.toLowerCase()) ||
-        q.getSurahNameArabic(surah).contains(_q);
-    }).toList();
-
-  void _setPanel(int p) => setState(() { _panel=(_panel==p)?0:p; _q=''; _ctrl.clear(); });
-  @override void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) => Drawer(
-    backgroundColor: AppColors.drawerBg,
-    width: MediaQuery.of(context).size.width * 0.85,
-    child: Column(children: [
-      SafeArea(bottom: false, child: _hdr()),
-      Container(height:2, decoration:BoxDecoration(gradient:LinearGradient(
-        colors:[AppColors.gold.withOpacity(0.1),AppColors.gold,AppColors.dark,AppColors.gold,AppColors.gold.withOpacity(0.1)]))),
-      Padding(padding:const EdgeInsets.fromLTRB(12,10,12,8),
-        child:Row(children:[
-          NBtn(label:'Surah', icon:Icons.format_list_bulleted_rounded, active:_panel==1, onTap:()=>_setPanel(1)),
-          const SizedBox(width:8),
-          NBtn(label:'Juz',   icon:Icons.grid_view_rounded,            active:_panel==2, onTap:()=>_setPanel(2)),
-          const SizedBox(width:8),
-          NBtn(label:'Hal',   icon:Icons.auto_stories_rounded,         active:_panel==3, onTap:()=>_setPanel(3)),
-        ])),
-      Expanded(child: _body()),
-      const SafeArea(top:false, child:SizedBox(height:8)),
-    ]),
-  );
-
-  Widget _hdr() => CustomPaint(
-    painter: _DHP(),
-    child: SizedBox(width:double.infinity, height:110,
-      child: Padding(padding:const EdgeInsets.fromLTRB(18,0,18,14),
-        child: Column(mainAxisAlignment:MainAxisAlignment.end,
-          crossAxisAlignment:CrossAxisAlignment.start, children:[
-          Text('القرآن الكريم', style:AppTextStyle.quranSurahNameStyle(fontSize:24,color:Colors.white)),
-          Text('Al-Quran Al-Karim', style:TextStyle(fontSize:11,color:Colors.white.withOpacity(0.65))),
-        ]))));
-
-  Widget _body() {
-    if (_panel == 0) return _menu();
-    String hintText = _panel == 1 ? 'Cari Surah...'
-        : _panel == 2 ? 'Cari Juz...' : 'Cari halaman 1 - 604';
-    return Column(children:[
-      Padding(padding:const EdgeInsets.fromLTRB(12,0,12,6),
-        child:Container(
-          decoration:BoxDecoration(color:const Color(0xFFF7F2E8),
-            borderRadius:BorderRadius.circular(10),
-            border:Border.all(color:AppColors.gold.withOpacity(0.4))),
-          child:TextField(
-            controller:_ctrl,
-            onChanged:(v)=>setState(()=>_q=v),
-            keyboardType: _panel == 3 ? TextInputType.number : TextInputType.text,
-            style:TextStyle(fontSize:13,color:AppColors.dark),
-            decoration:InputDecoration(
-              hintText: hintText,
-              hintStyle:TextStyle(color:AppColors.dark.withOpacity(0.35),fontSize:13),
-              prefixIcon:Icon(Icons.search_rounded,color:AppColors.gold,size:19),
-              suffixIcon:_q.isNotEmpty?IconButton(
-                icon:Icon(Icons.close_rounded,size:16,color:AppColors.dark.withOpacity(0.5)),
-                onPressed:(){_ctrl.clear();setState(()=>_q='');}):null,
-              border:InputBorder.none,
-              contentPadding:const EdgeInsets.symmetric(vertical:11))))),
-      Expanded(child: _list()),
-    ]);
-  }
-
-  Widget _list() {
-    if (_panel==1) return _SurahList(surahs:_surahs, cur:widget.curSurah, type:_type, onTap:widget.onSurah);
-    if (_panel==2) return _JuzList(juzs:_juzs, juzFirstSurah:_juzFirstSurah, onTap:widget.onJuz);
-    if (_panel==3) {
-      final filtered = _q.isEmpty ? widget.pages
-          : widget.pages.where((p) => '${p.pageNum}'.contains(_q)).toList();
-      return _PageList(pages:filtered, curIdx:widget.curPageIdx, onTap:widget.onPage);
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _menu() => ListView(padding:const EdgeInsets.only(top:4), children:[
-    if (widget.bookmarks.isNotEmpty) ...[
-      Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: Text('Penanda', style: TextStyle(
-            fontSize: 11, color: AppColors.gold, fontWeight: FontWeight.w700, letterSpacing: 0.8))),
-      ...widget.bookmarks.take(5).map((bm) => InkWell(
-        onTap: () => widget.onBookmark(bm),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(children: [
-            Icon(Icons.bookmark_rounded, size: 18, color: AppColors.gold),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${bm.surahName} : ${bm.verse}',
-                  style: TextStyle(fontSize: 13, color: AppColors.dark)),
-              Text(bm.surahNameAr,
-                  style: AppTextStyle.quranSurahNameStyle(fontSize: 14, color: AppColors.dark.withOpacity(0.6))),
-            ])),
-            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.dark.withOpacity(0.3)),
-          ]))),
-      ),
-      Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.gold.withOpacity(0.3)),
-      const SizedBox(height: 4),
-    ],
-    _MT(icon:Icons.bookmark_rounded,   label:'Semua Penanda',      onTap:()=>Navigator.pop(context)),
-    _MT(icon:Icons.translate_rounded,  label:'Terjemah & Tafsir',  onTap:() {
-      final nav = Navigator.of(context);
-      final onTranslate = widget.onTranslate;
-      nav.pop();
-      Future.delayed(const Duration(milliseconds: 300), () { onTranslate(); });
-    }),
-    _MT(icon:Icons.headphones_rounded, label:'Murattal & Hafalan', onTap:() {
-      final nav = Navigator.of(context);
-      nav.pop();
-      Future.delayed(const Duration(milliseconds: 300), () {
-        nav.push(MaterialPageRoute(builder: (_) => const HafalanScreen()));
-      });
-    }),
-    _MT(icon:Icons.download_rounded,   label:'Unduh Konten',       onTap:()=>Navigator.pop(context)),
-    _MT(icon:Icons.settings_outlined,  label:'Pengaturan',         onTap:()=>Navigator.pop(context)),
-    const SizedBox(height:24),
-    Center(child:Text('Al-Quran Digital',
-        style:TextStyle(fontSize:11,color:AppColors.dark.withOpacity(0.35)))),
-  ]);
-}
-
-// ─── Drawer sub-widgets ──────────────────────────────────────────────────────
-class _SurahList extends StatelessWidget {
-  final List<int> surahs; final int cur;
-  final String Function(int) type; final Function(int) onTap;
-  const _SurahList({required this.surahs,required this.cur,required this.type,required this.onTap});
-  @override
-  Widget build(BuildContext context) => ListView.separated(
-    padding:EdgeInsets.zero, itemCount:surahs.length,
-    separatorBuilder:(_,__)=>Divider(height:1,indent:12,endIndent:12,color:AppColors.gold.withOpacity(0.2)),
-    itemBuilder:(_,i) {
-      final s=surahs[i]; final active=s==cur;
-      return InkWell(onTap:()=>onTap(s),
-        child:Container(
-          color:active?AppColors.gold.withOpacity(0.12):Colors.transparent,
-          padding:const EdgeInsets.symmetric(horizontal:12,vertical:9),
-          child:Row(children:[
-            DB(n:s,active:active), const SizedBox(width:10),
-            Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-              Text(q.getSurahName(s),style:TextStyle(fontSize:13,fontWeight:FontWeight.w600,color:AppColors.dark)),
-              Text('${q.getVerseCount(s)} Ayat · ${type(s)}',
-                  style:TextStyle(fontSize:10,color:AppColors.dark.withOpacity(0.5))),
-            ])),
-            Text(q.getSurahNameArabic(s),
-              style:AppTextStyle.quranSurahNameStyle(fontSize:18,color:active?AppColors.gold:AppColors.dark.withOpacity(0.75))),
-          ])));
-    });
-}
-
-class _JuzList extends StatelessWidget {
-  final List<int> juzs; final Map<int,int> juzFirstSurah; final Function(int) onTap;
-  const _JuzList({required this.juzs, required this.juzFirstSurah, required this.onTap});
-  @override
-  Widget build(BuildContext context) => ListView.separated(
-    padding:EdgeInsets.zero, itemCount:juzs.length,
-    separatorBuilder:(_,__)=>Divider(height:1,indent:12,endIndent:12,color:AppColors.gold.withOpacity(0.2)),
-    itemBuilder:(_,i) {
-      final juz = juzs[i]; final s = juzFirstSurah[juz] ?? 1;
-      return InkWell(onTap: () => onTap(juz),
-        child:Padding(padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),
-          child:Row(children:[
-            DB(n:juz,active:false), const SizedBox(width:10),
-            Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-              Text('Juz $juz',style:TextStyle(fontSize:13,fontWeight:FontWeight.w600,color:AppColors.dark)),
-              Text('Dari ${q.getSurahName(s)}',style:TextStyle(fontSize:10,color:AppColors.dark.withOpacity(0.5))),
-            ])),
-            Text(q.getSurahNameArabic(s),
-              style:AppTextStyle.quranSurahNameStyle(fontSize:16,color:AppColors.dark.withOpacity(0.65))),
-          ])));
-    });
-}
-
-class _PageList extends StatelessWidget {
-  final List<PageData> pages; final int curIdx; final Function(int) onTap;
-  const _PageList({required this.pages,required this.curIdx,required this.onTap});
-  String _prev(PageData p) {
-    final t=q.getVerse(p.verses.first.surah,p.verses.first.verse,verseEndSymbol:false);
-    return t.length>45?'${t.substring(0,45)}...':t;
-  }
-  bool _newSurah(int i) => i==0 || pages[i].surah != pages[i-1].surah;
-  bool _isLast(int i) => i==pages.length-1 || pages[i+1].surah != pages[i].surah;
-  @override
-  Widget build(BuildContext context) => ListView.builder(
-    padding:const EdgeInsets.only(bottom:8), itemCount:pages.length,
-    itemBuilder:(_,i) {
-      final pg=pages[i]; final isCur=i==curIdx;
-      return Column(crossAxisAlignment:CrossAxisAlignment.stretch, children:[
-        if (_newSurah(i))
-          Container(
-            margin:const EdgeInsets.fromLTRB(12,8,12,0),
-            padding:const EdgeInsets.symmetric(horizontal:12,vertical:5),
-            decoration:BoxDecoration(color:AppColors.dark.withOpacity(0.85),
-              borderRadius:const BorderRadius.vertical(top:Radius.circular(8))),
-            child:Row(children:[
-              Text(pg.surahName,style:const TextStyle(fontSize:12,fontWeight:FontWeight.bold,color:Colors.white)),
-              const Spacer(),
-              Text(pg.surahNameAr,style:AppTextStyle.quranSurahNameStyle(fontSize:14,color:Colors.white70)),
-            ])),
-        InkWell(onTap:()=>onTap(pg.pageNum - 1),
-          child:Container(
-            margin:EdgeInsets.fromLTRB(12,0,12,_isLast(i)?0:1),
-            padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),
-            decoration:BoxDecoration(
-              color:isCur?AppColors.gold.withOpacity(0.15):const Color(0xFFF7F2E8).withOpacity(0.5),
-              border:isCur?Border.all(color:AppColors.gold,width:1):null,
-              borderRadius:_isLast(i)?const BorderRadius.vertical(bottom:Radius.circular(8)):BorderRadius.zero),
-            child:Row(children:[
-              Container(width:26,height:26,
-                decoration:BoxDecoration(shape:BoxShape.circle,
-                  color:isCur?AppColors.gold:AppColors.gold.withOpacity(0.15),
-                  border:Border.all(color:AppColors.gold.withOpacity(0.5),width:1)),
-                child:Center(child:Text('${pg.pageNum}',
-                  style:TextStyle(fontSize:9,fontWeight:FontWeight.bold,color:isCur?Colors.white:AppColors.dark)))),
-              const SizedBox(width:8),
-              Expanded(child:Text(_prev(pg),
-                style:AppTextStyle.quranPageInfoStyle(fontSize:12,color:AppColors.dark),
-                textDirection:TextDirection.rtl,maxLines:1,overflow:TextOverflow.ellipsis)),
-              const SizedBox(width:4),
-              Text('${pg.verses.first.verse}–${pg.verses.last.verse}',
-                style:TextStyle(fontSize:9,color:AppColors.dark.withOpacity(0.4))),
-            ]))),
-      ]);
-    });
-}
-
-class _MT extends StatelessWidget {
-  final IconData icon; final String label; final VoidCallback onTap;
-  const _MT({required this.icon,required this.label,required this.onTap});
-  @override
-  Widget build(BuildContext context) => InkWell(onTap:onTap,
-    child:Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:13),
-      child:Row(children:[
-        Icon(icon,size:20,color:AppColors.gold), const SizedBox(width:14),
-        Text(label,style:TextStyle(fontSize:14,color:AppColors.dark)),
-      ])));
-}
-
-class _DHP extends CustomPainter {
-  const _DHP();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w=size.width; final h=size.height;
-    canvas.drawRect(Rect.fromLTWH(0,0,w,h),Paint()
-      ..shader=LinearGradient(colors:[AppColors.dark,AppColors.dark.withOpacity(0.82)],
-        begin:Alignment.topLeft,end:Alignment.bottomRight)
-        .createShader(Rect.fromLTWH(0,0,w,h)));
-    final p=Paint()..color=AppColors.gold.withOpacity(0.08)..style=PaintingStyle.fill;
-    const step=22.0;
-    for (double x=0; x<w; x+=step)
-      for (double y=0; y<h; y+=step) {
-        final path=Path()..moveTo(x+step/2,y)..lineTo(x+step,y+step/2)
-          ..lineTo(x+step/2,y+step)..lineTo(x,y+step/2)..close();
-        canvas.drawPath(path,p);
-      }
-    canvas.drawLine(Offset(0,h-1),Offset(w,h-1),Paint()..color=AppColors.gold..strokeWidth=1.5);
-  }
-  @override bool shouldRepaint(covariant CustomPainter o) => false;
 }

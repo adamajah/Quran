@@ -15,12 +15,16 @@ import 'package:quran/quran.dart' as q;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/app_text_style.dart';
 import '../models/hafalan_models.dart';
+import '../models/reciter.dart';
+import '../utils/quran_utils.dart';
 import '../widgets/hafalan/hafalan_tab.dart';
 import '../widgets/hafalan/hafalan_widgets.dart';
-import '../widgets/hafalan/progress_tab.dart';
 import '../widgets/hafalan/quiz_tab.dart';
-import '../widgets/hafalan/statistik_tab.dart';
+import '../widgets/hafalan/realtime_ayah_view.dart';
+import '../widgets/hafalan/recording_controls.dart';
+import '../services/hafalan_engine.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HafalanScreen  —  main entry point
@@ -37,11 +41,13 @@ class _HafalanScreenState extends State<HafalanScreen>
     with TickerProviderStateMixin {
 
   // ── Navigation
-  int _tab = 0; // 0=hafalan, 1=progress, 2=quiz, 3=statistik
+  int _tab = 0; // 0=hafalan, 1=tarteel, 2=quiz
 
   // ── Surah selection
-  late int _surah;
-  late int _verseCount;
+  late int _hafalanSurah;
+  late int _tarteelSurah;
+  late int _hafalanVerseCount;
+  late int _tarteelVerseCount;
 
   // ── Verse states (key: "surah:verse")
   final Map<String, VerseState> _states = {};
@@ -60,6 +66,7 @@ class _HafalanScreenState extends State<HafalanScreen>
   final _audioPlayer = AudioPlayer();
   bool _playing = false;
   int _playingVerse = 0;
+  Reciter _selectedReciter = availableReciters[0];
 
   // ── Animation
   late AnimationController _pulseCtrl;
@@ -80,13 +87,24 @@ class _HafalanScreenState extends State<HafalanScreen>
   String? _selectedQuizAnswer;
   bool? _quizAnswerCorrect;
 
+  // ── Interactive (Tarteel) Mode
+  final _engine = HafalanEngine();
+  bool _isRecording = false;
+  HafalanSessionData? _sessionData;
+  Timer? _sessionTimer;
+  int _seconds = 0;
+  bool _isTextHidden = false;
+  final ScrollController _tarteelScroll = ScrollController();
+
   // ─────────────────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    _surah = widget.initialSurah;
-    _verseCount = q.getVerseCount(_surah);
-    _repeatCfg.toVerse = _verseCount.clamp(1, 7);
+    _hafalanSurah = widget.initialSurah;
+    _tarteelSurah = widget.initialSurah;
+    _hafalanVerseCount = q.getVerseCount(_hafalanSurah);
+    _tarteelVerseCount = q.getVerseCount(_tarteelSurah);
+    _repeatCfg.toVerse = _hafalanVerseCount.clamp(1, 7);
 
     _pulseCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 900))
@@ -106,6 +124,20 @@ class _HafalanScreenState extends State<HafalanScreen>
 
   Future<void> _loadPrefs() async {
     final p = await SharedPreferences.getInstance();
+
+    // Migration: reset default statuses to 'belum' by removing any saved status indices.
+    // This cleans up any corrupted or default-hafal states from previous versions/runs.
+    final migrated = p.getBool('h_migrated_belum_v2') ?? false;
+    if (!migrated) {
+      for (int s = 1; s <= q.totalSurahCount; s++) {
+        final cnt = q.getVerseCount(s);
+        for (int v = 1; v <= cnt; v++) {
+          await p.remove(_prefKey(s, v, 'status'));
+        }
+      }
+      await p.setBool('h_migrated_belum_v2', true);
+    }
+
     _stats = DailyStats(
       totalSessions: p.getInt('h_totalSessions') ?? 0,
       streak: p.getInt('h_streak') ?? 0,
@@ -153,15 +185,30 @@ class _HafalanScreenState extends State<HafalanScreen>
   void _cycleStatus(int s, int v) {
     setState(() {
       final st = _getState(s, v);
-      st.status = HafalanStatus.values[(st.status.index + 1) % 3];
-      // count towards today's verses
       if (st.status == HafalanStatus.hafal) {
+        st.status = HafalanStatus.belum;
+      } else {
+        st.status = HafalanStatus.hafal;
+        // count towards today's verses
         _stats.todayVerses++;
         _saveStats();
       }
     });
     HapticFeedback.mediumImpact();
     _saveVerseState(s, v);
+  }
+
+  void _resetStatusForSurah(int s) {
+    setState(() {
+      final cnt = q.getVerseCount(s);
+      for (int v = 1; v <= cnt; v++) {
+        final st = _getState(s, v);
+        st.status = HafalanStatus.belum;
+        _saveVerseState(s, v);
+      }
+    });
+    HapticFeedback.mediumImpact();
+    _snack('Ceklis hafalan untuk Surah ini telah direset ✓');
   }
 
   void _toggleBookmark(int s, int v) {
@@ -208,7 +255,17 @@ class _HafalanScreenState extends State<HafalanScreen>
 
   void _playVerse(int verse) {
     try {
-      _audioPlayer.setUrl(q.getAudioURLByVerse(_surah, verse));
+      // Calculate global verse number for the URL
+      int globalVerse = 0;
+      for (int i = 1; i < _hafalanSurah; i++) {
+        globalVerse += q.getVerseCount(i);
+      }
+      globalVerse += verse;
+
+      // Pattern: https://cdn.islamic.network/quran/audio/[bitrate]/[reciter_id]/[global_verse].mp3
+      final url = 'https://cdn.islamic.network/quran/audio/${_selectedReciter.bitrate}/${_selectedReciter.id}/$globalVerse.mp3';
+      
+      _audioPlayer.setUrl(url);
       _audioPlayer.play();
       setState(() { _playingVerse = verse; _playing = true; });
     } catch (e) { debugPrint('Audio err: $e'); }
@@ -249,23 +306,26 @@ class _HafalanScreenState extends State<HafalanScreen>
     final questions = <QuizQuestion>[];
 
     for (int v = from; v < to; v++) {
-      final correctNext = q.getVerse(_quizSurah, v + 1, verseEndSymbol: false);
+      final correctNext = QuranUtils.getCleanVerse(_quizSurah, v + 1, verseEndSymbol: false);
       // gather 3 wrong answers from other verses
       final wrongPool = <String>{};
       final rand = math.Random();
       while (wrongPool.length < 3) {
         final rv = rand.nextInt(total) + 1;
-        if (rv != v + 1) wrongPool.add(q.getVerse(_quizSurah, rv, verseEndSymbol: false));
+        if (rv != v + 1) wrongPool.add(QuranUtils.getCleanVerse(_quizSurah, rv, verseEndSymbol: false));
       }
       final options = [...wrongPool, correctNext]..shuffle(rand);
       questions.add(QuizQuestion(
         surah: _quizSurah,
         promptVerse: v,
-        promptText: q.getVerse(_quizSurah, v, verseEndSymbol: false),
+        promptText: QuranUtils.getCleanVerse(_quizSurah, v, verseEndSymbol: false),
         correctAnswer: correctNext,
         options: options,
       ));
     }
+    
+    // Shuffle the questions so they are not in order
+    questions.shuffle();
     setState(() {
       _quizQuestions = questions;
       _quizIndex = 0;
@@ -339,10 +399,10 @@ class _HafalanScreenState extends State<HafalanScreen>
 
   void _changeSurah(int s) {
     setState(() {
-      _surah = s;
-      _verseCount = q.getVerseCount(s);
+      _hafalanSurah = s;
+      _hafalanVerseCount = q.getVerseCount(s);
       _repeatCfg.fromVerse = 1;
-      _repeatCfg.toVerse   = _verseCount.clamp(1, 7);
+      _repeatCfg.toVerse   = _hafalanVerseCount.clamp(1, 7);
       _hideMode = HideMode.none;
       _stopRepeat();
     });
@@ -355,14 +415,105 @@ class _HafalanScreenState extends State<HafalanScreen>
     _pulseCtrl.dispose();
     _tabCtrl.dispose();
     _repeatTimer?.cancel();
+    _sessionTimer?.cancel();
+    _tarteelScroll.dispose();
+    _engine.dispose();
     super.dispose();
+  }
+
+  // ── Interactive (Tarteel) Logic ──────────────────────────────────────────
+  int _tarteelFromVerse = 1;
+  int _tarteelToVerse = 7;
+
+  void _startInteractive() {
+    _sessionTimer?.cancel();
+    _sessionTimer = null;
+    
+    // 1. Pause Murattal to avoid mic conflict
+    if (_playing) {
+      _audioPlayer.pause();
+      setState(() => _playing = false);
+    }
+
+    setState(() {
+      _isRecording = true;
+      _seconds = 0;
+    });
+
+    _engine.startSession(_tarteelSurah, _tarteelFromVerse, _tarteelToVerse);
+    
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (mounted) setState(() => _seconds++);
+    });
+
+    debugPrint('Tarteel Session Started: Surah $_tarteelSurah, Verse $_tarteelFromVerse-$_tarteelToVerse');
+  }
+
+  void _pauseInteractive() {
+    _sessionTimer?.cancel();
+    _sessionTimer = null;
+    setState(() => _isRecording = false);
+    _engine.stopSession(); // Essential: Turn off mic
+  }
+
+  void _resumeInteractive() {
+    _sessionTimer?.cancel();
+    _sessionTimer = null;
+    setState(() => _isRecording = true);
+    _engine.startSession(_tarteelSurah, _tarteelFromVerse, _tarteelToVerse); // Resume engine/mic
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (mounted) setState(() => _seconds++);
+    });
+  }
+
+  void _stopInteractive() {
+    _engine.stopSession();
+    _sessionTimer?.cancel();
+    _sessionTimer = null;
+    setState(() {
+      _isRecording = false;
+      _sessionData = null;
+      _seconds = 0;
+    });
+  }
+
+  void _scrollToCurrentWord() {
+    if (!_tarteelScroll.hasClients || _sessionData == null) return;
+    
+    final currentIdx = _sessionData!.currentIndex;
+    final totalWords = _sessionData!.words.length;
+    if (totalWords == 0) return;
+
+    // Smoother calculation: scroll based on word percentage
+    double progress = currentIdx / totalWords;
+    double maxScroll = _tarteelScroll.position.maxScrollExtent;
+    
+    // Add offset so current word is not at the very top
+    double targetScroll = (progress * maxScroll) - 80;
+    targetScroll = targetScroll.clamp(0.0, maxScroll);
+
+    _tarteelScroll.animateTo(
+      targetScroll,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+    );
+    
+    // Debug Log
+    debugPrint('Sync Progress: ${(progress * 100).toStringAsFixed(1)}% | Current Word: $currentIdx/$totalWords');
+  }
+
+  String _formatTime(int sec) {
+    final m = (sec / 60).floor().toString().padLeft(2, '0');
+    final s = (sec % 60).toString().padLeft(2, '0');
+    return "$m:$s";
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.outerBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
       body: Column(children: [
         _buildTabBar(),
@@ -378,36 +529,245 @@ class _HafalanScreenState extends State<HafalanScreen>
           child: KeyedSubtree(
             key: ValueKey(_tab),
             child: switch (_tab) {
-              0 => HafalanTab(
-                  surah: _surah,
-                  verseCount: _verseCount,
-                  hideMode: _hideMode,
-                  repeatActive: _repeatActive,
-                  repeatCfg: _repeatCfg,
-                  repeatRemaining: _repeatRemaining,
-                  repeatCurrentVerse: _repeatCurrentVerse,
-                  playing: _playing,
-                  playVerse: _playingVerse,
-                  pulseAnim: _pulseAnim,
-                  getState: _getState,
-                  onChangeSurah: _changeSurah,
-                  onHideModeChanged: (m) => setState(() => _hideMode = m),
-                  onCycleStatus: _cycleStatus,
-                  onToggleBookmark: _toggleBookmark,
-                  onRevealVerse: _revealVerse,
-                  onRepeatCfgChanged: (cfg) => setState(() => _repeatCfg = cfg),
-                  onStartRepeat: _startRepeat,
-                  onStopRepeat: _stopRepeat,
-                  onPlayVerse: _playVerse,
-                ),
-              1 => ProgressTab(
-                  surah: _surah,
-                  getState: _getState,
-                  versesByStatus: _versesByStatus,
-                  surahProgress: _surahProgress,
-                  totalHafal: _totalHafal,
-                  totalVerses: _totalVerses,
-                ),
+              0 => Column(
+                children: [
+                  Expanded(
+                    child: HafalanTab(
+                      surah: _hafalanSurah,
+                      verseCount: _hafalanVerseCount,
+                      hideMode: _hideMode,
+                      repeatActive: _repeatActive,
+                      repeatCfg: _repeatCfg,
+                      repeatRemaining: _repeatRemaining,
+                      repeatCurrentVerse: _repeatCurrentVerse,
+                      playing: _playing,
+                      playVerse: _playingVerse,
+                      pulseAnim: _pulseAnim,
+                      getState: _getState,
+                      onChangeSurah: _changeSurah,
+                      onHideModeChanged: (m) => setState(() => _hideMode = m),
+                      onCycleStatus: _cycleStatus,
+                      onResetSurahStatus: _resetStatusForSurah,
+                      onToggleBookmark: _toggleBookmark,
+                      onRevealVerse: _revealVerse,
+                      onRepeatCfgChanged: (cfg) => setState(() => _repeatCfg = cfg),
+                      onStartRepeat: _startRepeat,
+                      onStopRepeat: _stopRepeat,
+                      onPlayVerse: _playVerse,
+                      selectedReciter: _selectedReciter,
+                      onReciterChanged: (r) => setState(() => _selectedReciter = r),
+                    ),
+                  ),
+                  // Controls Bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      border: Border(
+                        top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade300, width: 0.8),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _ControlBtn(
+                          icon: Icons.skip_previous_rounded,
+                          onTap: () {
+                            if (_playingVerse > 1) _playVerse(_playingVerse - 1);
+                          },
+                        ),
+                        _ControlBtn(
+                          icon: _hideMode != HideMode.none ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                          onTap: () => setState(() => _hideMode = _hideMode == HideMode.none ? HideMode.allText : HideMode.none),
+                        ),
+                        _ControlBtn(
+                          icon: _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                          isLarge: true,
+                          onTap: () {
+                            if (_playing) {
+                              _audioPlayer.pause();
+                              setState(() => _playing = false);
+                            } else {
+                              if (_repeatActive) {
+                                _audioPlayer.play();
+                                setState(() => _playing = true);
+                              } else {
+                                _playVerse(_playingVerse == 0 ? 1 : _playingVerse);
+                              }
+                            }
+                          },
+                        ),
+                        _ControlBtn(
+                          icon: Icons.repeat_rounded,
+                          active: _repeatActive,
+                          onTap: () => _repeatActive ? _stopRepeat() : _startRepeat(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              1 => Column(
+                children: [
+                  // Selection Bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Theme.of(context).cardColor,
+                      border: Border(bottom: BorderSide(color: AppColors.gold.withOpacity(0.15))),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDropdown<int>(
+                                value: _tarteelSurah,
+                                items: List.generate(114, (i) => i + 1),
+                                label: (s) => q.getSurahName(s),
+                                onChanged: (s) async {
+                                  _sessionTimer?.cancel();
+                                  _sessionTimer = null;
+                                  await _engine.stopSession();
+                                  setState(() {
+                                    _tarteelSurah = s!;
+                                    _tarteelVerseCount = q.getVerseCount(s);
+                                    _tarteelFromVerse = 1;
+                                    _tarteelToVerse = _tarteelVerseCount.clamp(1, 7);
+                                    _isRecording = false;
+                                    _seconds = 0;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 85,
+                              child: _buildDropdown<int>(
+                                value: q.getJuzNumber(_tarteelSurah, _tarteelFromVerse),
+                                items: List.generate(30, (i) => i + 1),
+                                label: (j) => 'Juz $j',
+                                onChanged: (j) {
+                                  // Jump to first verse of this juz
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text('Range Ayat:', style: TextStyle(fontSize: 10, color: (isDark ? Colors.white : Colors.grey).withOpacity(0.5))),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildDropdown<int>(
+                                value: _tarteelFromVerse,
+                                items: List.generate(_tarteelVerseCount, (i) => i + 1),
+                                label: (v) => 'Dari $v',
+                                onChanged: (v) {
+                                  setState(() {
+                                    _tarteelFromVerse = v!;
+                                    if (_isRecording) _engine.startSession(_tarteelSurah, _tarteelFromVerse, _tarteelToVerse);
+                                  });
+                                },
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: Text('-', style: TextStyle(color: Colors.grey)),
+                            ),
+                            Expanded(
+                              child: _buildDropdown<int>(
+                                value: _tarteelToVerse,
+                                items: List.generate(_tarteelVerseCount - _tarteelFromVerse + 1, (i) => i + _tarteelFromVerse),
+                                label: (v) => 'Sampai $v',
+                                onChanged: (v) {
+                                  setState(() {
+                                    _tarteelToVerse = v!;
+                                    if (_isRecording) _engine.startSession(_tarteelSurah, _tarteelFromVerse, _tarteelToVerse);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: StreamBuilder<HafalanSessionData>(
+                      stream: _engine.sessionStream,
+                      builder: (context, snapshot) {
+                        final data = snapshot.data;
+                        if (data != null) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted && _sessionData != data) {
+                              setState(() => _sessionData = data);
+                              _scrollToCurrentWord();
+                            }
+                          });
+                        }
+                        
+                        return Stack(
+                          children: [
+                            ListView(
+                              controller: _tarteelScroll,
+                              padding: const EdgeInsets.all(16),
+                              children: [
+                                // Surah Header like mushaf
+                                if (data != null)
+                                  _MushafHeader(surah: _tarteelSurah),
+                                const SizedBox(height: 12),
+                                if (data == null)
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 100),
+                                      child: Column(
+                                        children: [
+                                          Icon(Icons.mic_none_rounded, size: 64, color: AppColors.gold.withOpacity(0.3)),
+                                          const SizedBox(height: 16),
+                                          Text('Siap Memulai Tarteel\nKetuk tombol Putar di bawah',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(color: (isDark ? Colors.white : Colors.grey).withOpacity(0.5))),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  RealtimeAyahView(
+                                    words: data.words,
+                                    hideMode: _isTextHidden ? HideMode.allText : HideMode.none,
+                                    isRecording: _isRecording,
+                                    currentIndex: data.currentIndex,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+                    ),
+                  ),
+                  RecordingControls(
+                    isRecording: _isRecording,
+                    mistakes: _sessionData?.mistakes ?? 0,
+                    timer: _formatTime(_seconds),
+                    onToggle: () {
+                      if (_isRecording) {
+                        _pauseInteractive();
+                      } else if (_seconds > 0) {
+                        _resumeInteractive();
+                      } else {
+                        _startInteractive();
+                      }
+                    },
+                    onStop: _stopInteractive,
+                    onNext: () => _engine.nextAyah(),
+                    onPrev: () => _engine.prevAyah(),
+                    onToggleHide: () => setState(() => _isTextHidden = !_isTextHidden),
+                    isHidden: _isTextHidden,
+                  ),
+                ],
+              ),
               2 => QuizTab(
                   quizSurah: _quizSurah,
                   quizFromVerse: _quizFromVerse,
@@ -428,17 +788,13 @@ class _HafalanScreenState extends State<HafalanScreen>
                   onGenerate: _generateQuiz,
                   onAnswer: _answerQuiz,
                   onRestart: () => setState(() {
+                    _quizQuestions = [];
                     _quizDone = false;
                     _quizIndex = 0;
                     _quizScore = 0;
                     _selectedQuizAnswer = null;
                     _quizAnswerCorrect = null;
                   }),
-                ),
-              3 => StatistikTab(
-                  stats: _stats,
-                  totalHafal: _totalHafal,
-                  totalVerses: _totalVerses,
                 ),
               _ => const SizedBox.shrink(),
             },
@@ -448,19 +804,23 @@ class _HafalanScreenState extends State<HafalanScreen>
     );
   }
 
-  AppBar _buildAppBar() => AppBar(
-    backgroundColor: AppColors.outerBg, elevation: 0, surfaceTintColor: Colors.transparent,
+  AppBar _buildAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AppBar(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
     leading: IconButton(
-      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.dark, size: 20),
+      icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : AppColors.dark, size: 20),
       onPressed: () => Navigator.pop(context),
     ),
     title: Column(children: [
       Text('Mode Hafalan', style: TextStyle(
-        fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.dark,
+        fontSize: 16, fontWeight: FontWeight.w700, color: isDark ? Colors.white : AppColors.dark,
         letterSpacing: 0.3,
       )),
       Text('Tahfidz Al-Quran', style: TextStyle(
-        fontSize: 10, color: AppColors.dark.withOpacity(0.5), letterSpacing: 0.8,
+        fontSize: 10, color: (isDark ? Colors.white : AppColors.dark).withOpacity(0.5), letterSpacing: 0.8,
       )),
     ]),
     centerTitle: true,
@@ -468,23 +828,114 @@ class _HafalanScreenState extends State<HafalanScreen>
       preferredSize: const Size.fromHeight(1.5),
       child: Container(height: 1.5, decoration: BoxDecoration(
         gradient: LinearGradient(colors: [
-          AppColors.gold.withOpacity(0), AppColors.gold, AppColors.dark, AppColors.gold, AppColors.gold.withOpacity(0),
+          AppColors.gold.withOpacity(0), AppColors.gold, isDark ? Colors.white24 : AppColors.dark, AppColors.gold, AppColors.gold.withOpacity(0),
         ]),
       )),
     ),
   );
+  }
 
-  Widget _buildTabBar() => Container(
-    color: AppColors.outerBg,
-    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-    child: Row(children: [
-      TabBtn(label: 'Hafalan',   icon: Icons.menu_book_rounded,         active: _tab == 0, onTap: () => setState(() => _tab = 0)),
-      const SizedBox(width: 6),
-      TabBtn(label: 'Progres',   icon: Icons.bar_chart_rounded,         active: _tab == 1, onTap: () => setState(() => _tab = 1)),
-      const SizedBox(width: 6),
-      TabBtn(label: 'Quiz',      icon: Icons.quiz_rounded,              active: _tab == 2, onTap: () => setState(() => _tab = 2)),
-      const SizedBox(width: 6),
-      TabBtn(label: 'Statistik', icon: Icons.insert_chart_outlined_rounded, active: _tab == 3, onTap: () => setState(() => _tab = 3)),
-    ]),
+  Widget _buildTabBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          TabBtn(label: 'Hafalan', icon: Icons.menu_book_rounded, active: _tab == 0, onTap: () => setState(() => _tab = 0)),
+          const SizedBox(width: 4),
+          TabBtn(label: 'Tarteel', icon: Icons.mic_rounded, active: _tab == 1, onTap: () => setState(() => _tab = 1)),
+          const SizedBox(width: 4),
+          TabBtn(label: 'Quiz', icon: Icons.quiz_rounded, active: _tab == 2, onTap: () => setState(() => _tab = 2)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required T value,
+    required List<T> items,
+    required String Function(T) label,
+    required void Function(T?) onChanged,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+    height: 36,
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    decoration: BoxDecoration(
+      color: Theme.of(context).cardColor,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<T>(
+        value: value,
+        dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        items: items.map((i) => DropdownMenuItem(value: i, child: Text(label(i), style: TextStyle(fontSize: 11, color: isDark ? Colors.white : AppColors.dark)))).toList(),
+        onChanged: onChanged,
+        isExpanded: true,
+        icon: const Icon(Icons.arrow_drop_down_rounded, color: AppColors.gold),
+      ),
+    ),
   );
+  }
+}
+
+class _ControlBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool isLarge;
+  final bool active;
+
+  const _ControlBtn({
+    required this.icon,
+    required this.onTap,
+    this.isLarge = false,
+    this.active = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(isLarge ? 12 : 10),
+        decoration: BoxDecoration(
+          color: active 
+              ? AppColors.hl 
+              : (isLarge ? AppColors.gold : AppColors.gold.withOpacity(0.1)),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon, 
+          color: (isLarge || active) ? Colors.white : AppColors.gold, 
+          size: isLarge ? 28 : 22
+        ),
+      ),
+    );
+  }
+}
+
+class _MushafHeader extends StatelessWidget {
+  final int surah;
+  const _MushafHeader({required this.surah});
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      height: 60,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
+        border: Border.all(color: AppColors.gold.withOpacity(0.3), width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(
+          q.getSurahNameArabic(surah),
+          style: AppTextStyle.quranSurahNameStyle(fontSize: 22, color: isDark ? Colors.white : AppColors.dark),
+        ),
+      ),
+    );
+  }
 }

@@ -1,26 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_quran_app/screens/splash_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quran_library/quran_library.dart';
 
-import 'constant/app_colors.dart';
+import 'screens/splash_screen.dart';
+import 'constants/theme_manager.dart';
+import 'controllers/settings_controller.dart';
+import 'services/settings_service.dart';
 
-void main(){
+import 'services/notification_service.dart';
+import 'services/storage_service.dart';
+import 'services/download_service.dart';
+import 'services/audio_service.dart';
+import 'providers/storage_provider.dart';
+import 'providers/download_provider.dart';
+import 'providers/audio_provider.dart';
 
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await QuranLibrary.init();
+  // NotificationService initialization moved to SplashScreen to avoid Activity-not-ready issues
+  
+  final prefs = await SharedPreferences.getInstance();
+  final settingsService = SettingsService(prefs);
+  final storageService = StorageService();
+  final downloadService = DownloadService();
+  final audioService = AudioService();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SettingsController(settingsService)),
+        ChangeNotifierProvider(create: (_) => StorageProvider(storageService)),
+        ChangeNotifierProvider(create: (_) => DownloadProvider(downloadService, storageService, prefs)),
+        ChangeNotifierProvider(create: (_) => AudioProvider(audioService)),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        primaryColor: AppColors.primaryColor,
-        scaffoldBackgroundColor:AppColors.backgroundColor,
-        primaryColorLight:AppColors.primaryLightColor,
-        textTheme: GoogleFonts.amiriTextTheme(),
-      ),
-      home: SplashScreen(),
+    return Consumer<SettingsController>(
+      builder: (context, controller, child) {
+        return ScreenUtilInit(
+          designSize: const Size(392, 800),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, child) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: ThemeManager.getTheme(controller.settings.theme),
+              home: const SplashScreen(),
+            );
+          },
+        );
+      },
     );
   }
 }

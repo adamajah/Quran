@@ -4,7 +4,9 @@
 
 enum HafalanStatus { belum, murojaah, hafal }
 
-enum HideMode { none, allText, partialWords }
+enum HideMode { none, allText, partialWords, perWord, random }
+
+enum WordStatus { pending, correct, wrong, almost }
 
 class VerseState {
   HafalanStatus status;
@@ -51,5 +53,31 @@ class QuizQuestion {
     required this.surah, required this.promptVerse,
     required this.promptText, required this.correctAnswer,
     required this.options,
+  });
+}
+
+// ── Tarteel Mode Models ──────────────────────────────────────────────────────
+
+class InteractiveWord {
+  final String text;
+  final String cleanText;
+  final bool isVerseMarker;  // true = verse-end badge, skip during speech matching
+  WordStatus status;
+  InteractiveWord({
+    required this.text,
+    required this.cleanText,
+    this.status = WordStatus.pending,
+    this.isVerseMarker = false,
+  });
+}
+
+class InteractiveAyah {
+  final int surah;
+  final int verse;
+  final List<InteractiveWord> words;
+  InteractiveAyah({
+    required this.surah,
+    required this.verse,
+    required this.words,
   });
 }

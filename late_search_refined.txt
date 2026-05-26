@@ -1,0 +1,25 @@
+./lib/screens/reading_screen.dart:  late final PageController _pageController;
+./lib/screens/reading_screen.dart:      // Calculate the base font size based on settings.arabicFontSize
+./lib/screens/hafalan_screen.dart:  late int _hafalanSurah;
+./lib/screens/hafalan_screen.dart:  late int _tarteelSurah;
+./lib/screens/hafalan_screen.dart:  late int _hafalanVerseCount;
+./lib/screens/hafalan_screen.dart:  late int _tarteelVerseCount;
+./lib/screens/hafalan_screen.dart:  late AnimationController _pulseCtrl;
+./lib/screens/hafalan_screen.dart:  late Animation<double> _pulseAnim;
+./lib/screens/hafalan_screen.dart:  late AnimationController _tabCtrl;
+./lib/screens/hafalan_screen.dart:      // Calculate global verse number for the URL
+./lib/screens/home_screen.dart:  late PageController _pageCtrl;
+./lib/screens/home_screen.dart:  late AnimationController _flipCtrl;
+./lib/screens/home_screen.dart:  late final List<PageData> _pages;
+./lib/screens/splash_screen.dart:  late AnimationController _controller;
+./lib/screens/splash_screen.dart:  late Animation<double> _animation;
+./lib/screens/splash_screen.dart:  late Animation<Offset> _offsetAnimation;
+./lib/services/quran_matching_service.dart:  /// Calculate similarity between two words (0.0 to 1.0)
+./lib/widgets/common/mushaf_drawer.dart:              final onTranslate = widget.onTranslate;
+./lib/widgets/hafalan/recording_controls.dart:  late AnimationController _ctrl;
+./lib/widgets/bookmarks/add_bookmark_sheet.dart:  late int _surah;
+./lib/widgets/bookmarks/add_bookmark_sheet.dart:  late int _verse;
+./lib/widgets/bookmarks/add_bookmark_sheet.dart:  late String _folder;
+./lib/widgets/bookmarks/add_bookmark_sheet.dart:  late bool _isFavorite;
+./lib/widgets/bookmarks/add_bookmark_sheet.dart:  late int? _highlightColor;
+./.dart_tool/flutter_build/dart_plugin_registrant.dart:// This file is generated from template in file `flutter_tools/lib/src/flutter_plugins.dart`.
