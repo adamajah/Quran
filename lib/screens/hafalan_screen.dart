@@ -95,6 +95,9 @@ class _HafalanScreenState extends State<HafalanScreen>
   int _seconds = 0;
   bool _isTextHidden = false;
   final ScrollController _tarteelScroll = ScrollController();
+  final GlobalKey _currentTarteelWordKey = GlobalKey();
+  int _lastAutoScrolledWord = -1;
+  List<InteractiveWord>? _lastAutoScrollWords;
 
   // ─────────────────────────────────────────────────────────────────────────
   @override
@@ -547,31 +550,26 @@ class _HafalanScreenState extends State<HafalanScreen>
     });
   }
 
-  void _scrollToCurrentWord() {
-    if (!_tarteelScroll.hasClients || _sessionData == null) return;
+  void _scheduleTarteelAutoScroll(HafalanSessionData data) {
+    if (!identical(_lastAutoScrollWords, data.words)) {
+      _lastAutoScrollWords = data.words;
+      _lastAutoScrolledWord = -1;
+    }
+    if (data.currentIndex == _lastAutoScrolledWord) return;
+    _lastAutoScrolledWord = data.currentIndex;
 
-    final currentIdx = _sessionData!.currentIndex;
-    final totalWords = _sessionData!.words.length;
-    if (totalWords == 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final currentWordContext = _currentTarteelWordKey.currentContext;
+      if (currentWordContext == null) return;
 
-    // Smoother calculation: scroll based on word percentage
-    double progress = currentIdx / totalWords;
-    double maxScroll = _tarteelScroll.position.maxScrollExtent;
-
-    // Add offset so current word is not at the very top
-    double targetScroll = (progress * maxScroll) - 80;
-    targetScroll = targetScroll.clamp(0.0, maxScroll);
-
-    _tarteelScroll.animateTo(
-      targetScroll,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutCubic,
-    );
-
-    // Debug Log
-    debugPrint(
-      'Sync Progress: ${(progress * 100).toStringAsFixed(1)}% | Current Word: $currentIdx/$totalWords',
-    );
+      Scrollable.ensureVisible(
+        currentWordContext,
+        alignment: 0.32,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   String _formatTime(int sec) {
@@ -859,9 +857,9 @@ class _HafalanScreenState extends State<HafalanScreen>
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (mounted && _sessionData != data) {
                                   setState(() => _sessionData = data);
-                                  _scrollToCurrentWord();
                                 }
                               });
+                              _scheduleTarteelAutoScroll(data);
                             }
 
                             return Stack(
@@ -912,6 +910,7 @@ class _HafalanScreenState extends State<HafalanScreen>
                                                 : HideMode.none,
                                         isRecording: _isRecording,
                                         currentIndex: data.currentIndex,
+                                        currentWordKey: _currentTarteelWordKey,
                                       ),
                                   ],
                                 ),

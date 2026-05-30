@@ -8,6 +8,7 @@ class RealtimeAyahView extends StatelessWidget {
   final HideMode hideMode;
   final bool isRecording;
   final int currentIndex;
+  final GlobalKey currentWordKey;
 
   const RealtimeAyahView({
     super.key,
@@ -15,6 +16,7 @@ class RealtimeAyahView extends StatelessWidget {
     required this.hideMode,
     required this.isRecording,
     required this.currentIndex,
+    required this.currentWordKey,
   });
 
   @override
@@ -81,6 +83,7 @@ class RealtimeAyahView extends StatelessWidget {
                 !isCurrent;
 
             return AnimatedContainer(
+              key: isCurrent ? currentWordKey : null,
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
