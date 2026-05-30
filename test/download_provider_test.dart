@@ -47,7 +47,7 @@ void main() {
       prefs,
     );
 
-    await provider.downloadSurah(36);
+    await provider.downloadSurah(36, reciter: availableReciters.first);
     await Future<void>.delayed(Duration.zero);
 
     expect(downloadService.urls, [
@@ -74,8 +74,7 @@ void main() {
       (reciter) => reciter.id == 'ar.hanirifai',
     );
 
-    provider.selectReciter(hani);
-    await provider.downloadSurah(1);
+    await provider.downloadSurah(1, reciter: hani);
     await Future<void>.delayed(Duration.zero);
 
     expect(downloadService.urls, [
@@ -116,5 +115,34 @@ void main() {
 
     expect(resolvedPath, currentPath);
     expect(provider.itemForSurah(1)?.savePath, currentPath);
+  });
+
+  test('interrupted bulk queue does not resume automatically', () async {
+    SharedPreferences.setMockInitialValues({
+      'pause_low_battery': false,
+      'download_items': jsonEncode([
+        DownloadItem(
+          id: '027',
+          title: 'An-Naml',
+          subtitle: 'Mishary Rashid Alafasy',
+          url:
+              'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/27.mp3',
+          progress: 0.5,
+          status: DownloadStatus.downloading,
+        ).toJson(),
+      ]),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final downloadService = _FakeDownloadService();
+    final provider = DownloadProvider(
+      downloadService,
+      _FakeStorageService(),
+      prefs,
+    );
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.statusForSurah(27), DownloadStatus.notDownloaded);
+    expect(downloadService.urls, isEmpty);
   });
 }

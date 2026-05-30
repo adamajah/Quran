@@ -19,13 +19,13 @@ class DownloadProvider with ChangeNotifier {
   List<DownloadItem> _items = [];
   bool _wifiOnly = false;
   bool _pauseLowBattery = true;
-  String _selectedReciterId = availableReciters.first.id;
   final List<String> _queue = [];
   String? _activeDownloadId;
 
   DownloadProvider(this._downloadService, this._storageService, this._prefs) {
     _loadSettings();
     _loadItems();
+    _resetInterruptedDownloads();
     _reconcileDownloadedItems();
     _listenToBattery();
   }
@@ -33,18 +33,10 @@ class DownloadProvider with ChangeNotifier {
   List<DownloadItem> get items => _items;
   bool get wifiOnly => _wifiOnly;
   bool get pauseLowBattery => _pauseLowBattery;
-  Reciter get selectedReciter => availableReciters.firstWhere(
-    (reciter) =>
-        reciter.id == _selectedReciterId && reciter.supportsSurahAudioDownload,
-    orElse: () => availableReciters.first,
-  );
 
   void _loadSettings() {
     _wifiOnly = _prefs.getBool('wifi_only') ?? false;
     _pauseLowBattery = _prefs.getBool('pause_low_battery') ?? true;
-    _selectedReciterId =
-        _prefs.getString('selected_offline_reciter') ??
-        availableReciters.first.id;
   }
 
   void _loadItems() {
@@ -129,24 +121,35 @@ class DownloadProvider with ChangeNotifier {
   }
 
   DownloadItem? itemForSurah(int surah, {Reciter? reciter}) {
-    final id = _itemId(surah, reciter ?? selectedReciter);
-    final index = _items.indexWhere((item) => item.id == id);
-    return index == -1 ? null : _items[index];
+    if (reciter != null) {
+      final id = _itemId(surah, reciter);
+      final index = _items.indexWhere((item) => item.id == id);
+      return index == -1 ? null : _items[index];
+    }
+
+    final candidates = _itemsForSurah(surah);
+    for (final status in [
+      DownloadStatus.completed,
+      DownloadStatus.downloading,
+      DownloadStatus.paused,
+      DownloadStatus.failed,
+      DownloadStatus.notDownloaded,
+    ]) {
+      final index = candidates.indexWhere((item) => item.status == status);
+      if (index != -1) return candidates[index];
+    }
+    return null;
   }
 
   DownloadStatus statusForSurah(int surah) {
     return itemForSurah(surah)?.status ?? DownloadStatus.notDownloaded;
   }
 
-  int completedSurahCountForReciter(String reciterId) {
-    final defaultReciterId = availableReciters.first.id;
-    return List.generate(q.totalSurahCount, (index) {
-      final surahId = (index + 1).toString().padLeft(3, '0');
-      return reciterId == defaultReciterId ? surahId : '$reciterId-$surahId';
-    }).where((id) {
-      final index = _items.indexWhere((item) => item.id == id);
-      return index != -1 && _items[index].status == DownloadStatus.completed;
-    }).length;
+  List<DownloadItem> _itemsForSurah(int surah) {
+    final paddedId = surah.toString().padLeft(3, '0');
+    return _items
+        .where((item) => item.id == paddedId || item.id.endsWith('-$paddedId'))
+        .toList();
   }
 
   void _saveItems() {
@@ -154,6 +157,18 @@ class DownloadProvider with ChangeNotifier {
       _items.map((item) => item.toJson()).toList(),
     );
     _prefs.setString('download_items', encoded);
+  }
+
+  void _resetInterruptedDownloads() {
+    var changed = false;
+    for (final item in _items) {
+      if (item.status != DownloadStatus.downloading) continue;
+      item.status = DownloadStatus.notDownloaded;
+      item.progress = 0;
+      item.lastError = null;
+      changed = true;
+    }
+    if (changed) _saveItems();
   }
 
   Future<void> _reconcileDownloadedItems() async {
@@ -180,8 +195,8 @@ class DownloadProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> localAudioPathForSurah(int surah) async {
-    final item = itemForSurah(surah);
+  Future<String?> localAudioPathForSurah(int surah, {Reciter? reciter}) async {
+    final item = itemForSurah(surah, reciter: reciter);
     final savedPath = item?.savePath;
     if (item == null ||
         item.status != DownloadStatus.completed ||
@@ -221,15 +236,7 @@ class DownloadProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void selectReciter(Reciter reciter) {
-    if (!reciter.supportsSurahAudioDownload) return;
-    _selectedReciterId = reciter.id;
-    _prefs.setString('selected_offline_reciter', reciter.id);
-    notifyListeners();
-  }
-
-  Future<void> downloadSurah(int surah) async {
-    final reciter = selectedReciter;
+  Future<void> downloadSurah(int surah, {required Reciter reciter}) async {
     if (!reciter.supportsSurahAudioDownload) return;
 
     final id = _itemId(surah, reciter);
@@ -403,35 +410,5 @@ class DownloadProvider with ChangeNotifier {
         }
       }
     });
-  }
-
-  Future<void> downloadAll() async {
-    await downloadReciter(selectedReciter);
-  }
-
-  Future<void> downloadReciter(Reciter reciter) async {
-    if (!reciter.supportsSurahAudioDownload) return;
-
-    var changed = false;
-    for (var surah = 1; surah <= q.totalSurahCount; surah++) {
-      final item = _buildSurahItem(surah, reciter);
-      changed = _upsertItem(item) || changed;
-    }
-    if (changed) {
-      _saveItems();
-      notifyListeners();
-    }
-
-    for (var surah = 1; surah <= q.totalSurahCount; surah++) {
-      final paddedId = surah.toString().padLeft(3, '0');
-      final id =
-          reciter.id == availableReciters.first.id
-              ? paddedId
-              : '${reciter.id}-$paddedId';
-      final index = _items.indexWhere((item) => item.id == id);
-      if (index != -1 && _items[index].status != DownloadStatus.completed) {
-        await startDownload(id);
-      }
-    }
   }
 }

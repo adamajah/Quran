@@ -53,3 +53,7 @@ const List<Reciter> availableReciters = [
     surahAudioBitrate: 128,
   ),
 ];
+
+List<Reciter> get offlineReciters => availableReciters
+    .where((reciter) => reciter.supportsSurahAudioDownload)
+    .toList(growable: false);
