@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -45,6 +46,10 @@ class _HomeScreenState extends State<HomeScreen>
   int _playV = 0;
   int _curS = 1;
   Reciter _selectedReciter = availableReciters.first;
+  List<AyahTiming> _streamAyahTimings = const [];
+  Duration? _streamDuration;
+  int? _streamSurah;
+  StreamSubscription<Duration>? _positionSubscription;
 
   // Tap-to-play: which verse was tapped
   int _tappedSurah = 0;
@@ -87,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
     _loadPrefs();
+    _positionSubscription = _audio.positionStream.listen(_syncStreamAyah);
     _audio.playerStateStream.listen((s) {
       if (s.processingState != ProcessingState.completed) return;
       if (!mounted) return;
@@ -95,7 +101,10 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() {
           _playing = false;
           _playV = 0;
+          _tappedSurah = 0;
+          _tappedVerse = 0;
         });
+        _clearStreamPlayback();
         return;
       }
 
@@ -218,17 +227,18 @@ class _HomeScreenState extends State<HomeScreen>
       await _audio.setSpeed(settings.playbackSpeed);
       if (reciter.usesSurahAudioStream) {
         final duration = await _audio.setUrl(reciter.surahAudioUrl(r.surah));
+        final timings = await _reciterService.getAyahTimings(reciter, r.surah);
+        _streamSurah = r.surah;
+        _streamDuration = duration;
+        _streamAyahTimings = timings;
         if (r.verse > 1) {
           final position =
-              await _reciterService.getAyahStartPosition(
-                reciter,
-                r.surah,
-                r.verse,
-              ) ??
+              _startPositionForAyah(timings, r.verse) ??
               _estimateAyahPosition(duration, r.surah, r.verse);
           if (position != null) await _audio.seek(position);
         }
       } else {
+        _clearStreamPlayback();
         await _audio.setUrl(
           AudioUtils.getVerseAudioUrl(
             r.surah,
@@ -239,6 +249,12 @@ class _HomeScreenState extends State<HomeScreen>
         );
       }
       await _audio.play();
+      if (mounted) {
+        setState(() {
+          _tappedSurah = 0;
+          _tappedVerse = 0;
+        });
+      }
       return true;
     } catch (e) {
       debugPrint('Audio: $e');
@@ -253,6 +269,76 @@ class _HomeScreenState extends State<HomeScreen>
     return Duration(
       milliseconds: (duration.inMilliseconds * (ayah - 1) / verseCount).round(),
     );
+  }
+
+  Duration? _startPositionForAyah(List<AyahTiming> timings, int ayah) {
+    for (final timing in timings) {
+      if (timing.ayah == ayah) return timing.start;
+    }
+    return null;
+  }
+
+  void _syncStreamAyah(Duration position) {
+    final surah = _streamSurah;
+    if (!_playing || surah == null || !_selectedReciter.usesSurahAudioStream) {
+      return;
+    }
+
+    final ayah =
+        OfflineReciterService.findAyahForPosition(
+          _streamAyahTimings,
+          position,
+        ) ??
+        _estimateAyahForPosition(position, _streamDuration, surah);
+    if (ayah == null || (_curS == surah && _playV == ayah)) return;
+
+    setState(() {
+      _curS = surah;
+      _playV = ayah;
+      _tappedSurah = 0;
+      _tappedVerse = 0;
+    });
+    _showPlayingAyahPage(surah, ayah);
+  }
+
+  int? _estimateAyahForPosition(
+    Duration position,
+    Duration? duration,
+    int surah,
+  ) {
+    if (duration == null || duration.inMilliseconds <= 0) return null;
+    final verseCount = q.getVerseCount(surah);
+    return (position.inMilliseconds * verseCount / duration.inMilliseconds)
+            .floor()
+            .clamp(0, verseCount - 1) +
+        1;
+  }
+
+  void _showPlayingAyahPage(int surah, int ayah) {
+    final pageIdx = _pages.indexWhere(
+      (page) => page.verses.any(
+        (verse) => verse.surah == surah && verse.verse == ayah,
+      ),
+    );
+    if (pageIdx == -1 || pageIdx == _pgIdx || !_pageCtrl.hasClients) return;
+
+    setState(() => _pgIdx = pageIdx);
+    final currentVirtual = _pageCtrl.page?.round() ?? (_pages.length * 500);
+    final currentReal = currentVirtual % _pages.length;
+    _isAutoAdvancing = true;
+    _pageCtrl
+        .animateToPage(
+          currentVirtual + pageIdx - currentReal,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        )
+        .whenComplete(() => _isAutoAdvancing = false);
+  }
+
+  void _clearStreamPlayback() {
+    _streamSurah = null;
+    _streamDuration = null;
+    _streamAyahTimings = const [];
   }
 
   Future<void> _togglePlay() async {
@@ -484,6 +570,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _positionSubscription?.cancel();
     _audio.dispose();
     _pageCtrl.dispose();
     _flipCtrl.dispose();

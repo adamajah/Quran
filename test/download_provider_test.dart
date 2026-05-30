@@ -188,10 +188,32 @@ void main() {
       {'id': 5, 'folder_url': 'https://server10.mp3quran.net/ajm/'},
     ]);
     final position = OfflineReciterService.parseAyahStartPosition([
-      {'ayah': 4, 'start_time': 29219},
+      {'ayah': 4, 'start_time': 29219, 'end_time': 42210},
     ], 4);
 
     expect(reads, {'server10.mp3quran.net/ajm/': 5});
     expect(position, const Duration(milliseconds: 29219));
+  });
+
+  test('offline timing resolves the active ayah as playback moves', () {
+    final timings = OfflineReciterService.parseAyahTimings([
+      {'ayah': 4, 'start_time': 29219, 'end_time': 42210},
+      {'ayah': 5, 'start_time': 42210, 'end_time': 54884},
+    ]);
+
+    expect(
+      OfflineReciterService.findAyahForPosition(
+        timings,
+        const Duration(milliseconds: 40000),
+      ),
+      4,
+    );
+    expect(
+      OfflineReciterService.findAyahForPosition(
+        timings,
+        const Duration(milliseconds: 45000),
+      ),
+      5,
+    );
   });
 }

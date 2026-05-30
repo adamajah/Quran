@@ -2,6 +2,18 @@ import 'package:dio/dio.dart';
 
 import '../models/reciter.dart';
 
+class AyahTiming {
+  final int ayah;
+  final Duration start;
+  final Duration end;
+
+  const AyahTiming({
+    required this.ayah,
+    required this.start,
+    required this.end,
+  });
+}
+
 class OfflineReciterService {
   static const _catalogUrl =
       'https://www.mp3quran.net/api/v3/reciters?language=eng';
@@ -10,7 +22,7 @@ class OfflineReciterService {
   static const _ayahTimingUrl = 'https://mp3quran.net/api/v3/ayat_timing';
 
   static Future<List<Reciter>>? _cachedReciters;
-  static final Map<String, Future<Duration?>> _cachedAyahPositions = {};
+  static final Map<String, Future<List<AyahTiming>>> _cachedAyahTimings = {};
 
   final Dio _dio;
 
@@ -62,36 +74,36 @@ class OfflineReciterService {
     int surah,
     int ayah,
   ) async {
-    final readId = reciter.timingReadId;
-    if (readId == null) return null;
+    final timings = await getAyahTimings(reciter, surah);
+    for (final timing in timings) {
+      if (timing.ayah == ayah) return timing.start;
+    }
+    return null;
+  }
 
-    final key = '$readId:$surah:$ayah';
-    final position =
-        _cachedAyahPositions[key] ??= _fetchAyahStartPosition(
-          readId,
-          surah,
-          ayah,
-        );
+  Future<List<AyahTiming>> getAyahTimings(Reciter reciter, int surah) async {
+    final readId = reciter.timingReadId;
+    if (readId == null) return const [];
+
+    final key = '$readId:$surah';
+    final timings =
+        _cachedAyahTimings[key] ??= _fetchAyahTimings(readId, surah);
     try {
-      return await position;
+      return await timings;
     } catch (_) {
-      if (identical(_cachedAyahPositions[key], position)) {
-        _cachedAyahPositions.remove(key);
+      if (identical(_cachedAyahTimings[key], timings)) {
+        _cachedAyahTimings.remove(key);
       }
-      return null;
+      return const [];
     }
   }
 
-  Future<Duration?> _fetchAyahStartPosition(
-    int readId,
-    int surah,
-    int ayah,
-  ) async {
+  Future<List<AyahTiming>> _fetchAyahTimings(int readId, int surah) async {
     final response = await _dio.get<List<dynamic>>(
       _ayahTimingUrl,
       queryParameters: {'read': readId, 'surah': surah},
     );
-    return parseAyahStartPosition(response.data ?? const [], ayah);
+    return parseAyahTimings(response.data ?? const []);
   }
 
   static Map<String, int> parseTimingReadIds(List<dynamic> data) {
@@ -108,11 +120,40 @@ class OfflineReciterService {
   }
 
   static Duration? parseAyahStartPosition(List<dynamic> data, int ayah) {
+    for (final timing in parseAyahTimings(data)) {
+      if (timing.ayah == ayah) return timing.start;
+    }
+    return null;
+  }
+
+  static List<AyahTiming> parseAyahTimings(List<dynamic> data) {
+    final timings = <AyahTiming>[];
     for (final rawTiming in data) {
       final timing = rawTiming as Map<String, dynamic>;
-      if (timing['ayah'] == ayah && timing['start_time'] is num) {
-        return Duration(milliseconds: (timing['start_time'] as num).round());
+      final ayah = timing['ayah'];
+      final start = timing['start_time'];
+      final end = timing['end_time'];
+      if (ayah is int && ayah > 0 && start is num && end is num) {
+        timings.add(
+          AyahTiming(
+            ayah: ayah,
+            start: Duration(milliseconds: start.round()),
+            end: Duration(milliseconds: end.round()),
+          ),
+        );
       }
+    }
+    return timings;
+  }
+
+  static int? findAyahForPosition(List<AyahTiming> timings, Duration position) {
+    for (final timing in timings) {
+      if (position >= timing.start && position < timing.end) {
+        return timing.ayah;
+      }
+    }
+    if (timings.isNotEmpty && position >= timings.last.start) {
+      return timings.last.ayah;
     }
     return null;
   }
