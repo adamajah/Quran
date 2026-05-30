@@ -31,7 +31,9 @@ class SpeechService {
       _isInitialized = await _speech.initialize(
         onStatus: _handleStatus,
         onError: _handleError,
-        debugLogging: kDebugMode,
+        // Plugin debug logging prints microphone RMS values several times per
+        // second. Keep app-level status logs without flooding logcat.
+        debugLogging: false,
       );
       return _isInitialized;
     } catch (e) {
