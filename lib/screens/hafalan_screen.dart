@@ -474,22 +474,35 @@ class _HafalanScreenState extends State<HafalanScreen>
   int _tarteelFromVerse = 1;
   int _tarteelToVerse = 7;
 
-  void _startInteractive() {
+  Future<void> _prepareForSpeechRecognition() async {
+    _repeatTimer?.cancel();
+    ++_playRequestId;
+    await _audioPlayer.stop();
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
+    if (!mounted) return;
+    setState(() {
+      _repeatActive = false;
+      _playing = false;
+      _playingVerse = 0;
+    });
+  }
+
+  Future<void> _startInteractive() async {
     _sessionTimer?.cancel();
     _sessionTimer = null;
-
-    // 1. Pause Murattal to avoid mic conflict
-    if (_playing) {
-      _audioPlayer.pause();
-      setState(() => _playing = false);
-    }
+    await _prepareForSpeechRecognition();
+    if (!mounted) return;
 
     setState(() {
       _isRecording = true;
       _seconds = 0;
     });
 
-    _engine.startSession(_tarteelSurah, _tarteelFromVerse, _tarteelToVerse);
+    await _engine.startSession(
+      _tarteelSurah,
+      _tarteelFromVerse,
+      _tarteelToVerse,
+    );
 
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (mounted) setState(() => _seconds++);
@@ -500,29 +513,31 @@ class _HafalanScreenState extends State<HafalanScreen>
     );
   }
 
-  void _pauseInteractive() {
+  Future<void> _pauseInteractive() async {
     _sessionTimer?.cancel();
     _sessionTimer = null;
     setState(() => _isRecording = false);
-    _engine.stopSession(); // Essential: Turn off mic
+    await _engine.stopSession();
   }
 
-  void _resumeInteractive() {
+  Future<void> _resumeInteractive() async {
     _sessionTimer?.cancel();
     _sessionTimer = null;
+    await _prepareForSpeechRecognition();
+    if (!mounted) return;
     setState(() => _isRecording = true);
-    _engine.startSession(
+    await _engine.startSession(
       _tarteelSurah,
       _tarteelFromVerse,
       _tarteelToVerse,
-    ); // Resume engine/mic
+    );
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (mounted) setState(() => _seconds++);
     });
   }
 
-  void _stopInteractive() {
-    _engine.stopSession();
+  Future<void> _stopInteractive() async {
+    await _engine.stopSession();
     _sessionTimer?.cancel();
     _sessionTimer = null;
     setState(() {
@@ -783,17 +798,18 @@ class _HafalanScreenState extends State<HafalanScreen>
                                       (i) => i + 1,
                                     ),
                                     label: (v) => 'Dari $v',
-                                    onChanged: (v) {
+                                    onChanged: (v) async {
+                                      final restart = _isRecording;
                                       setState(() {
                                         _tarteelFromVerse = v!;
-                                        if (_isRecording) {
-                                          _engine.startSession(
-                                            _tarteelSurah,
-                                            _tarteelFromVerse,
-                                            _tarteelToVerse,
-                                          );
-                                        }
                                       });
+                                      if (restart) {
+                                        await _engine.startSession(
+                                          _tarteelSurah,
+                                          _tarteelFromVerse,
+                                          _tarteelToVerse,
+                                        );
+                                      }
                                     },
                                   ),
                                 ),
@@ -814,17 +830,18 @@ class _HafalanScreenState extends State<HafalanScreen>
                                       (i) => i + _tarteelFromVerse,
                                     ),
                                     label: (v) => 'Sampai $v',
-                                    onChanged: (v) {
+                                    onChanged: (v) async {
+                                      final restart = _isRecording;
                                       setState(() {
                                         _tarteelToVerse = v!;
-                                        if (_isRecording) {
-                                          _engine.startSession(
-                                            _tarteelSurah,
-                                            _tarteelFromVerse,
-                                            _tarteelToVerse,
-                                          );
-                                        }
                                       });
+                                      if (restart) {
+                                        await _engine.startSession(
+                                          _tarteelSurah,
+                                          _tarteelFromVerse,
+                                          _tarteelToVerse,
+                                        );
+                                      }
                                     },
                                   ),
                                 ),
@@ -907,16 +924,16 @@ class _HafalanScreenState extends State<HafalanScreen>
                         isRecording: _isRecording,
                         mistakes: _sessionData?.mistakes ?? 0,
                         timer: _formatTime(_seconds),
-                        onToggle: () {
+                        onToggle: () async {
                           if (_isRecording) {
-                            _pauseInteractive();
+                            await _pauseInteractive();
                           } else if (_seconds > 0) {
-                            _resumeInteractive();
+                            await _resumeInteractive();
                           } else {
-                            _startInteractive();
+                            await _startInteractive();
                           }
                         },
-                        onStop: _stopInteractive,
+                        onStop: () => _stopInteractive(),
                         onNext: () => _engine.nextAyah(),
                         onPrev: () => _engine.prevAyah(),
                         onToggleHide:

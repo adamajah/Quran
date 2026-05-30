@@ -9,7 +9,10 @@ class SpeechService {
   bool _shouldBeListening = false;
   int _reconnectCount = 0;
   final int _maxReconnects = 50;
-  DateTime? _lastReconnectTime;
+  Timer? _reconnectTimer;
+  bool _restartInProgress = false;
+  int _listenGeneration = 0;
+  String _localeId = 'ar-SA';
 
   Function(String)? _onResult;
   Function(String)? _onStatus;
@@ -21,8 +24,8 @@ class SpeechService {
   }) async {
     if (_isInitialized) return true;
 
-    _onStatus = onStatus;
-    _onError = onError;
+    if (onStatus != null) _onStatus = onStatus;
+    if (onError != null) _onError = onError;
 
     try {
       _isInitialized = await _speech.initialize(
@@ -41,12 +44,8 @@ class SpeechService {
     debugPrint('Speech Status: $status');
     _onStatus?.call(status);
 
-    // AUTO RECONNECT LOGIC
-    // Some plugins send 'doneNoResult' or 'done' or 'notListening'
     if (status.contains('done') || status == 'notListening') {
-      if (_shouldBeListening) {
-        _attemptReconnect();
-      }
+      _scheduleReconnect();
     }
   }
 
@@ -56,59 +55,91 @@ class SpeechService {
     );
     _onError?.call(error.errorMsg);
 
-    if (_shouldBeListening && !error.permanent) {
-      _attemptReconnect();
+    if (!_shouldBeListening) return;
+
+    if (_isRecoverableError(error)) {
+      _scheduleReconnect();
+    } else if (error.permanent) {
+      _shouldBeListening = false;
+      _cancelReconnect();
     }
   }
 
-  Future<void> _attemptReconnect() async {
+  bool _isRecoverableError(SpeechRecognitionError error) {
+    return !error.permanent ||
+        error.errorMsg == 'error_no_match' ||
+        error.errorMsg == 'error_speech_timeout';
+  }
+
+  void _scheduleReconnect() {
+    if (!_shouldBeListening ||
+        _restartInProgress ||
+        _reconnectTimer != null ||
+        _speech.isListening) {
+      return;
+    }
+
     if (_reconnectCount >= _maxReconnects) {
       debugPrint('Max reconnects reached ($_maxReconnects). Stopping.');
       _shouldBeListening = false;
       return;
     }
 
-    // Rate limit reconnects to once every 1.2 seconds (loosened from 2s)
-    final now = DateTime.now();
-    if (_lastReconnectTime != null &&
-        now.difference(_lastReconnectTime!).inMilliseconds < 1200) {
-      return;
-    }
-    _lastReconnectTime = now;
+    final delay = Duration(
+      milliseconds: 1800 + (_reconnectCount * 300).clamp(0, 3000),
+    );
+    _reconnectTimer = Timer(delay, _restartListening);
+  }
 
+  Future<void> _restartListening() async {
+    _reconnectTimer = null;
+    if (!_shouldBeListening || _restartInProgress) return;
+
+    final generation = _listenGeneration;
+    _restartInProgress = true;
     _reconnectCount++;
     debugPrint('Attempting auto-reconnect #$_reconnectCount / $_maxReconnects');
-
-    // Slightly longer delay before restarting to allow OS to clean up
-    await Future.delayed(const Duration(milliseconds: 2000));
-
-    if (_shouldBeListening) {
-      // Self-healing: if it's been many retries, try to re-initialize
-      if (_reconnectCount % 5 == 0) {
-        debugPrint('Multiple failures, re-initializing engine...');
-        _isInitialized = false;
-        await init();
-      }
-      await _startListeningInternal();
+    try {
+      await _speech.cancel();
+      if (!_shouldBeListening || generation != _listenGeneration) return;
+      await _startListeningInternal(localeId: _localeId);
+    } finally {
+      _restartInProgress = false;
     }
+  }
+
+  void _cancelReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
   }
 
   Future<void> startListening({
     required Function(String) onResult,
     String localeId = 'ar-SA',
   }) async {
+    final generation = ++_listenGeneration;
     _onResult = (transcript) {
       _reconnectCount = 0; // Reset count on successful speech result
       onResult(transcript);
     };
     _shouldBeListening = true;
     _reconnectCount = 0;
+    _localeId = localeId;
+    _cancelReconnect();
 
     if (!_isInitialized) {
       await init();
     }
 
-    await _startListeningInternal(localeId: localeId);
+    _restartInProgress = true;
+    try {
+      await _speech.cancel();
+      if (_shouldBeListening && generation == _listenGeneration) {
+        await _startListeningInternal(localeId: localeId);
+      }
+    } finally {
+      _restartInProgress = false;
+    }
   }
 
   Future<void> _startListeningInternal({String localeId = 'ar-SA'}) async {
@@ -130,16 +161,21 @@ class SpeechService {
       );
     } catch (e) {
       debugPrint('Listen Internal Error: $e');
+      _scheduleReconnect();
     }
   }
 
   Future<void> stopListening() async {
+    _listenGeneration++;
     _shouldBeListening = false;
+    _cancelReconnect();
     await _speech.stop();
   }
 
   Future<void> cancelListening() async {
+    _listenGeneration++;
     _shouldBeListening = false;
+    _cancelReconnect();
     await _speech.cancel();
   }
 
