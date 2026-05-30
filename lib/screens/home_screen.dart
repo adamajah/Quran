@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 import '../services/bookmark_service.dart';
+import '../services/audio_playback_coordinator.dart';
 import '../services/offline_reciter_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_style.dart';
@@ -36,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _audio = AudioPlayer();
+  final _playbackOwner = Object();
   final _reciterService = OfflineReciterService();
   late PageController _pageCtrl;
   late AnimationController _flipCtrl;
@@ -50,6 +52,8 @@ class _HomeScreenState extends State<HomeScreen>
   Duration? _streamDuration;
   int? _streamSurah;
   StreamSubscription<Duration>? _positionSubscription;
+  int _playRequestId = 0;
+  bool _playInProgress = false;
 
   // Tap-to-play: which verse was tapped
   int _tappedSurah = 0;
@@ -105,12 +109,14 @@ class _HomeScreenState extends State<HomeScreen>
           _tappedVerse = 0;
         });
         _clearStreamPlayback();
+        AudioPlaybackCoordinator.instance.release(_playbackOwner);
         return;
       }
 
       final settings = context.read<SettingsController>().settings;
       if (!settings.autoPlay) {
         setState(() => _playing = false);
+        AudioPlaybackCoordinator.instance.release(_playbackOwner);
         return;
       }
 
@@ -160,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen>
             _playing = false;
             _playV = 0;
           });
+          AudioPlaybackCoordinator.instance.release(_playbackOwner);
         }
       }
     });
@@ -205,8 +212,15 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<bool> _doPlay(VerseRef r) async {
+    final requestId = ++_playRequestId;
     final settings = context.read<SettingsController>().settings;
     try {
+      await AudioPlaybackCoordinator.instance.requestPlayback(
+        _playbackOwner,
+        _stopForPlaybackHandoff,
+      );
+      if (requestId != _playRequestId) return false;
+
       final reciter =
           await _reciterService.findReciterForSurah(
             settings.defaultReciterId,
@@ -215,6 +229,7 @@ class _HomeScreenState extends State<HomeScreen>
           _selectedReciter;
       if (reciter.usesSurahAudioStream &&
           !reciter.supportsSurahDownload(r.surah)) {
+        AudioPlaybackCoordinator.instance.release(_playbackOwner);
         _snack('Qari ini belum menyediakan audio untuk surat tersebut');
         return false;
       }
@@ -227,7 +242,9 @@ class _HomeScreenState extends State<HomeScreen>
       await _audio.setSpeed(settings.playbackSpeed);
       if (reciter.usesSurahAudioStream) {
         final duration = await _audio.setUrl(reciter.surahAudioUrl(r.surah));
+        if (requestId != _playRequestId) return false;
         final timings = await _reciterService.getAyahTimings(reciter, r.surah);
+        if (requestId != _playRequestId) return false;
         _streamSurah = r.surah;
         _streamDuration = duration;
         _streamAyahTimings = timings;
@@ -247,6 +264,7 @@ class _HomeScreenState extends State<HomeScreen>
             reciter.bitrate,
           ),
         );
+        if (requestId != _playRequestId) return false;
       }
       await _audio.play();
       if (mounted) {
@@ -257,6 +275,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
       return true;
     } catch (e) {
+      AudioPlaybackCoordinator.instance.release(_playbackOwner);
       debugPrint('Audio: $e');
       _snack('Audio gagal diputar. Silakan coba lagi.');
       return false;
@@ -341,13 +360,54 @@ class _HomeScreenState extends State<HomeScreen>
     _streamAyahTimings = const [];
   }
 
+  Future<void> _stopForPlaybackHandoff() async {
+    ++_playRequestId;
+    await _audio.stop();
+    _clearStreamPlayback();
+    if (!mounted) return;
+    setState(() => _playing = false);
+  }
+
+  Future<void> _stopPlayback({bool resetVerse = false}) async {
+    ++_playRequestId;
+    await _audio.stop();
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
+    _clearStreamPlayback();
+    if (!mounted) return;
+    setState(() {
+      _playing = false;
+      if (resetVerse) {
+        _playV = 0;
+        _tappedSurah = 0;
+        _tappedVerse = 0;
+      }
+    });
+  }
+
+  void _cancelPlaybackRequest() {
+    ++_playRequestId;
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
+    _clearStreamPlayback();
+    unawaited(_audio.stop());
+  }
+
   Future<void> _togglePlay() async {
+    if (_playInProgress) return;
+    _playInProgress = true;
     try {
       final r = await InternetAddress.lookup('example.com');
       if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
         if (_playing) {
           await _audio.pause();
           if (mounted) setState(() => _playing = false);
+        } else if (_audio.processingState == ProcessingState.ready &&
+            _playV != 0) {
+          await AudioPlaybackCoordinator.instance.requestPlayback(
+            _playbackOwner,
+            _stopForPlaybackHandoff,
+          );
+          await _audio.play();
+          if (mounted) setState(() => _playing = true);
         } else {
           final pg = _pages[_pgIdx];
           if (_playV == 0) _playV = pg.verses.first.verse;
@@ -364,6 +424,8 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } on SocketException {
       _snack('Sambungkan ke Internet');
+    } finally {
+      _playInProgress = false;
     }
   }
 
@@ -500,16 +562,14 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _apply(int pageIdx) {
+    _cancelPlaybackRequest();
     setState(() {
       _pgIdx = pageIdx;
       _curS = _pages[pageIdx].surah;
       _playV = 0;
       _tappedSurah = 0;
       _tappedVerse = 0;
-      if (_playing) {
-        _audio.stop();
-        _playing = false;
-      }
+      _playing = false;
     });
     final currentVirtual = _pageCtrl.page?.round() ?? (_pages.length * 500);
     final currentReal = currentVirtual % _pages.length;
@@ -560,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen>
               );
               setState(() => _selectedReciter = selected);
               if (_playing) {
-                _audio.stop();
+                _cancelPlaybackRequest();
                 _playing = false;
               }
             },
@@ -571,6 +631,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _positionSubscription?.cancel();
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
     _audio.dispose();
     _pageCtrl.dispose();
     _flipCtrl.dispose();
@@ -626,6 +687,7 @@ class _HomeScreenState extends State<HomeScreen>
                       itemCount: null,
                       onPageChanged: (virtualIdx) {
                         final idx = virtualIdx % _pages.length;
+                        if (!_isAutoAdvancing) _cancelPlaybackRequest();
                         setState(() {
                           _pgIdx = idx;
                           _curS = _pages[idx].surah;
@@ -634,10 +696,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                           if (!_isAutoAdvancing) {
                             _playV = 0;
-                            if (_playing) {
-                              _audio.stop();
-                              _playing = false;
-                            }
+                            _playing = false;
                           }
                         });
                         _savePrefs();
@@ -691,14 +750,7 @@ class _HomeScreenState extends State<HomeScreen>
                 surahName: pg.surahName,
                 playVerse: _playV,
                 onPlay: _togglePlay,
-                onStop:
-                    () => setState(() {
-                      _audio.stop();
-                      _playing = false;
-                      _playV = 0;
-                      _tappedSurah = 0;
-                      _tappedVerse = 0;
-                    }),
+                onStop: () => _stopPlayback(resetVerse: true),
                 fontScale: fontScale,
                 onZoomIn:
                     () => controller.updateArabicFontSize(

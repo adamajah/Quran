@@ -23,6 +23,7 @@ import '../widgets/hafalan/quiz_tab.dart';
 import '../widgets/hafalan/realtime_ayah_view.dart';
 import '../widgets/hafalan/recording_controls.dart';
 import '../services/hafalan_engine.dart';
+import '../services/audio_playback_coordinator.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HafalanScreen  —  main entry point
@@ -61,6 +62,8 @@ class _HafalanScreenState extends State<HafalanScreen>
 
   // ── Audio
   final _audioPlayer = AudioPlayer();
+  final _playbackOwner = Object();
+  int _playRequestId = 0;
   bool _playing = false;
   int _playingVerse = 0;
   Reciter _selectedReciter = availableReciters[0];
@@ -234,6 +237,7 @@ class _HafalanScreenState extends State<HafalanScreen>
   void _onAudioState(PlayerState st) {
     if (st.processingState != ProcessingState.completed) return;
     if (!_repeatActive) {
+      AudioPlaybackCoordinator.instance.release(_playbackOwner);
       setState(() {
         _playing = false;
         _playingVerse = 0;
@@ -258,6 +262,7 @@ class _HafalanScreenState extends State<HafalanScreen>
         });
       } else {
         // done
+        AudioPlaybackCoordinator.instance.release(_playbackOwner);
         setState(() {
           _repeatActive = false;
           _playing = false;
@@ -268,8 +273,15 @@ class _HafalanScreenState extends State<HafalanScreen>
     }
   }
 
-  void _playVerse(int verse) {
+  Future<void> _playVerse(int verse) async {
+    final requestId = ++_playRequestId;
     try {
+      await AudioPlaybackCoordinator.instance.requestPlayback(
+        _playbackOwner,
+        _stopForPlaybackHandoff,
+      );
+      if (requestId != _playRequestId) return;
+
       // Calculate global verse number for the URL
       int globalVerse = 0;
       for (int i = 1; i < _hafalanSurah; i++) {
@@ -281,8 +293,9 @@ class _HafalanScreenState extends State<HafalanScreen>
       final url =
           'https://cdn.islamic.network/quran/audio/${_selectedReciter.bitrate}/${_selectedReciter.id}/$globalVerse.mp3';
 
-      _audioPlayer.setUrl(url);
-      _audioPlayer.play();
+      await _audioPlayer.setUrl(url);
+      if (requestId != _playRequestId) return;
+      await _audioPlayer.play();
       setState(() {
         _playingVerse = verse;
         _playing = true;
@@ -290,6 +303,28 @@ class _HafalanScreenState extends State<HafalanScreen>
     } catch (e) {
       debugPrint('Audio err: $e');
     }
+  }
+
+  Future<void> _stopForPlaybackHandoff() async {
+    ++_playRequestId;
+    _repeatTimer?.cancel();
+    await _audioPlayer.stop();
+    if (!mounted) return;
+    setState(() {
+      _repeatActive = false;
+      _playing = false;
+      _playingVerse = 0;
+    });
+  }
+
+  Future<void> _resumePlayback() async {
+    await AudioPlaybackCoordinator.instance.requestPlayback(
+      _playbackOwner,
+      _stopForPlaybackHandoff,
+    );
+    await _audioPlayer.play();
+    if (!mounted) return;
+    setState(() => _playing = true);
   }
 
   void _startRepeat() {
@@ -309,7 +344,9 @@ class _HafalanScreenState extends State<HafalanScreen>
 
   void _stopRepeat() {
     _repeatTimer?.cancel();
+    ++_playRequestId;
     _audioPlayer.stop();
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
     setState(() {
       _repeatActive = false;
       _playing = false;
@@ -419,6 +456,7 @@ class _HafalanScreenState extends State<HafalanScreen>
   // ─────────────────────────────────────────────────────────────────────────
   @override
   void dispose() {
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
     _audioPlayer.dispose();
     _pulseCtrl.dispose();
     _tabCtrl.dispose();
@@ -632,16 +670,15 @@ class _HafalanScreenState extends State<HafalanScreen>
                                       ? Icons.pause_rounded
                                       : Icons.play_arrow_rounded,
                               isLarge: true,
-                              onTap: () {
+                              onTap: () async {
                                 if (_playing) {
-                                  _audioPlayer.pause();
+                                  await _audioPlayer.pause();
                                   setState(() => _playing = false);
                                 } else {
                                   if (_repeatActive) {
-                                    _audioPlayer.play();
-                                    setState(() => _playing = true);
+                                    await _resumePlayback();
                                   } else {
-                                    _playVerse(
+                                    await _playVerse(
                                       _playingVerse == 0 ? 1 : _playingVerse,
                                     );
                                   }

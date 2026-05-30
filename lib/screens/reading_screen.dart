@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../constants/quran_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_text_style.dart';
+import '../services/audio_playback_coordinator.dart';
 import '../utils/quran_utils.dart';
 import '../screens/translation_dialog.dart';
 import '../controllers/settings_controller.dart';
@@ -24,6 +26,8 @@ class ReadingScreen extends StatefulWidget {
 
 class _ReadingScreenState extends State<ReadingScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final _playbackOwner = Object();
+  int _playRequestId = 0;
 
   bool _isPlaying = false;
   int _currentPage = 1;
@@ -61,6 +65,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
         if (settings.autoPlay) {
           _onVerseCompleted();
         } else {
+          AudioPlaybackCoordinator.instance.release(_playbackOwner);
           setState(() {
             _isPlaying = false;
             _playingVerse = 0;
@@ -143,27 +148,41 @@ class _ReadingScreenState extends State<ReadingScreen> {
     await prefs.setInt('lastReadPage', _currentPage);
   }
 
-  void _playVerse(int surah, int verse) {
+  Future<void> _playVerse(int surah, int verse) async {
+    final requestId = ++_playRequestId;
     final settings = context.read<SettingsController>().settings;
     try {
-      _audioPlayer.setVolume(settings.defaultVolume);
-      _audioPlayer.setSpeed(settings.playbackSpeed);
-      _audioPlayer.setUrl(quran_pkg.getAudioURLByVerse(surah, verse));
-      _audioPlayer.play();
+      await AudioPlaybackCoordinator.instance.requestPlayback(
+        _playbackOwner,
+        _stopForPlaybackHandoff,
+      );
+      if (requestId != _playRequestId) return;
+      await _audioPlayer.setVolume(settings.defaultVolume);
+      await _audioPlayer.setSpeed(settings.playbackSpeed);
+      await _audioPlayer.setUrl(quran_pkg.getAudioURLByVerse(surah, verse));
+      if (requestId != _playRequestId) return;
+      await _audioPlayer.play();
     } catch (e) {
       debugPrint("Audio error: $e");
     }
   }
 
-  void _togglePlay() async {
+  Future<void> _togglePlay() async {
     try {
       final r = await InternetAddress.lookup('google.com');
       if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
         if (_isPlaying) {
-          _audioPlayer.pause();
+          await _audioPlayer.pause();
+        } else if (_audioPlayer.processingState == ProcessingState.ready &&
+            _playingVerse != 0) {
+          await AudioPlaybackCoordinator.instance.requestPlayback(
+            _playbackOwner,
+            _stopForPlaybackHandoff,
+          );
+          await _audioPlayer.play();
         } else {
           if (_playingVerse == 0) _playingVerse = 1;
-          _playVerse(_currentSurahIndex, _playingVerse);
+          await _playVerse(_currentSurahIndex, _playingVerse);
         }
         setState(() => _isPlaying = !_isPlaying);
       } else {
@@ -172,6 +191,24 @@ class _ReadingScreenState extends State<ReadingScreen> {
     } on SocketException catch (_) {
       _snack('Koneksi internet diperlukan untuk audio');
     }
+  }
+
+  Future<void> _stopForPlaybackHandoff() async {
+    ++_playRequestId;
+    await _audioPlayer.stop();
+    if (!mounted) return;
+    setState(() => _isPlaying = false);
+  }
+
+  Future<void> _stopPlayback({bool resetVerse = false}) async {
+    ++_playRequestId;
+    await _audioPlayer.stop();
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
+    if (!mounted) return;
+    setState(() {
+      _isPlaying = false;
+      if (resetVerse) _playingVerse = 0;
+    });
   }
 
   void _loadTranslation() {
@@ -221,6 +258,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
 
   @override
   void dispose() {
+    AudioPlaybackCoordinator.instance.release(_playbackOwner);
     _audioPlayer.dispose();
     _pageController.dispose();
     super.dispose();
@@ -283,14 +321,14 @@ class _ReadingScreenState extends State<ReadingScreen> {
                   itemCount: _totalPages,
                   onPageChanged: (idx) {
                     final pageNum = idx + 1;
+                    if (_isPlaying && !_isAutoAdvancing) {
+                      unawaited(_stopPlayback(resetVerse: true));
+                    }
                     setState(() {
                       _currentPage = pageNum;
                       _currentSurahIndex = _getSurahFromPage(pageNum);
                       _playingVerse = 0;
-                      if (_isPlaying && !_isAutoAdvancing) {
-                        _audioPlayer.stop();
-                        _isPlaying = false;
-                      }
+                      if (!_isAutoAdvancing) _isPlaying = false;
                     });
                     _saveLastRead();
                     if (_translationVerses.isNotEmpty) {
@@ -330,12 +368,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
                 gold: _gold,
                 textColor: textColor,
                 onPlay: _togglePlay,
-                onStop:
-                    () => setState(() {
-                      _audioPlayer.stop();
-                      _isPlaying = false;
-                      _playingVerse = 0;
-                    }),
+                onStop: () => _stopPlayback(resetVerse: true),
                 onTranslate: _showTranslationDialog,
               ),
             ],
