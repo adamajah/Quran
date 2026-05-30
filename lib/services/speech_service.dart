@@ -7,12 +7,13 @@ class SpeechService {
   final SpeechToText _speech = SpeechToText();
   bool _isInitialized = false;
   bool _shouldBeListening = false;
-  int _reconnectCount = 0;
-  final int _maxReconnects = 50;
+  int _consecutiveStartFailures = 0;
   Timer? _reconnectTimer;
   bool _restartInProgress = false;
   int _listenGeneration = 0;
   String _localeId = 'ar-SA';
+
+  static const _normalReconnectDelay = Duration(milliseconds: 250);
 
   Function(String)? _onResult;
   Function(String)? _onStatus;
@@ -73,7 +74,7 @@ class SpeechService {
         error.errorMsg == 'error_speech_timeout';
   }
 
-  void _scheduleReconnect() {
+  void _scheduleReconnect({bool afterStartFailure = false}) {
     if (!_shouldBeListening ||
         _restartInProgress ||
         _reconnectTimer != null ||
@@ -81,15 +82,17 @@ class SpeechService {
       return;
     }
 
-    if (_reconnectCount >= _maxReconnects) {
-      debugPrint('Max reconnects reached ($_maxReconnects). Stopping.');
-      _shouldBeListening = false;
-      return;
-    }
-
-    final delay = Duration(
-      milliseconds: 1800 + (_reconnectCount * 300).clamp(0, 3000),
-    );
+    // Android may end recognition after a short pause even when pauseFor is
+    // longer. Resume quickly after a normal endpoint, but slow down repeated
+    // start failures so a broken recognizer cannot spin in a tight loop.
+    final delay =
+        afterStartFailure
+            ? Duration(
+              milliseconds:
+                  800 + (_consecutiveStartFailures * 600).clamp(0, 4200),
+            )
+            : _normalReconnectDelay;
+    debugPrint('Speech reconnect scheduled in ${delay.inMilliseconds} ms');
     _reconnectTimer = Timer(delay, _restartListening);
   }
 
@@ -98,15 +101,18 @@ class SpeechService {
     if (!_shouldBeListening || _restartInProgress) return;
 
     final generation = _listenGeneration;
+    var started = false;
     _restartInProgress = true;
-    _reconnectCount++;
-    debugPrint('Attempting auto-reconnect #$_reconnectCount / $_maxReconnects');
+    debugPrint('Restarting speech recognition session');
     try {
       await _speech.cancel();
       if (!_shouldBeListening || generation != _listenGeneration) return;
-      await _startListeningInternal(localeId: _localeId);
+      started = await _startListeningInternal(localeId: _localeId);
     } finally {
       _restartInProgress = false;
+    }
+    if (!started) {
+      _scheduleReconnect(afterStartFailure: true);
     }
   }
 
@@ -120,12 +126,9 @@ class SpeechService {
     String localeId = 'ar-SA',
   }) async {
     final generation = ++_listenGeneration;
-    _onResult = (transcript) {
-      _reconnectCount = 0; // Reset count on successful speech result
-      onResult(transcript);
-    };
+    _onResult = onResult;
     _shouldBeListening = true;
-    _reconnectCount = 0;
+    _consecutiveStartFailures = 0;
     _localeId = localeId;
     _cancelReconnect();
 
@@ -133,18 +136,22 @@ class SpeechService {
       await init();
     }
 
+    var started = false;
     _restartInProgress = true;
     try {
       await _speech.cancel();
       if (_shouldBeListening && generation == _listenGeneration) {
-        await _startListeningInternal(localeId: localeId);
+        started = await _startListeningInternal(localeId: localeId);
       }
     } finally {
       _restartInProgress = false;
     }
+    if (!started) {
+      _scheduleReconnect(afterStartFailure: true);
+    }
   }
 
-  Future<void> _startListeningInternal({String localeId = 'ar-SA'}) async {
+  Future<bool> _startListeningInternal({String localeId = 'ar-SA'}) async {
     try {
       await _speech.listen(
         onResult: (result) {
@@ -161,10 +168,15 @@ class SpeechService {
         ),
         localeId: localeId,
       );
+      if (_speech.isListening) {
+        _consecutiveStartFailures = 0;
+        return true;
+      }
     } catch (e) {
       debugPrint('Listen Internal Error: $e');
-      _scheduleReconnect();
     }
+    _consecutiveStartFailures++;
+    return false;
   }
 
   Future<void> stopListening() async {
