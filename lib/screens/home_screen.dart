@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen>
   int? _streamSurah;
   StreamSubscription<Duration>? _positionSubscription;
   int _playRequestId = 0;
-  bool _playInProgress = false;
 
   // Tap-to-play: which verse was tapped
   int _tappedSurah = 0;
@@ -211,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _selectedReciter = reciter);
   }
 
-  Future<bool> _doPlay(VerseRef r) async {
+  Future<void> _doPlay(VerseRef r) async {
     final requestId = ++_playRequestId;
     final settings = context.read<SettingsController>().settings;
     try {
@@ -219,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen>
         _playbackOwner,
         _stopForPlaybackHandoff,
       );
-      if (requestId != _playRequestId) return false;
+      if (requestId != _playRequestId) return;
 
       final reciter =
           await _reciterService.findReciterForSurah(
@@ -230,8 +228,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (reciter.usesSurahAudioStream &&
           !reciter.supportsSurahDownload(r.surah)) {
         AudioPlaybackCoordinator.instance.release(_playbackOwner);
+        if (mounted) setState(() => _playing = false);
         _snack('Qari ini belum menyediakan audio untuk surat tersebut');
-        return false;
+        return;
       }
 
       if (mounted && reciter.id != _selectedReciter.id) {
@@ -242,9 +241,9 @@ class _HomeScreenState extends State<HomeScreen>
       await _audio.setSpeed(settings.playbackSpeed);
       if (reciter.usesSurahAudioStream) {
         final duration = await _audio.setUrl(reciter.surahAudioUrl(r.surah));
-        if (requestId != _playRequestId) return false;
+        if (requestId != _playRequestId) return;
         final timings = await _reciterService.getAyahTimings(reciter, r.surah);
-        if (requestId != _playRequestId) return false;
+        if (requestId != _playRequestId) return;
         _streamSurah = r.surah;
         _streamDuration = duration;
         _streamAyahTimings = timings;
@@ -264,21 +263,21 @@ class _HomeScreenState extends State<HomeScreen>
             reciter.bitrate,
           ),
         );
-        if (requestId != _playRequestId) return false;
+        if (requestId != _playRequestId) return;
       }
-      await _audio.play();
+      unawaited(_audio.play());
       if (mounted) {
         setState(() {
+          _playing = true;
           _tappedSurah = 0;
           _tappedVerse = 0;
         });
       }
-      return true;
     } catch (e) {
       AudioPlaybackCoordinator.instance.release(_playbackOwner);
       debugPrint('Audio: $e');
+      if (mounted) setState(() => _playing = false);
       _snack('Audio gagal diputar. Silakan coba lagi.');
-      return false;
     }
   }
 
@@ -392,61 +391,42 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _togglePlay() async {
-    if (_playInProgress) return;
-    _playInProgress = true;
-    try {
-      final r = await InternetAddress.lookup('example.com');
-      if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
-        if (_playing) {
-          await _audio.pause();
-          if (mounted) setState(() => _playing = false);
-        } else if (_audio.processingState == ProcessingState.ready &&
-            _playV != 0) {
-          await AudioPlaybackCoordinator.instance.requestPlayback(
-            _playbackOwner,
-            _stopForPlaybackHandoff,
-          );
-          await _audio.play();
-          if (mounted) setState(() => _playing = true);
-        } else {
-          final pg = _pages[_pgIdx];
-          if (_playV == 0) _playV = pg.verses.first.verse;
-          final didPlay = await _doPlay(
-            pg.verses.firstWhere(
-              (r) => r.verse == _playV,
-              orElse: () => pg.verses.first,
-            ),
-          );
-          if (mounted) setState(() => _playing = didPlay);
-        }
-      } else {
-        _snack('Sambungkan ke Internet');
-      }
-    } on SocketException {
-      _snack('Sambungkan ke Internet');
-    } finally {
-      _playInProgress = false;
+    if (_playing) {
+      ++_playRequestId;
+      if (mounted) setState(() => _playing = false);
+      await _audio.pause();
+      return;
     }
+
+    if (mounted) setState(() => _playing = true);
+    if (_audio.processingState == ProcessingState.ready && _playV != 0) {
+      await AudioPlaybackCoordinator.instance.requestPlayback(
+        _playbackOwner,
+        _stopForPlaybackHandoff,
+      );
+      unawaited(_audio.play());
+      return;
+    }
+
+    final pg = _pages[_pgIdx];
+    if (_playV == 0) _playV = pg.verses.first.verse;
+    await _doPlay(
+      pg.verses.firstWhere(
+        (r) => r.verse == _playV,
+        orElse: () => pg.verses.first,
+      ),
+    );
   }
 
   Future<void> _tapVerse(int surah, int verse) async {
-    try {
-      final r = await InternetAddress.lookup('example.com');
-      if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
-        setState(() {
-          _tappedSurah = surah;
-          _tappedVerse = verse;
-          _playV = verse;
-          _curS = surah;
-        });
-        final didPlay = await _doPlay(VerseRef(surah, verse));
-        if (mounted) setState(() => _playing = didPlay);
-      } else {
-        _snack('Sambungkan ke Internet');
-      }
-    } on SocketException {
-      _snack('Sambungkan ke Internet');
-    }
+    setState(() {
+      _tappedSurah = surah;
+      _tappedVerse = verse;
+      _playV = verse;
+      _curS = surah;
+      _playing = true;
+    });
+    await _doPlay(VerseRef(surah, verse));
   }
 
   void _loadTranslation() {
@@ -710,7 +690,7 @@ class _HomeScreenState extends State<HomeScreen>
                           playVerse: _playV,
                           tappedSurah: _tappedSurah,
                           tappedVerse: _tappedVerse,
-                          isPlayingPage: idx == _pgIdx && _playing,
+                          isPlayingPage: idx == _pgIdx && _playV != 0,
                           fontScale: fontScale,
                           showTajwid: settings.showTajwid,
                           bookmarkedVerses:

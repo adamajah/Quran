@@ -275,6 +275,12 @@ class _HafalanScreenState extends State<HafalanScreen>
 
   Future<void> _playVerse(int verse) async {
     final requestId = ++_playRequestId;
+    if (mounted) {
+      setState(() {
+        _playingVerse = verse;
+        _playing = true;
+      });
+    }
     try {
       await AudioPlaybackCoordinator.instance.requestPlayback(
         _playbackOwner,
@@ -295,12 +301,10 @@ class _HafalanScreenState extends State<HafalanScreen>
 
       await _audioPlayer.setUrl(url);
       if (requestId != _playRequestId) return;
-      await _audioPlayer.play();
-      setState(() {
-        _playingVerse = verse;
-        _playing = true;
-      });
+      unawaited(_audioPlayer.play());
     } catch (e) {
+      AudioPlaybackCoordinator.instance.release(_playbackOwner);
+      if (mounted) setState(() => _playing = false);
       debugPrint('Audio err: $e');
     }
   }
@@ -318,13 +322,12 @@ class _HafalanScreenState extends State<HafalanScreen>
   }
 
   Future<void> _resumePlayback() async {
+    if (mounted) setState(() => _playing = true);
     await AudioPlaybackCoordinator.instance.requestPlayback(
       _playbackOwner,
       _stopForPlaybackHandoff,
     );
-    await _audioPlayer.play();
-    if (!mounted) return;
-    setState(() => _playing = true);
+    unawaited(_audioPlayer.play());
   }
 
   void _startRepeat() {

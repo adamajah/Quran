@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -161,36 +160,35 @@ class _ReadingScreenState extends State<ReadingScreen> {
       await _audioPlayer.setSpeed(settings.playbackSpeed);
       await _audioPlayer.setUrl(quran_pkg.getAudioURLByVerse(surah, verse));
       if (requestId != _playRequestId) return;
-      await _audioPlayer.play();
+      unawaited(_audioPlayer.play());
     } catch (e) {
+      AudioPlaybackCoordinator.instance.release(_playbackOwner);
+      if (mounted) setState(() => _isPlaying = false);
       debugPrint("Audio error: $e");
     }
   }
 
   Future<void> _togglePlay() async {
-    try {
-      final r = await InternetAddress.lookup('google.com');
-      if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
-        if (_isPlaying) {
-          await _audioPlayer.pause();
-        } else if (_audioPlayer.processingState == ProcessingState.ready &&
-            _playingVerse != 0) {
-          await AudioPlaybackCoordinator.instance.requestPlayback(
-            _playbackOwner,
-            _stopForPlaybackHandoff,
-          );
-          await _audioPlayer.play();
-        } else {
-          if (_playingVerse == 0) _playingVerse = 1;
-          await _playVerse(_currentSurahIndex, _playingVerse);
-        }
-        setState(() => _isPlaying = !_isPlaying);
-      } else {
-        _snack('Koneksi internet diperlukan untuk audio');
-      }
-    } on SocketException catch (_) {
-      _snack('Koneksi internet diperlukan untuk audio');
+    if (_isPlaying) {
+      ++_playRequestId;
+      setState(() => _isPlaying = false);
+      await _audioPlayer.pause();
+      return;
     }
+
+    setState(() => _isPlaying = true);
+    if (_audioPlayer.processingState == ProcessingState.ready &&
+        _playingVerse != 0) {
+      await AudioPlaybackCoordinator.instance.requestPlayback(
+        _playbackOwner,
+        _stopForPlaybackHandoff,
+      );
+      unawaited(_audioPlayer.play());
+      return;
+    }
+
+    if (_playingVerse == 0) _playingVerse = 1;
+    await _playVerse(_currentSurahIndex, _playingVerse);
   }
 
   Future<void> _stopForPlaybackHandoff() async {
@@ -248,13 +246,6 @@ class _ReadingScreenState extends State<ReadingScreen> {
           ),
     );
   }
-
-  void _snack(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(msg),
-      action: SnackBarAction(label: 'OK', onPressed: () {}),
-    ),
-  );
 
   @override
   void dispose() {
