@@ -61,11 +61,12 @@ class SpeechService {
     if (!_shouldBeListening) return;
 
     if (_isRecoverableError(error)) {
-      final isBusy = error.errorMsg == 'error_busy';
-      if (isBusy) {
+      final needsBackoff =
+          error.errorMsg == 'error_busy' || error.errorMsg == 'error_network';
+      if (needsBackoff) {
         _consecutiveStartFailures++;
       }
-      _scheduleReconnect(afterStartFailure: isBusy);
+      _scheduleReconnect(afterStartFailure: needsBackoff);
     } else if (error.permanent) {
       _shouldBeListening = false;
       _cancelReconnect();
@@ -76,7 +77,8 @@ class SpeechService {
     return !error.permanent ||
         error.errorMsg == 'error_no_match' ||
         error.errorMsg == 'error_speech_timeout' ||
-        error.errorMsg == 'error_busy';
+        error.errorMsg == 'error_busy' ||
+        error.errorMsg == 'error_network';
   }
 
   void _scheduleReconnect({bool afterStartFailure = false}) {
