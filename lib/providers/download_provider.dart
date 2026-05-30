@@ -19,7 +19,9 @@ class DownloadProvider with ChangeNotifier {
   List<DownloadItem> _items = [];
   bool _wifiOnly = false;
   bool _pauseLowBattery = true;
+  String _selectedReciterId = availableReciters.first.id;
   final List<String> _queue = [];
+  String? _activeDownloadId;
 
   DownloadProvider(this._downloadService, this._storageService, this._prefs) {
     _loadSettings();
@@ -30,10 +32,18 @@ class DownloadProvider with ChangeNotifier {
   List<DownloadItem> get items => _items;
   bool get wifiOnly => _wifiOnly;
   bool get pauseLowBattery => _pauseLowBattery;
+  Reciter get selectedReciter => availableReciters.firstWhere(
+    (reciter) =>
+        reciter.id == _selectedReciterId && reciter.supportsSurahAudioDownload,
+    orElse: () => availableReciters.first,
+  );
 
   void _loadSettings() {
     _wifiOnly = _prefs.getBool('wifi_only') ?? false;
     _pauseLowBattery = _prefs.getBool('pause_low_battery') ?? true;
+    _selectedReciterId =
+        _prefs.getString('selected_offline_reciter') ??
+        availableReciters.first.id;
   }
 
   void _loadItems() {
@@ -57,11 +67,14 @@ class DownloadProvider with ChangeNotifier {
   }
 
   DownloadItem _buildSurahItem(int surah, Reciter reciter) {
+    if (!reciter.supportsSurahAudioDownload) {
+      throw ArgumentError('${reciter.name} belum tersedia untuk audio offline');
+    }
+
     final paddedId = surah.toString().padLeft(3, '0');
-    final id =
-        reciter.id == availableReciters.first.id
-            ? paddedId
-            : '${reciter.id}-$paddedId';
+    final id = reciter.id == availableReciters.first.id
+        ? paddedId
+        : '${reciter.id}-$paddedId';
 
     return DownloadItem(
       id: id,
@@ -73,24 +86,54 @@ class DownloadProvider with ChangeNotifier {
 
   String _surahAudioUrl(int surah, Reciter reciter) {
     return 'https://cdn.islamic.network/quran/audio-surah/'
-        '${reciter.bitrate}/${reciter.id}/$surah.mp3';
+        '${reciter.surahAudioBitrate}/${reciter.surahAudioId}/$surah.mp3';
   }
 
   void _syncDefaultSurahItems() {
     var changed = false;
     for (final item in _buildDefaultSurahItems()) {
-      if (_items.indexWhere((existing) => existing.id == item.id) == -1) {
-        _items.add(item);
-        changed = true;
-      }
+      changed = _upsertItem(item) || changed;
     }
     if (changed) _saveItems();
   }
 
-  DownloadStatus statusForSurah(int surah) {
-    final id = surah.toString().padLeft(3, '0');
+  bool _upsertItem(DownloadItem item) {
+    final index = _items.indexWhere((existing) => existing.id == item.id);
+    if (index == -1) {
+      _items.add(item);
+      return true;
+    }
+
+    final existing = _items[index];
+    if (existing.title == item.title &&
+        existing.subtitle == item.subtitle &&
+        existing.url == item.url) {
+      return false;
+    }
+
+    _items[index] = existing.copyWith(
+      title: item.title,
+      subtitle: item.subtitle,
+      url: item.url,
+    );
+    return true;
+  }
+
+  String _itemId(int surah, Reciter reciter) {
+    final paddedId = surah.toString().padLeft(3, '0');
+    return reciter.id == availableReciters.first.id
+        ? paddedId
+        : '${reciter.id}-$paddedId';
+  }
+
+  DownloadItem? itemForSurah(int surah, {Reciter? reciter}) {
+    final id = _itemId(surah, reciter ?? selectedReciter);
     final index = _items.indexWhere((item) => item.id == id);
-    return index == -1 ? DownloadStatus.notDownloaded : _items[index].status;
+    return index == -1 ? null : _items[index];
+  }
+
+  DownloadStatus statusForSurah(int surah) {
+    return itemForSurah(surah)?.status ?? DownloadStatus.notDownloaded;
   }
 
   int completedSurahCountForReciter(String reciterId) {
@@ -123,6 +166,25 @@ class DownloadProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void selectReciter(Reciter reciter) {
+    if (!reciter.supportsSurahAudioDownload) return;
+    _selectedReciterId = reciter.id;
+    _prefs.setString('selected_offline_reciter', reciter.id);
+    notifyListeners();
+  }
+
+  Future<void> downloadSurah(int surah) async {
+    final reciter = selectedReciter;
+    if (!reciter.supportsSurahAudioDownload) return;
+
+    final id = _itemId(surah, reciter);
+    if (_upsertItem(_buildSurahItem(surah, reciter))) {
+      _saveItems();
+      notifyListeners();
+    }
+    await startDownload(id);
+  }
+
   Future<void> startDownload(String id) async {
     final index = _items.indexWhere((item) => item.id == id);
     if (index == -1) return;
@@ -152,16 +214,16 @@ class DownloadProvider with ChangeNotifier {
       }
     }
 
-    if (!_queue.contains(id)) {
-      _queue.add(id);
+    if (_items[index].status == DownloadStatus.completed ||
+        _queue.contains(id) ||
+        _activeDownloadId == id) {
+      return;
     }
 
-    if (_queue.first == id) {
-      _processDownload(id);
-    } else {
-      _items[index].status = DownloadStatus.downloading; // Show as in queue
-      notifyListeners();
-    }
+    _queue.add(id);
+    _items[index].status = DownloadStatus.downloading;
+    notifyListeners();
+    _processNext();
   }
 
   Future<void> _processDownload(String id) async {
@@ -202,6 +264,7 @@ class DownloadProvider with ChangeNotifier {
         _items[index].savePath = savePath;
         _items[index].progress = 1.0;
         _queue.remove(id);
+        _activeDownloadId = null;
         _saveItems();
 
         NotificationService.showDownloadCompleted(
@@ -226,6 +289,8 @@ class DownloadProvider with ChangeNotifier {
           );
         }
         _queue.remove(id);
+        _activeDownloadId = null;
+        _saveItems();
         notifyListeners();
         _processNext();
       },
@@ -233,9 +298,9 @@ class DownloadProvider with ChangeNotifier {
   }
 
   void _processNext() {
-    if (_queue.isNotEmpty) {
-      _processDownload(_queue.first);
-    }
+    if (_activeDownloadId != null || _queue.isEmpty) return;
+    _activeDownloadId = _queue.first;
+    _processDownload(_activeDownloadId!);
   }
 
   void pauseDownload(String id) {
@@ -244,6 +309,9 @@ class DownloadProvider with ChangeNotifier {
     if (index != -1) {
       _items[index].status = DownloadStatus.paused;
       _queue.remove(id);
+      if (_activeDownloadId != id) {
+        _processNext();
+      }
       notifyListeners();
     }
   }
@@ -283,36 +351,30 @@ class DownloadProvider with ChangeNotifier {
   }
 
   Future<void> downloadAll() async {
-    _syncDefaultSurahItems();
-    for (var surah = 1; surah <= q.totalSurahCount; surah++) {
-      final id = surah.toString().padLeft(3, '0');
-      final index = _items.indexWhere((item) => item.id == id);
-      if (index != -1 && _items[index].status != DownloadStatus.completed) {
-        startDownload(id);
-      }
-    }
+    await downloadReciter(selectedReciter);
   }
 
   Future<void> downloadReciter(Reciter reciter) async {
+    if (!reciter.supportsSurahAudioDownload) return;
+
+    var changed = false;
     for (var surah = 1; surah <= q.totalSurahCount; surah++) {
       final item = _buildSurahItem(surah, reciter);
-      final index = _items.indexWhere((existing) => existing.id == item.id);
-      if (index == -1) {
-        _items.add(item);
-      }
+      changed = _upsertItem(item) || changed;
     }
-    _saveItems();
-    notifyListeners();
+    if (changed) {
+      _saveItems();
+      notifyListeners();
+    }
 
     for (var surah = 1; surah <= q.totalSurahCount; surah++) {
       final paddedId = surah.toString().padLeft(3, '0');
-      final id =
-          reciter.id == availableReciters.first.id
-              ? paddedId
-              : '${reciter.id}-$paddedId';
+      final id = reciter.id == availableReciters.first.id
+          ? paddedId
+          : '${reciter.id}-$paddedId';
       final index = _items.indexWhere((item) => item.id == id);
       if (index != -1 && _items[index].status != DownloadStatus.completed) {
-        startDownload(id);
+        await startDownload(id);
       }
     }
   }

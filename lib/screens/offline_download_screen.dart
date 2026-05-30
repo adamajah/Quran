@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:quran/quran.dart' as q;
+import '../providers/audio_provider.dart';
 import '../providers/download_provider.dart';
 import '../providers/storage_provider.dart';
 import '../models/download_item.dart';
@@ -345,6 +347,11 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        const SizedBox(height: 4),
+        Text(
+          'Qari offline aktif: ${provider.selectedReciter.name}',
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
+        ),
         const SizedBox(height: 12),
 
         // Search bar
@@ -526,9 +533,15 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
   ) {
     return Consumer<DownloadProvider>(
       builder: (context, provider, _) {
+        final item = provider.itemForSurah(surah);
         final isDownloaded = status == DownloadStatus.completed;
         final isDownloading = status == DownloadStatus.downloading;
         final isPaused = status == DownloadStatus.paused;
+        final audioProvider = context.watch<AudioProvider>();
+        final isPlaying =
+            item?.savePath != null &&
+            audioProvider.currentPath == item!.savePath &&
+            audioProvider.playerState == PlayerState.playing;
         final statusText =
             isDownloaded
                 ? 'Sudah Download'
@@ -614,10 +627,19 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
 
               // Action icon
               if (isDownloaded)
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.gold,
-                  size: 22,
+                IconButton(
+                  tooltip: isPlaying ? 'Jeda audio offline' : 'Putar offline',
+                  onPressed:
+                      item?.savePath == null
+                          ? null
+                          : () => audioProvider.playToggle(item!.savePath!),
+                  icon: Icon(
+                    isPlaying
+                        ? Icons.pause_circle_filled_rounded
+                        : Icons.play_circle_fill_rounded,
+                    color: AppColors.gold,
+                    size: 26,
+                  ),
                 )
               else if (isDownloading)
                 SizedBox(
@@ -634,10 +656,7 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
                 )
               else
                 GestureDetector(
-                  onTap:
-                      () => provider.startDownload(
-                        surah.toString().padLeft(3, '0'),
-                      ),
+                  onTap: () => provider.downloadSurah(surah),
                   child: const Icon(
                     Icons.play_arrow_rounded,
                     color: Colors.grey,
@@ -680,11 +699,10 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
           child: Column(
             children: List.generate(availableReciters.length, (i) {
               final qari = availableReciters[i];
-              final isFirst = i == 0; // Mishary highlighted by default
               final isLast = i == availableReciters.length - 1;
               return Column(
                 children: [
-                  _buildQariRow(context, qari, isFirst, isDark, textColor),
+                  _buildQariRow(context, qari, isDark, textColor),
                   if (!isLast)
                     Divider(
                       height: 1,
@@ -707,7 +725,6 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
   Widget _buildQariRow(
     BuildContext context,
     Reciter qari,
-    bool isHighlighted,
     bool isDark,
     Color textColor,
   ) {
@@ -715,100 +732,116 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
       builder: (context, provider, _) {
         final completedCount = provider.completedSurahCountForReciter(qari.id);
         final isCompleted = completedCount == q.totalSurahCount;
+        final isSelected = provider.selectedReciter.id == qari.id;
+        final canDownload = qari.supportsSurahAudioDownload;
         final subtitle =
-            isCompleted
+            !canDownload
+                ? 'Streaming saja • audio offline belum tersedia'
+                : isCompleted
                 ? 'Semua surat sudah download'
                 : completedCount > 0
-                ? '$completedCount/${q.totalSurahCount} surat • ${qari.bitrate} kbps'
-                : '${qari.bitrate} kbps • High Quality';
+                ? '$completedCount/${q.totalSurahCount} surat • ${qari.surahAudioBitrate} kbps'
+                : '${qari.surahAudioBitrate} kbps • Audio offline';
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              // Avatar
-              CircleAvatar(
-                radius: 20,
-                backgroundColor:
-                    isHighlighted
-                        ? AppColors.gold.withValues(alpha: 0.2)
-                        : (isDark ? Colors.white10 : Colors.grey.shade100),
-                child: Text(
-                  qari.name[0],
-                  style: TextStyle(
-                    color: isHighlighted ? AppColors.gold : textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+        return InkWell(
+          onTap: canDownload ? () => provider.selectReciter(qari) : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                // Avatar
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor:
+                      isSelected
+                          ? AppColors.gold.withValues(alpha: 0.2)
+                          : (isDark ? Colors.white10 : Colors.grey.shade100),
+                  child: Text(
+                    qari.name[0],
+                    style: TextStyle(
+                      color: isSelected ? AppColors.gold : textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      qari.name,
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        qari.name,
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Download button
+                GestureDetector(
+                  onTap:
+                      !canDownload || isCompleted
+                          ? null
+                          : () => provider.downloadReciter(qari),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isCompleted
+                              ? Colors.transparent
+                              : isSelected
+                              ? AppColors.gold
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color:
+                            isCompleted
+                                ? AppColors.gold
+                                : isSelected
+                                ? AppColors.gold
+                                : (isDark
+                                    ? Colors.white24
+                                    : Colors.grey.shade300),
                       ),
                     ),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Download button
-              GestureDetector(
-                onTap:
-                    isCompleted ? null : () => provider.downloadReciter(qari),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isCompleted
-                            ? Colors.transparent
-                            : isHighlighted
-                            ? AppColors.gold
-                            : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color:
-                          isCompleted
-                              ? AppColors.gold
-                              : isHighlighted
-                              ? AppColors.gold
-                              : (isDark
-                                  ? Colors.white24
-                                  : Colors.grey.shade300),
-                    ),
-                  ),
-                  child: Text(
-                    isCompleted ? 'Sudah' : 'Download',
-                    style: TextStyle(
-                      color:
-                          isCompleted
-                              ? AppColors.gold
-                              : isHighlighted
-                              ? Colors.white
-                              : textColor.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                    child: Text(
+                      !canDownload
+                          ? 'N/A'
+                          : isCompleted
+                          ? 'Sudah'
+                          : 'Download 114',
+                      style: TextStyle(
+                        color:
+                            isCompleted
+                                ? AppColors.gold
+                                : isSelected
+                                ? Colors.white
+                                : textColor.withValues(alpha: 0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
