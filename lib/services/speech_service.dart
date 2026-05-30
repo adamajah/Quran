@@ -13,7 +13,7 @@ class SpeechService {
   int _listenGeneration = 0;
   String _localeId = 'ar-SA';
 
-  static const _normalReconnectDelay = Duration(milliseconds: 250);
+  static const _normalReconnectDelay = Duration(milliseconds: 550);
 
   Function(String)? _onResult;
   Function(String)? _onStatus;
@@ -61,7 +61,11 @@ class SpeechService {
     if (!_shouldBeListening) return;
 
     if (_isRecoverableError(error)) {
-      _scheduleReconnect();
+      final isBusy = error.errorMsg == 'error_busy';
+      if (isBusy) {
+        _consecutiveStartFailures++;
+      }
+      _scheduleReconnect(afterStartFailure: isBusy);
     } else if (error.permanent) {
       _shouldBeListening = false;
       _cancelReconnect();
@@ -71,7 +75,8 @@ class SpeechService {
   bool _isRecoverableError(SpeechRecognitionError error) {
     return !error.permanent ||
         error.errorMsg == 'error_no_match' ||
-        error.errorMsg == 'error_speech_timeout';
+        error.errorMsg == 'error_speech_timeout' ||
+        error.errorMsg == 'error_busy';
   }
 
   void _scheduleReconnect({bool afterStartFailure = false}) {
