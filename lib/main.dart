@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:quran_library/quran_library.dart';
 
 import 'screens/splash_screen.dart';
 import 'constants/theme_manager.dart';
@@ -18,7 +17,6 @@ import 'providers/audio_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await QuranLibrary.init();
   // NotificationService initialization moved to SplashScreen to avoid Activity-not-ready issues
 
   final prefs = await SharedPreferences.getInstance();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:quran_library/quran_library.dart';
+import '../constants/quran_fonts.dart';
 import 'app_colors.dart';
 
 abstract class AppTextStyle {
@@ -74,7 +74,7 @@ abstract class AppTextStyle {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // ✅ QURAN STYLES — font Hafs dari quran_library (identik Mushaf Madinah)
+  // Quran styles using the bundled Hafs font.
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Teks AYAT AL-QURAN — font Hafs utama
@@ -84,7 +84,7 @@ abstract class AppTextStyle {
     Color color = const Color(0xFF1A1008),
     double height = 2.2,
   }) {
-    return QuranLibrary().hafsStyle.copyWith(
+    return AppQuranFonts.hafsStyle.copyWith(
       fontSize: fontSize,
       height: height,
       color: color,
@@ -96,7 +96,7 @@ abstract class AppTextStyle {
     double fontSize = 20,
     Color color = const Color(0xFF3B2A1A),
   }) {
-    return QuranLibrary().hafsStyle.copyWith(
+    return AppQuranFonts.hafsStyle.copyWith(
       fontSize: fontSize,
       color: color,
       fontWeight: FontWeight.bold,
@@ -108,7 +108,7 @@ abstract class AppTextStyle {
     double fontSize = 10,
     Color color = const Color(0xFF3B2A1A),
   }) {
-    return QuranLibrary().hafsStyle.copyWith(
+    return AppQuranFonts.hafsStyle.copyWith(
       fontSize: fontSize,
       color: color,
       fontWeight: FontWeight.bold,
@@ -120,7 +120,7 @@ abstract class AppTextStyle {
     double fontSize = 12,
     Color color = const Color(0xFF3B2A1A),
   }) {
-    return QuranLibrary().naskhStyle.copyWith(
+    return AppQuranFonts.naskhStyle.copyWith(
       fontSize: fontSize,
       color: color.withValues(alpha: 0.8),
     );

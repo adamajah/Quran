@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
 
@@ -205,7 +205,7 @@ class TajwidLegend extends StatelessWidget {
                                     ),
                                     child: Text(
                                       ex,
-                                      style: QuranLibrary().hafsStyle.copyWith(
+                                      style: AppQuranFonts.hafsStyle.copyWith(
                                         fontSize: 16,
                                         color: color,
                                       ),

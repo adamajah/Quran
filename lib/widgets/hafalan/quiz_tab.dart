@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as q;
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/hafalan_models.dart';
 import 'hafalan_widgets.dart';
@@ -279,7 +279,7 @@ class QuizTab extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         q_.promptText,
-                        style: QuranLibrary().hafsStyle.copyWith(
+                        style: AppQuranFonts.hafsStyle.copyWith(
                           fontSize: 22,
                           height: 1.85,
                           color: textColor,
@@ -376,7 +376,7 @@ class QuizTab extends StatelessWidget {
                           Expanded(
                             child: Text(
                               opt,
-                              style: QuranLibrary().hafsStyle.copyWith(
+                              style: AppQuranFonts.hafsStyle.copyWith(
                                 fontSize: 18,
                                 height: 1.7,
                                 color: textColor,

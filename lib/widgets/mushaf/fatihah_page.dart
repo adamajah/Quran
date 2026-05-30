@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
 import '../../models/verse_ref.dart';
@@ -170,7 +170,7 @@ class _FatihahPageState extends State<FatihahPage> {
                     ),
                     TextSpan(
                       text: ' ${_ar(v.verse)}',
-                      style: QuranLibrary().hafsStyle.copyWith(
+                      style: AppQuranFonts.hafsStyle.copyWith(
                         fontSize: 15 * widget.fontScale,
                         color:
                             active
@@ -205,7 +205,7 @@ class _FatihahPageState extends State<FatihahPage> {
       return [
         TextSpan(
           text: text,
-          style: QuranLibrary().hafsStyle.copyWith(
+          style: AppQuranFonts.hafsStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
@@ -236,7 +236,7 @@ class _FatihahPageState extends State<FatihahPage> {
           recognizer:
               TapGestureRecognizer()
                 ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
-          style: QuranLibrary().hafsStyle.copyWith(
+          style: AppQuranFonts.hafsStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: color,

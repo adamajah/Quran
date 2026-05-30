@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as q;
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
 import '../../models/verse_ref.dart';
@@ -79,7 +79,7 @@ class Basmalah extends StatelessWidget {
         bismillah,
         textAlign: TextAlign.center,
         textDirection: TextDirection.rtl,
-        style: QuranLibrary().hafsStyle.copyWith(
+        style: AppQuranFonts.hafsStyle.copyWith(
           fontSize: 18,
           color: isDark ? Colors.white : AppColors.dark,
           height: 1.6,

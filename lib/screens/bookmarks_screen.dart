@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quran/quran.dart' as q;
-import 'package:quran_library/quran_library.dart';
+import '../constants/quran_fonts.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -650,7 +650,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                               bm.verse,
                               verseEndSymbol: false,
                             ),
-                            style: QuranLibrary().hafsStyle.copyWith(
+                            style: AppQuranFonts.hafsStyle.copyWith(
                               fontSize: 24,
                               height: 1.85,
                               color: isDark ? Colors.white : AppColors.ink,
@@ -659,7 +659,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           const TextSpan(text: ' '),
                           TextSpan(
                             text: _toAr(bm.verse),
-                            style: QuranLibrary().hafsStyle.copyWith(
+                            style: AppQuranFonts.hafsStyle.copyWith(
                               fontSize: 18,
                               color: AppColors.gold,
                               fontWeight: FontWeight.bold,

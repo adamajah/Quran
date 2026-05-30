@@ -7,7 +7,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   battery_plus
   connectivity_plus
   flutter_timezone
-  media_kit_libs_windows_audio
   share_plus
   speech_to_text_windows
   url_launcher_windows

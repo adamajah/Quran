@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 
 import '../../constants/app_colors.dart';
 import '../../models/verse_ref.dart';
@@ -108,7 +108,7 @@ class NormalBody extends StatelessWidget {
     double maxW,
     Color inkColor,
   ) {
-    final s = QuranLibrary().hafsStyle.copyWith(
+    final s = AppQuranFonts.hafsStyle.copyWith(
       fontSize: fs,
       height: lh,
       color: inkColor,
@@ -296,7 +296,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       out.add(
         TextSpan(
           text: ' ',
-          style: QuranLibrary().hafsStyle.copyWith(
+          style: AppQuranFonts.hafsStyle.copyWith(
             fontSize: widget.fs * widget.fontScale,
             height: 1.85,
             color: inkColor,
@@ -328,7 +328,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
               ),
               child: Text(
                 _ar(v.verse),
-                style: QuranLibrary().hafsStyle.copyWith(
+                style: AppQuranFonts.hafsStyle.copyWith(
                   fontSize: numFs * widget.fontScale,
                   color:
                       active
@@ -345,7 +345,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       out.add(
         TextSpan(
           text: ' ',
-          style: QuranLibrary().hafsStyle.copyWith(
+          style: AppQuranFonts.hafsStyle.copyWith(
             fontSize: widget.fs * widget.fontScale,
             height: 1.85,
             color: inkColor,
@@ -407,7 +407,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       return [
         TextSpan(
           text: text,
-          style: QuranLibrary().hafsStyle.copyWith(
+          style: AppQuranFonts.hafsStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
@@ -439,7 +439,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
           recognizer:
               TapGestureRecognizer()
                 ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
-          style: QuranLibrary().hafsStyle.copyWith(
+          style: AppQuranFonts.hafsStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: color,

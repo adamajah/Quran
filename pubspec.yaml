@@ -15,7 +15,6 @@ dependencies:
 
   # QURAN
   quran: ^1.4.1
-  quran_library: 2.2.1
 
   # UI
   google_fonts: ^6.2.1
@@ -65,6 +64,14 @@ flutter:
   assets:
     - assets/
     - assets/icon/
+
+  fonts:
+    - family: hafs
+      fonts:
+        - asset: assets/fonts/UthmanicHafs_V20.ttf
+    - family: naskh
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
 
 dependency_overrides:
   connectivity_plus: 6.1.0

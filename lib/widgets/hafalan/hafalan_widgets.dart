@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ class _PartialHideTextState extends State<PartialHideText> {
                         )
                         : Text(
                           word,
-                          style: QuranLibrary().hafsStyle.copyWith(
+                          style: AppQuranFonts.hafsStyle.copyWith(
                             fontSize: widget.fontSize,
                             height: 1.9,
                             color:

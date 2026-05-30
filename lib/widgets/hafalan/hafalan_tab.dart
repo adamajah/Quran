@@ -10,7 +10,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as q;
-import 'package:quran_library/quran_library.dart';
+import '../../constants/quran_fonts.dart';
 
 import '../../constants/app_colors.dart';
 import '../../models/hafalan_models.dart';
@@ -660,7 +660,7 @@ class _HafalanTabState extends State<HafalanTab> {
         children: [
           TextSpan(
             text: cleanText,
-            style: QuranLibrary().hafsStyle.copyWith(
+            style: AppQuranFonts.hafsStyle.copyWith(
               fontSize: 21,
               height: 2.0,
               color: active ? AppColors.hl : textColor,
@@ -682,7 +682,7 @@ class _HafalanTabState extends State<HafalanTab> {
               ),
               child: Text(
                 _arNum(verse),
-                style: QuranLibrary().hafsStyle.copyWith(
+                style: AppQuranFonts.hafsStyle.copyWith(
                   fontSize: 14,
                   color: active ? AppColors.hl : AppColors.gold,
                   fontWeight: FontWeight.bold,

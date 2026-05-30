@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran/quran.dart' as quran_pkg;
-import 'package:quran_library/quran_library.dart';
+import '../constants/quran_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_text_style.dart';
@@ -454,7 +454,7 @@ class _HafsVerseArea extends StatelessWidget {
 
   List<InlineSpan> _buildSpans(double fs) {
     final spans = <InlineSpan>[];
-    final hafsStyle = QuranLibrary().hafsStyle;
+    final hafsStyle = AppQuranFonts.hafsStyle;
     final verseStyle = hafsStyle.copyWith(
       fontSize: fs,
       height: settings.lineSpacing,
@@ -498,7 +498,7 @@ class _HafsVerseArea extends StatelessWidget {
               child: Center(
                 child: Text(
                   _toArabic(verseIdx),
-                  style: QuranLibrary().hafsStyle.copyWith(
+                  style: AppQuranFonts.hafsStyle.copyWith(
                     fontSize: (fs * 0.42).clamp(7.0, 13.0),
                     color: active ? _hl : darkBrown,
                     fontWeight: FontWeight.bold,
@@ -516,7 +516,7 @@ class _HafsVerseArea extends StatelessWidget {
   }
 
   double _measureHeight(double fs, double maxW) {
-    final hafsStyle = QuranLibrary().hafsStyle;
+    final hafsStyle = AppQuranFonts.hafsStyle;
     final tp = TextPainter(
       text: TextSpan(
         children:
