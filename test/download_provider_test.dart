@@ -148,34 +148,50 @@ void main() {
   });
 
   test('offline catalog keeps valid qari collections and surah URLs', () {
-    final reciters = OfflineReciterService.parseCatalog({
-      'reciters': [
-        {
-          'name': 'Example Qari',
-          'moshaf': [
-            {
-              'id': 7,
-              'name': 'Hafs',
-              'server': 'https://audio.example/',
-              'surah_list': '1,36',
-            },
-            {
-              'id': 8,
-              'name': 'Invalid server',
-              'server': '',
-              'surah_list': '1',
-            },
-          ],
-        },
-      ],
-    });
+    final reciters = OfflineReciterService.parseCatalog(
+      {
+        'reciters': [
+          {
+            'name': 'Example Qari',
+            'moshaf': [
+              {
+                'id': 7,
+                'name': 'Hafs',
+                'server': 'https://audio.example/',
+                'surah_list': '1,36',
+              },
+              {
+                'id': 8,
+                'name': 'Invalid server',
+                'server': '',
+                'surah_list': '1',
+              },
+            ],
+          },
+        ],
+      },
+      timingReadIds: {'audio.example/': 12},
+    );
 
     expect(reciters, hasLength(1));
     expect(reciters.single.id, 'mp3quran.7');
     expect(reciters.single.collectionName, 'Hafs');
     expect(reciters.single.usesSurahAudioStream, isTrue);
+    expect(reciters.single.timingReadId, 12);
     expect(reciters.single.supportsSurahDownload(36), isTrue);
     expect(reciters.single.supportsSurahDownload(2), isFalse);
     expect(reciters.single.surahAudioUrl(36), 'https://audio.example/036.mp3');
+  });
+
+  test('offline catalog parses official ayah timing metadata', () {
+    final reads = OfflineReciterService.parseTimingReadIds([
+      {'id': 5, 'folder_url': 'https://server10.mp3quran.net/ajm/'},
+    ]);
+    final position = OfflineReciterService.parseAyahStartPosition([
+      {'ayah': 4, 'start_time': 29219},
+    ], 4);
+
+    expect(reads, {'server10.mp3quran.net/ajm/': 5});
+    expect(position, const Duration(milliseconds: 29219));
   });
 }

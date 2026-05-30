@@ -7,6 +7,7 @@ class Reciter {
   final String? surahAudioBaseUrl;
   final Set<int>? downloadableSurahs;
   final String? collectionName;
+  final int? timingReadId;
 
   const Reciter({
     required this.name,
@@ -17,6 +18,7 @@ class Reciter {
     this.surahAudioBaseUrl,
     this.downloadableSurahs,
     this.collectionName,
+    this.timingReadId,
   });
 
   bool get supportsSurahAudioDownload =>

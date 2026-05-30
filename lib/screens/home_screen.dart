@@ -217,10 +217,17 @@ class _HomeScreenState extends State<HomeScreen>
       await _audio.setVolume(settings.defaultVolume);
       await _audio.setSpeed(settings.playbackSpeed);
       if (reciter.usesSurahAudioStream) {
-        if (r.verse != 1) {
-          _snack('${reciter.name} diputar dari awal surat');
+        final duration = await _audio.setUrl(reciter.surahAudioUrl(r.surah));
+        if (r.verse > 1) {
+          final position =
+              await _reciterService.getAyahStartPosition(
+                reciter,
+                r.surah,
+                r.verse,
+              ) ??
+              _estimateAyahPosition(duration, r.surah, r.verse);
+          if (position != null) await _audio.seek(position);
         }
-        await _audio.setUrl(reciter.surahAudioUrl(r.surah));
       } else {
         await _audio.setUrl(
           AudioUtils.getVerseAudioUrl(
@@ -238,6 +245,14 @@ class _HomeScreenState extends State<HomeScreen>
       _snack('Audio gagal diputar. Silakan coba lagi.');
       return false;
     }
+  }
+
+  Duration? _estimateAyahPosition(Duration? duration, int surah, int ayah) {
+    if (duration == null || ayah <= 1) return null;
+    final verseCount = q.getVerseCount(surah);
+    return Duration(
+      milliseconds: (duration.inMilliseconds * (ayah - 1) / verseCount).round(),
+    );
   }
 
   Future<void> _togglePlay() async {

@@ -5,8 +5,12 @@ import '../models/reciter.dart';
 class OfflineReciterService {
   static const _catalogUrl =
       'https://www.mp3quran.net/api/v3/reciters?language=eng';
+  static const _timingReadsUrl =
+      'https://mp3quran.net/api/v3/ayat_timing/reads';
+  static const _ayahTimingUrl = 'https://mp3quran.net/api/v3/ayat_timing';
 
   static Future<List<Reciter>>? _cachedReciters;
+  static final Map<String, Future<Duration?>> _cachedAyahPositions = {};
 
   final Dio _dio;
 
@@ -42,10 +46,81 @@ class OfflineReciterService {
 
   Future<List<Reciter>> _fetchReciters() async {
     final response = await _dio.get<Map<String, dynamic>>(_catalogUrl);
-    return parseCatalog(response.data ?? const {});
+    try {
+      final timings = await _dio.get<List<dynamic>>(_timingReadsUrl);
+      return parseCatalog(
+        response.data ?? const {},
+        timingReadIds: parseTimingReadIds(timings.data ?? const []),
+      );
+    } catch (_) {
+      return parseCatalog(response.data ?? const {});
+    }
   }
 
-  static List<Reciter> parseCatalog(Map<String, dynamic> data) {
+  Future<Duration?> getAyahStartPosition(
+    Reciter reciter,
+    int surah,
+    int ayah,
+  ) async {
+    final readId = reciter.timingReadId;
+    if (readId == null) return null;
+
+    final key = '$readId:$surah:$ayah';
+    final position =
+        _cachedAyahPositions[key] ??= _fetchAyahStartPosition(
+          readId,
+          surah,
+          ayah,
+        );
+    try {
+      return await position;
+    } catch (_) {
+      if (identical(_cachedAyahPositions[key], position)) {
+        _cachedAyahPositions.remove(key);
+      }
+      return null;
+    }
+  }
+
+  Future<Duration?> _fetchAyahStartPosition(
+    int readId,
+    int surah,
+    int ayah,
+  ) async {
+    final response = await _dio.get<List<dynamic>>(
+      _ayahTimingUrl,
+      queryParameters: {'read': readId, 'surah': surah},
+    );
+    return parseAyahStartPosition(response.data ?? const [], ayah);
+  }
+
+  static Map<String, int> parseTimingReadIds(List<dynamic> data) {
+    final readIds = <String, int>{};
+    for (final rawRead in data) {
+      final read = rawRead as Map<String, dynamic>;
+      final id = read['id'];
+      final server = read['folder_url'] as String?;
+      if (id is int && server != null && server.isNotEmpty) {
+        readIds[_normalizeServer(server)] = id;
+      }
+    }
+    return readIds;
+  }
+
+  static Duration? parseAyahStartPosition(List<dynamic> data, int ayah) {
+    for (final rawTiming in data) {
+      final timing = rawTiming as Map<String, dynamic>;
+      if (timing['ayah'] == ayah && timing['start_time'] is num) {
+        return Duration(milliseconds: (timing['start_time'] as num).round());
+      }
+    }
+    return null;
+  }
+
+  static List<Reciter> parseCatalog(
+    Map<String, dynamic> data, {
+    Map<String, int> timingReadIds = const {},
+  }) {
     final reciters = <Reciter>[];
     for (final rawReciter in data['reciters'] as List<dynamic>? ?? const []) {
       final reciter = rawReciter as Map<String, dynamic>;
@@ -78,6 +153,7 @@ class OfflineReciterService {
             surahAudioBaseUrl: server,
             downloadableSurahs: surahs,
             collectionName: collection['name'] as String?,
+            timingReadId: timingReadIds[_normalizeServer(server)],
           ),
         );
       }
@@ -89,5 +165,12 @@ class OfflineReciterService {
       return (a.collectionName ?? '').compareTo(b.collectionName ?? '');
     });
     return reciters;
+  }
+
+  static String _normalizeServer(String server) {
+    final uri = Uri.tryParse(server.trim());
+    if (uri == null || uri.host.isEmpty) return server.trim();
+    final path = uri.path.endsWith('/') ? uri.path : '${uri.path}/';
+    return '${uri.host.toLowerCase()}$path';
   }
 }

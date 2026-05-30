@@ -52,11 +52,6 @@ class _ReciterDialogState extends State<ReciterDialog> {
                   color: textColor,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Audio katalog lengkap diputar per surat',
-                style: TextStyle(color: Colors.grey, fontSize: 11),
-              ),
               const SizedBox(height: 12),
               Container(
                 height: 1,
