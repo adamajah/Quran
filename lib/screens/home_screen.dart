@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 import '../services/bookmark_service.dart';
+import '../services/offline_reciter_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_style.dart';
 import '../models/verse_ref.dart';
@@ -34,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _audio = AudioPlayer();
+  final _reciterService = OfflineReciterService();
   late PageController _pageCtrl;
   late AnimationController _flipCtrl;
 
@@ -42,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _pgIdx = 0;
   int _playV = 0;
   int _curS = 1;
+  Reciter _selectedReciter = availableReciters.first;
 
   // Tap-to-play: which verse was tapped
   int _tappedSurah = 0;
@@ -87,6 +90,14 @@ class _HomeScreenState extends State<HomeScreen>
     _audio.playerStateStream.listen((s) {
       if (s.processingState != ProcessingState.completed) return;
       if (!mounted) return;
+
+      if (_selectedReciter.usesSurahAudioStream) {
+        setState(() {
+          _playing = false;
+          _playV = 0;
+        });
+        return;
+      }
 
       final settings = context.read<SettingsController>().settings;
       if (!settings.autoPlay) {
@@ -163,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen>
       _pgIdx = idx;
       _bookmarks = bookmarks;
     });
+    _restoreSelectedReciter(lastSurah);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pageCtrl.hasClients) {
         _pageCtrl.jumpToPage(_pages.length * 500 + idx);
@@ -176,41 +188,76 @@ class _HomeScreenState extends State<HomeScreen>
     await p.setInt('lastPage', _pgIdx);
   }
 
-  void _doPlay(VerseRef r) {
+  Future<void> _restoreSelectedReciter(int surah) async {
+    final id = context.read<SettingsController>().settings.defaultReciterId;
+    final reciter = await _reciterService.findReciterForSurah(id, surah);
+    if (!mounted || reciter == null) return;
+    setState(() => _selectedReciter = reciter);
+  }
+
+  Future<bool> _doPlay(VerseRef r) async {
     final settings = context.read<SettingsController>().settings;
     try {
-      _audio.setVolume(settings.defaultVolume);
-      _audio.setSpeed(settings.playbackSpeed);
-      final reciterId =
-          settings.defaultReciterId.isNotEmpty
-              ? settings.defaultReciterId
-              : availableReciters[0].id;
-      _audio.setUrl(
-        AudioUtils.getVerseAudioUrl(r.surah, r.verse, reciterId, 128),
-      );
-      _audio.play();
+      final reciter =
+          await _reciterService.findReciterForSurah(
+            settings.defaultReciterId,
+            r.surah,
+          ) ??
+          _selectedReciter;
+      if (reciter.usesSurahAudioStream &&
+          !reciter.supportsSurahDownload(r.surah)) {
+        _snack('Qari ini belum menyediakan audio untuk surat tersebut');
+        return false;
+      }
+
+      if (mounted && reciter.id != _selectedReciter.id) {
+        setState(() => _selectedReciter = reciter);
+      }
+
+      await _audio.setVolume(settings.defaultVolume);
+      await _audio.setSpeed(settings.playbackSpeed);
+      if (reciter.usesSurahAudioStream) {
+        if (r.verse != 1) {
+          _snack('${reciter.name} diputar dari awal surat');
+        }
+        await _audio.setUrl(reciter.surahAudioUrl(r.surah));
+      } else {
+        await _audio.setUrl(
+          AudioUtils.getVerseAudioUrl(
+            r.surah,
+            r.verse,
+            reciter.id,
+            reciter.bitrate,
+          ),
+        );
+      }
+      await _audio.play();
+      return true;
     } catch (e) {
       debugPrint('Audio: $e');
+      _snack('Audio gagal diputar. Silakan coba lagi.');
+      return false;
     }
   }
 
-  void _togglePlay() async {
+  Future<void> _togglePlay() async {
     try {
       final r = await InternetAddress.lookup('example.com');
       if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
         if (_playing) {
-          _audio.pause();
+          await _audio.pause();
+          if (mounted) setState(() => _playing = false);
         } else {
           final pg = _pages[_pgIdx];
           if (_playV == 0) _playV = pg.verses.first.verse;
-          _doPlay(
+          final didPlay = await _doPlay(
             pg.verses.firstWhere(
               (r) => r.verse == _playV,
               orElse: () => pg.verses.first,
             ),
           );
+          if (mounted) setState(() => _playing = didPlay);
         }
-        setState(() => _playing = !_playing);
       } else {
         _snack('Sambungkan ke Internet');
       }
@@ -219,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _tapVerse(int surah, int verse) async {
+  Future<void> _tapVerse(int surah, int verse) async {
     try {
       final r = await InternetAddress.lookup('example.com');
       if (r.isNotEmpty && r[0].rawAddress.isNotEmpty) {
@@ -228,9 +275,9 @@ class _HomeScreenState extends State<HomeScreen>
           _tappedVerse = verse;
           _playV = verse;
           _curS = surah;
-          _playing = true;
         });
-        _doPlay(VerseRef(surah, verse));
+        final didPlay = await _doPlay(VerseRef(surah, verse));
+        if (mounted) setState(() => _playing = didPlay);
       } else {
         _snack('Sambungkan ke Internet');
       }
@@ -400,21 +447,17 @@ class _HomeScreenState extends State<HomeScreen>
       _bookmarks.any((b) => b.surah == surah && b.verse == verse);
 
   void _showReciterDialog() {
-    final settings = context.read<SettingsController>().settings;
-    final currentReciter = availableReciters.firstWhere(
-      (r) => r.id == settings.defaultReciterId,
-      orElse: () => availableReciters[0],
-    );
-
     showDialog(
       context: context,
       builder:
           (context) => ReciterDialog(
-            currentReciter: currentReciter,
+            currentReciter: _selectedReciter,
+            surah: _curS,
             onSelect: (Reciter selected) {
               context.read<SettingsController>().updateDefaultReciter(
                 selected.id,
               );
+              setState(() => _selectedReciter = selected);
               if (_playing) {
                 _audio.stop();
                 _playing = false;
@@ -541,7 +584,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               BottomBar(
                 playing: _playing,
-                reciter: settings.defaultReciterId,
+                reciter: _selectedReciter.name,
                 pageNum: pg.pageNum,
                 surahName: pg.surahName,
                 playVerse: _playV,

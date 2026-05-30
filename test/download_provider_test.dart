@@ -173,6 +173,7 @@ void main() {
     expect(reciters, hasLength(1));
     expect(reciters.single.id, 'mp3quran.7');
     expect(reciters.single.collectionName, 'Hafs');
+    expect(reciters.single.usesSurahAudioStream, isTrue);
     expect(reciters.single.supportsSurahDownload(36), isTrue);
     expect(reciters.single.supportsSurahDownload(2), isFalse);
     expect(reciters.single.surahAudioUrl(36), 'https://audio.example/036.mp3');

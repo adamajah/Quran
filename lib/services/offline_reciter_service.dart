@@ -12,6 +12,18 @@ class OfflineReciterService {
 
   OfflineReciterService({Dio? dio}) : _dio = dio ?? Dio();
 
+  Future<Reciter?> findReciterForSurah(String id, int surah) async {
+    for (final reciter in availableReciters) {
+      if (reciter.id == id) return reciter;
+    }
+
+    final reciters = await getRecitersForSurah(surah);
+    for (final reciter in reciters) {
+      if (reciter.id == id) return reciter;
+    }
+    return null;
+  }
+
   Future<List<Reciter>> getRecitersForSurah(int surah) async {
     final catalog = _cachedReciters ??= _fetchReciters();
     try {

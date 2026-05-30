@@ -22,6 +22,8 @@ class Reciter {
   bool get supportsSurahAudioDownload =>
       surahAudioId != null || surahAudioBaseUrl != null;
 
+  bool get usesSurahAudioStream => surahAudioBaseUrl != null;
+
   bool supportsSurahDownload(int surah) =>
       supportsSurahAudioDownload &&
       (downloadableSurahs == null || downloadableSurahs!.contains(surah));
