@@ -4,6 +4,9 @@ class Reciter {
   final int bitrate;
   final String? surahAudioId;
   final int? surahAudioBitrate;
+  final String? surahAudioBaseUrl;
+  final Set<int>? downloadableSurahs;
+  final String? collectionName;
 
   const Reciter({
     required this.name,
@@ -11,9 +14,29 @@ class Reciter {
     this.bitrate = 128,
     this.surahAudioId,
     this.surahAudioBitrate,
+    this.surahAudioBaseUrl,
+    this.downloadableSurahs,
+    this.collectionName,
   });
 
-  bool get supportsSurahAudioDownload => surahAudioId != null;
+  bool get supportsSurahAudioDownload =>
+      surahAudioId != null || surahAudioBaseUrl != null;
+
+  bool supportsSurahDownload(int surah) =>
+      supportsSurahAudioDownload &&
+      (downloadableSurahs == null || downloadableSurahs!.contains(surah));
+
+  String surahAudioUrl(int surah) {
+    final baseUrl = surahAudioBaseUrl;
+    if (baseUrl != null) {
+      final separator = baseUrl.endsWith('/') ? '' : '/';
+      final fileName = surah.toString().padLeft(3, '0');
+      return '$baseUrl$separator$fileName.mp3';
+    }
+
+    return 'https://cdn.islamic.network/quran/audio-surah/'
+        '$surahAudioBitrate/$surahAudioId/$surah.mp3';
+  }
 }
 
 const List<Reciter> availableReciters = [

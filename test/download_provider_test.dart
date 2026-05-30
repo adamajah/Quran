@@ -7,6 +7,7 @@ import 'package:flutter_quran_app/models/download_item.dart';
 import 'package:flutter_quran_app/models/reciter.dart';
 import 'package:flutter_quran_app/providers/download_provider.dart';
 import 'package:flutter_quran_app/services/download_service.dart';
+import 'package:flutter_quran_app/services/offline_reciter_service.dart';
 import 'package:flutter_quran_app/services/storage_service.dart';
 
 class _FakeDownloadService extends DownloadService {
@@ -144,5 +145,36 @@ void main() {
 
     expect(provider.statusForSurah(27), DownloadStatus.notDownloaded);
     expect(downloadService.urls, isEmpty);
+  });
+
+  test('offline catalog keeps valid qari collections and surah URLs', () {
+    final reciters = OfflineReciterService.parseCatalog({
+      'reciters': [
+        {
+          'name': 'Example Qari',
+          'moshaf': [
+            {
+              'id': 7,
+              'name': 'Hafs',
+              'server': 'https://audio.example/',
+              'surah_list': '1,36',
+            },
+            {
+              'id': 8,
+              'name': 'Invalid server',
+              'server': '',
+              'surah_list': '1',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(reciters, hasLength(1));
+    expect(reciters.single.id, 'mp3quran.7');
+    expect(reciters.single.collectionName, 'Hafs');
+    expect(reciters.single.supportsSurahDownload(36), isTrue);
+    expect(reciters.single.supportsSurahDownload(2), isFalse);
+    expect(reciters.single.surahAudioUrl(36), 'https://audio.example/036.mp3');
   });
 }

@@ -79,8 +79,7 @@ class DownloadProvider with ChangeNotifier {
   }
 
   String _surahAudioUrl(int surah, Reciter reciter) {
-    return 'https://cdn.islamic.network/quran/audio-surah/'
-        '${reciter.surahAudioBitrate}/${reciter.surahAudioId}/$surah.mp3';
+    return reciter.surahAudioUrl(surah);
   }
 
   void _syncDefaultSurahItems() {
@@ -237,7 +236,7 @@ class DownloadProvider with ChangeNotifier {
   }
 
   Future<void> downloadSurah(int surah, {required Reciter reciter}) async {
-    if (!reciter.supportsSurahAudioDownload) return;
+    if (!reciter.supportsSurahDownload(surah)) return;
 
     final id = _itemId(surah, reciter);
     if (_upsertItem(_buildSurahItem(surah, reciter))) {

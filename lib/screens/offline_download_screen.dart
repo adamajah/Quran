@@ -7,6 +7,7 @@ import '../providers/download_provider.dart';
 import '../providers/storage_provider.dart';
 import '../models/download_item.dart';
 import '../models/reciter.dart';
+import '../services/offline_reciter_service.dart';
 
 import '../constants/app_colors.dart';
 
@@ -22,6 +23,7 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
   String _searchQuery = '';
   int _filterIndex = 0; // 0=Semua, 1=Belum Download, 2=Sudah Download
   bool _showAllSurah = false;
+  final _offlineReciterService = OfflineReciterService();
 
   String _formatSize(double gb) {
     if (gb < 1) return '${(gb * 1024).toStringAsFixed(1)} MB';
@@ -695,115 +697,133 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       backgroundColor:
           isDark ? const Color(0xFF1E1E1E) : Theme.of(context).cardColor,
       builder: (sheetContext) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Pilih Qari',
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+          child: SizedBox(
+            height: MediaQuery.sizeOf(sheetContext).height * 0.78,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pilih Qari',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${q.getSurahName(surah)} • ${q.getVerseCount(surah)} Ayat',
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-                const SizedBox(height: 14),
-                Consumer<DownloadProvider>(
-                  builder: (context, provider, _) {
-                    return Column(
-                      children: List.generate(offlineReciters.length, (index) {
-                        final reciter = offlineReciters[index];
-                        final item = provider.itemForSurah(
-                          surah,
-                          reciter: reciter,
-                        );
-                        final status =
-                            item?.status ?? DownloadStatus.notDownloaded;
-                        final isDownloaded = status == DownloadStatus.completed;
-                        final isDownloading =
-                            status == DownloadStatus.downloading;
-                        return Column(
-                          children: [
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: CircleAvatar(
-                                backgroundColor: AppColors.gold.withValues(
-                                  alpha: 0.12,
-                                ),
-                                child: Text(
-                                  reciter.name[0],
-                                  style: const TextStyle(
-                                    color: AppColors.gold,
-                                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${q.getSurahName(surah)} • ${q.getVerseCount(surah)} Ayat',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 14),
+                  Expanded(
+                    child: FutureBuilder<List<Reciter>>(
+                      future: _offlineReciterService.getRecitersForSurah(surah),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        final reciters = snapshot.data!;
+                        return Consumer<DownloadProvider>(
+                          builder: (context, provider, _) {
+                            return ListView.separated(
+                              itemCount: reciters.length,
+                              separatorBuilder:
+                                  (_, _) => Divider(
+                                    height: 1,
+                                    color:
+                                        isDark
+                                            ? Colors.white10
+                                            : Colors.grey.shade200,
                                   ),
-                                ),
-                              ),
-                              title: Text(
-                                reciter.name,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                '${reciter.surahAudioBitrate} kbps • Audio offline',
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              trailing: FilledButton(
-                                onPressed:
-                                    isDownloaded || isDownloading
-                                        ? null
-                                        : () async {
-                                          await provider.downloadSurah(
-                                            surah,
-                                            reciter: reciter,
-                                          );
-                                          if (sheetContext.mounted) {
-                                            Navigator.pop(sheetContext);
-                                          }
-                                        },
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.gold,
-                                  foregroundColor: Colors.white,
-                                ),
-                                child: Text(
-                                  isDownloaded
-                                      ? 'Sudah'
-                                      : isDownloading
-                                      ? 'Proses'
-                                      : 'Download',
-                                ),
-                              ),
-                            ),
-                            if (index != offlineReciters.length - 1)
-                              Divider(
-                                height: 1,
-                                color:
-                                    isDark
-                                        ? Colors.white10
-                                        : Colors.grey.shade200,
-                              ),
-                          ],
+                              itemBuilder: (context, index) {
+                                final reciter = reciters[index];
+                                final item = provider.itemForSurah(
+                                  surah,
+                                  reciter: reciter,
+                                );
+                                final status =
+                                    item?.status ??
+                                    DownloadStatus.notDownloaded;
+                                final isDownloaded =
+                                    status == DownloadStatus.completed;
+                                final isDownloading =
+                                    status == DownloadStatus.downloading;
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppColors.gold.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    child: Text(
+                                      reciter.name[0],
+                                      style: const TextStyle(
+                                        color: AppColors.gold,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    reciter.name,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    reciter.collectionName ?? 'Audio offline',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  trailing: FilledButton(
+                                    onPressed:
+                                        isDownloaded || isDownloading
+                                            ? null
+                                            : () async {
+                                              await provider.downloadSurah(
+                                                surah,
+                                                reciter: reciter,
+                                              );
+                                              if (sheetContext.mounted) {
+                                                Navigator.pop(sheetContext);
+                                              }
+                                            },
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: AppColors.gold,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: Text(
+                                      isDownloaded
+                                          ? 'Sudah'
+                                          : isDownloading
+                                          ? 'Proses'
+                                          : 'Download',
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         );
-                      }),
-                    );
-                  },
-                ),
-              ],
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
