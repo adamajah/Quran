@@ -27,7 +27,7 @@ class HafalanSessionData {
 
 class HafalanEngine {
   final SpeechService _speechService = SpeechService();
-  
+
   int _currentSurah = 1;
   int _startVerse = 1;
   int _endVerse = 7;
@@ -46,39 +46,49 @@ class HafalanEngine {
     _mistakesCount = 0;
     _lastTranscript = "";
     _loadRange(surah, from, to);
-    
+
     await _speechService.init(
       onStatus: (status) => _notify(),
       onError: (error) => _notify(),
     );
-    
+
     await _listen();
   }
 
   void _loadRange(int surah, int from, int to) {
     _allWords = [];
     for (int v = from; v <= to; v++) {
-      String rawText = QuranUtils.getCleanVerse(surah, v, verseEndSymbol: false);
-      
-      List<String> words = rawText.split(RegExp(r'\s+'))
-          .where((w) => w.trim().isNotEmpty)
-          .toList();
-      
+      String rawText = QuranUtils.getCleanVerse(
+        surah,
+        v,
+        verseEndSymbol: false,
+      );
+
+      List<String> words =
+          rawText
+              .split(RegExp(r'\s+'))
+              .where((w) => w.trim().isNotEmpty)
+              .toList();
+
       for (var w in words) {
-        _allWords.add(InteractiveWord(
-          text: w,
-          cleanText: QuranMatchingService.normalizeArabic(w),
-          status: WordStatus.pending,
-        ));
+        _allWords.add(
+          InteractiveWord(
+            text: w,
+            cleanText: QuranMatchingService.normalizeArabic(w),
+            status: WordStatus.pending,
+          ),
+        );
       }
 
       // Verse marker
-      _allWords.add(InteractiveWord(
-        text: _toArabicDigit(v),
-        cleanText: '',
-        status: WordStatus.correct,
-        isVerseMarker: true,
-      ));
+      _allWords.add(
+        InteractiveWord(
+          text: _toArabicDigit(v),
+          cleanText: '',
+          status: WordStatus.correct,
+          isVerseMarker: true,
+        ),
+      );
     }
     _currentWordIndex = 0;
     _notify();
@@ -102,49 +112,62 @@ class HafalanEngine {
 
   void _processTranscript(String transcript) {
     // 1. Normalize the full transcript
-    List<String> recognizedWords = transcript.split(RegExp(r'\s+'))
-        .map((w) => QuranMatchingService.normalizeArabic(w))
-        .where((w) => w.isNotEmpty)
-        .toList();
+    List<String> recognizedWords =
+        transcript
+            .split(RegExp(r'\s+'))
+            .map((w) => QuranMatchingService.normalizeArabic(w))
+            .where((w) => w.isNotEmpty)
+            .toList();
 
     if (recognizedWords.isEmpty) return;
 
     // 2. Adaptive Window Matching
     // We look at the last 3 recognized words to handle STT re-corrections
     int lookbackCount = math.min(recognizedWords.length, 3);
-    List<String> recentRecognized = recognizedWords.sublist(recognizedWords.length - lookbackCount);
+    List<String> recentRecognized = recognizedWords.sublist(
+      recognizedWords.length - lookbackCount,
+    );
 
     for (String recognized in recentRecognized) {
       // 3. Sliding Search Window (Look ahead 2 words)
       int searchWindow = 2;
       int start = _currentWordIndex;
-      int end = math.min(_allWords.length, _currentWordIndex + searchWindow + 1);
+      int end = math.min(
+        _allWords.length,
+        _currentWordIndex + searchWindow + 1,
+      );
 
       bool foundMatch = false;
 
       for (int i = start; i < end; i++) {
         final target = _allWords[i];
-        if (target.isVerseMarker || target.status == WordStatus.correct) continue;
+        if (target.isVerseMarker || target.status == WordStatus.correct) {
+          continue;
+        }
 
-        double similarity = QuranMatchingService.getSimilarity(recognized, target.cleanText);
+        double similarity = QuranMatchingService.getSimilarity(
+          recognized,
+          target.cleanText,
+        );
 
         // Production Thresholds:
         // > 0.8: High Confidence (Correct)
         // > 0.5: Medium Confidence (Almost/Tracking)
         if (similarity >= 0.75) {
           target.status = WordStatus.correct;
-          
+
           // Handle skipped words (User jumped ahead)
           if (i > _currentWordIndex) {
             for (int k = _currentWordIndex; k < i; k++) {
-              if (!_allWords[k].isVerseMarker && _allWords[k].status == WordStatus.pending) {
+              if (!_allWords[k].isVerseMarker &&
+                  _allWords[k].status == WordStatus.pending) {
                 _allWords[k].status = WordStatus.wrong;
                 _mistakesCount++;
                 _vibrate();
               }
             }
           }
-          
+
           _currentWordIndex = i + 1;
           foundMatch = true;
           break;
@@ -158,20 +181,27 @@ class HafalanEngine {
 
       // 4. Misread Detection
       // If word is spoken but doesn't match current or next targets
-      if (!foundMatch && recognized.length > 3 && _currentWordIndex < _allWords.length) {
+      if (!foundMatch &&
+          recognized.length > 3 &&
+          _currentWordIndex < _allWords.length) {
         final currentTarget = _allWords[_currentWordIndex];
-        if (!currentTarget.isVerseMarker && currentTarget.status == WordStatus.pending) {
-           double sim = QuranMatchingService.getSimilarity(recognized, currentTarget.cleanText);
-           if (sim < 0.2) { // Clear mismatch
-              currentTarget.status = WordStatus.wrong;
-              _mistakesCount++;
-              _vibrate();
-              // Don't advance, let user retry or continue
-           }
+        if (!currentTarget.isVerseMarker &&
+            currentTarget.status == WordStatus.pending) {
+          double sim = QuranMatchingService.getSimilarity(
+            recognized,
+            currentTarget.cleanText,
+          );
+          if (sim < 0.2) {
+            // Clear mismatch
+            currentTarget.status = WordStatus.wrong;
+            _mistakesCount++;
+            _vibrate();
+            // Don't advance, let user retry or continue
+          }
         }
       }
     }
-    
+
     _notify();
   }
 
@@ -179,14 +209,16 @@ class HafalanEngine {
 
   void _notify() {
     if (_sessionController.isClosed) return;
-    _sessionController.add(HafalanSessionData(
-      surah: _currentSurah,
-      verse: _startVerse,
-      words: _allWords,
-      mistakes: _mistakesCount,
-      currentIndex: _currentWordIndex,
-      lastRecognized: _lastTranscript,
-    ));
+    _sessionController.add(
+      HafalanSessionData(
+        surah: _currentSurah,
+        verse: _startVerse,
+        words: _allWords,
+        mistakes: _mistakesCount,
+        currentIndex: _currentWordIndex,
+        lastRecognized: _lastTranscript,
+      ),
+    );
   }
 
   Future<void> stopSession() async {
@@ -197,7 +229,7 @@ class HafalanEngine {
 
   void nextAyah() {
     if (_endVerse < q.getVerseCount(_currentSurah)) {
-      _startVerse++; 
+      _startVerse++;
       _endVerse++;
       _loadRange(_currentSurah, _startVerse, _endVerse);
     }
@@ -205,7 +237,7 @@ class HafalanEngine {
 
   void prevAyah() {
     if (_startVerse > 1) {
-      _startVerse--; 
+      _startVerse--;
       _endVerse--;
       _loadRange(_currentSurah, _startVerse, _endVerse);
     }

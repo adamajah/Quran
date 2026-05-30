@@ -20,8 +20,8 @@ class VerseState {
 }
 
 class RepeatConfig {
-  int count;          // times to repeat
-  int delaySeconds;   // pause between repeats
+  int count; // times to repeat
+  int delaySeconds; // pause between repeats
   int fromVerse;
   int toVerse;
   RepeatConfig({
@@ -50,8 +50,10 @@ class QuizQuestion {
   final String promptText, correctAnswer;
   final List<String> options;
   const QuizQuestion({
-    required this.surah, required this.promptVerse,
-    required this.promptText, required this.correctAnswer,
+    required this.surah,
+    required this.promptVerse,
+    required this.promptText,
+    required this.correctAnswer,
     required this.options,
   });
 }
@@ -61,7 +63,8 @@ class QuizQuestion {
 class InteractiveWord {
   final String text;
   final String cleanText;
-  final bool isVerseMarker;  // true = verse-end badge, skip during speech matching
+  final bool
+  isVerseMarker; // true = verse-end badge, skip during speech matching
   WordStatus status;
   InteractiveWord({
     required this.text,

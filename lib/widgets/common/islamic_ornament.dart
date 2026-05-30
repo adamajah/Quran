@@ -25,5 +25,3 @@ class IslamicOrnament extends StatelessWidget {
     );
   }
 }
-
-

@@ -21,11 +21,14 @@ class QuranMatchingService {
     cleaned = cleaned.replaceAll('\u0629', '\u0647'); // Ta Marbuta -> Ha
 
     // 5. Normalize Hamza (optional, for even looser matching)
-    cleaned = cleaned.replaceAll('\u0621', '\u0627'); // Isolated Hamza -> Alif (sometimes STT does this)
+    cleaned = cleaned.replaceAll(
+      '\u0621',
+      '\u0627',
+    ); // Isolated Hamza -> Alif (sometimes STT does this)
 
     // 6. Strip symbols, verse markers, and digits
     cleaned = cleaned.replaceAll(RegExp(r'[^\u0621-\u064A\s]'), '');
-    
+
     // 7. Collapse whitespace
     cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
 
@@ -36,16 +39,18 @@ class QuranMatchingService {
   static double getSimilarity(String s1, String s2) {
     if (s1 == s2) return 1.0;
     if (s1.isEmpty || s2.isEmpty) return 0.0;
-    
+
     int distance = _levenshteinDistance(s1, s2);
     int maxLen = math.max(s1.length, s2.length);
-    
+
     // Weighted similarity: give more importance to the start of the word
     double baseScore = 1.0 - (distance / maxLen);
-    
+
     // Prefix bonus (if first 2 chars match, it's more likely the same word in Arabic)
     double prefixBonus = 0.0;
-    if (s1.length >= 2 && s2.length >= 2 && s1.substring(0, 2) == s2.substring(0, 2)) {
+    if (s1.length >= 2 &&
+        s2.length >= 2 &&
+        s1.substring(0, 2) == s2.substring(0, 2)) {
       prefixBonus = 0.1;
     }
 

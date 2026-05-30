@@ -19,7 +19,6 @@ import '../../utils/quran_utils.dart';
 import 'hafalan_widgets.dart';
 
 class HafalanTab extends StatefulWidget {
-
   final int surah;
   final int verseCount;
 
@@ -36,36 +35,21 @@ class HafalanTab extends StatefulWidget {
 
   final Animation<double> pulseAnim;
 
-  final VerseState Function(
-    int,
-    int,
-  ) getState;
+  final VerseState Function(int, int) getState;
 
-  final ValueChanged<int>
-      onChangeSurah;
+  final ValueChanged<int> onChangeSurah;
 
-  final ValueChanged<HideMode>
-      onHideModeChanged;
+  final ValueChanged<HideMode> onHideModeChanged;
 
-  final void Function(
-    int,
-    int,
-  ) onCycleStatus;
+  final void Function(int, int) onCycleStatus;
 
   final ValueChanged<int> onResetSurahStatus;
 
-  final void Function(
-    int,
-    int,
-  ) onToggleBookmark;
+  final void Function(int, int) onToggleBookmark;
 
-  final void Function(
-    int,
-    int,
-  ) onRevealVerse;
+  final void Function(int, int) onRevealVerse;
 
-  final ValueChanged<RepeatConfig>
-      onRepeatCfgChanged;
+  final ValueChanged<RepeatConfig> onRepeatCfgChanged;
 
   final VoidCallback onStartRepeat;
 
@@ -103,18 +87,14 @@ class HafalanTab extends StatefulWidget {
   });
 
   @override
-  State<HafalanTab> createState() =>
-      _HafalanTabState();
+  State<HafalanTab> createState() => _HafalanTabState();
 }
 
 class _HafalanTabState extends State<HafalanTab> {
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : AppColors.dark;
-    final surahName = q.getSurahName(widget.surah);
-
     return Column(
       children: [
         // ── Compact Toolbar ──────────────────────────────────────
@@ -122,7 +102,9 @@ class _HafalanTabState extends State<HafalanTab> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1A1A1A) : AppColors.pageBg,
-            border: Border(bottom: BorderSide(color: AppColors.gold.withOpacity(0.18))),
+            border: Border(
+              bottom: BorderSide(color: AppColors.gold.withValues(alpha: 0.18)),
+            ),
           ),
           child: Column(
             children: [
@@ -133,39 +115,101 @@ class _HafalanTabState extends State<HafalanTab> {
                     flex: 2,
                     child: DropdownButtonFormField<int>(
                       value: widget.surah,
-                      dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.gold.withOpacity(0.4))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.gold.withOpacity(0.4))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.gold, width: 1.5)),
-                        filled: true, fillColor: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
-                        prefixIcon: Icon(Icons.menu_book_rounded, size: 14, color: AppColors.gold),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: AppColors.gold,
+                            width: 1.5,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
+                        prefixIcon: Icon(
+                          Icons.menu_book_rounded,
+                          size: 14,
+                          color: AppColors.gold,
+                        ),
                       ),
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textColor),
-                      items: List.generate(114, (i) => i + 1)
-                          .map((s) => DropdownMenuItem(value: s, child: Text(q.getSurahName(s))))
-                          .toList(),
-                      onChanged: (s) { if (s != null) widget.onChangeSurah(s); },
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                      items:
+                          List.generate(114, (i) => i + 1)
+                              .map(
+                                (s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text(q.getSurahName(s)),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (s) {
+                        if (s != null) widget.onChangeSurah(s);
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<int>(
                       value: widget.repeatCfg.fromVerse,
-                      dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.gold.withOpacity(0.2))),
-                        labelText: 'Dari', labelStyle: TextStyle(fontSize: 9, color: textColor.withOpacity(0.5)),
-                        filled: true, fillColor: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        labelText: 'Dari',
+                        labelStyle: TextStyle(
+                          fontSize: 9,
+                          color: textColor.withValues(alpha: 0.5),
+                        ),
+                        filled: true,
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
                       ),
                       style: TextStyle(fontSize: 11, color: textColor),
-                      items: List.generate(widget.verseCount, (i) => i + 1)
-                          .map((v) => DropdownMenuItem(value: v, child: Text('$v'))).toList(),
+                      items:
+                          List.generate(widget.verseCount, (i) => i + 1)
+                              .map(
+                                (v) => DropdownMenuItem(
+                                  value: v,
+                                  child: Text('$v'),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (v) {
                         if (v != null) {
                           final newCfg = widget.repeatCfg;
@@ -180,18 +224,47 @@ class _HafalanTabState extends State<HafalanTab> {
                   Expanded(
                     child: DropdownButtonFormField<int>(
                       value: widget.repeatCfg.toVerse,
-                      dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.gold.withOpacity(0.2))),
-                        labelText: 'Ke', labelStyle: TextStyle(fontSize: 9, color: textColor.withOpacity(0.5)),
-                        filled: true, fillColor: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        labelText: 'Ke',
+                        labelStyle: TextStyle(
+                          fontSize: 9,
+                          color: textColor.withValues(alpha: 0.5),
+                        ),
+                        filled: true,
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
                       ),
                       style: TextStyle(fontSize: 11, color: textColor),
-                      items: List.generate(widget.verseCount - widget.repeatCfg.fromVerse + 1, (i) => i + widget.repeatCfg.fromVerse)
-                          .map((v) => DropdownMenuItem(value: v, child: Text('$v'))).toList(),
+                      items:
+                          List.generate(
+                                widget.verseCount -
+                                    widget.repeatCfg.fromVerse +
+                                    1,
+                                (i) => i + widget.repeatCfg.fromVerse,
+                              )
+                              .map(
+                                (v) => DropdownMenuItem(
+                                  value: v,
+                                  child: Text('$v'),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (v) {
                         if (v != null) {
                           final newCfg = widget.repeatCfg;
@@ -207,51 +280,76 @@ class _HafalanTabState extends State<HafalanTab> {
               // Row 2: Hide mode quick toggles
               Row(
                 children: [
-                  Text('Mode:', style: TextStyle(fontSize: 10, color: textColor.withOpacity(0.5))),
+                  Text(
+                    'Mode:',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: textColor.withValues(alpha: 0.5),
+                    ),
+                  ),
                   const SizedBox(width: 4),
-                  _HideModeChip(label: 'Tampil', icon: Icons.visibility_rounded,
+                  _HideModeChip(
+                    label: 'Tampil',
+                    icon: Icons.visibility_rounded,
                     active: widget.hideMode == HideMode.none,
-                    onTap: () => widget.onHideModeChanged(HideMode.none)),
+                    onTap: () => widget.onHideModeChanged(HideMode.none),
+                  ),
                   const SizedBox(width: 4),
-                  _HideModeChip(label: 'Sembunyi', icon: Icons.visibility_off_rounded,
+                  _HideModeChip(
+                    label: 'Sembunyi',
+                    icon: Icons.visibility_off_rounded,
                     active: widget.hideMode == HideMode.allText,
-                    onTap: () => widget.onHideModeChanged(HideMode.allText)),
+                    onTap: () => widget.onHideModeChanged(HideMode.allText),
+                  ),
                   const SizedBox(width: 4),
-                  _HideModeChip(label: 'Sebagian', icon: Icons.remove_red_eye_rounded,
+                  _HideModeChip(
+                    label: 'Sebagian',
+                    icon: Icons.remove_red_eye_rounded,
                     active: widget.hideMode == HideMode.partialWords,
-                    onTap: () => widget.onHideModeChanged(HideMode.partialWords)),
+                    onTap:
+                        () => widget.onHideModeChanged(HideMode.partialWords),
+                  ),
                   const Spacer(),
                   InkWell(
                     onTap: () {
                       showDialog(
                         context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Reset Ceklis Hafalan?'),
-                          content: Text('Apakah Anda ingin mematikan/mereset semua ceklis hafalan untuk Surah ${q.getSurahName(widget.surah)}?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Batal'),
+                        builder:
+                            (ctx) => AlertDialog(
+                              title: const Text('Reset Ceklis Hafalan?'),
+                              content: Text(
+                                'Apakah Anda ingin mematikan/mereset semua ceklis hafalan untuk Surah ${q.getSurahName(widget.surah)}?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Batal'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    widget.onResetSurahStatus(widget.surah);
+                                  },
+                                  child: const Text(
+                                    'Reset',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                widget.onResetSurahStatus(widget.surah);
-                              },
-                              child: const Text('Reset', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
                       );
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.06),
+                        color: Colors.red.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.red.withOpacity(0.2),
+                          color: Colors.red.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
@@ -286,42 +384,98 @@ class _HafalanTabState extends State<HafalanTab> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButtonFormField<Reciter>(
                         value: widget.selectedReciter,
-                        dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        dropdownColor:
+                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         decoration: InputDecoration(
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: AppColors.gold.withOpacity(0.2))),
-                          prefixIcon: Icon(Icons.person_rounded, size: 12, color: AppColors.gold),
-                          filled: true, fillColor: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: BorderSide(
+                              color: AppColors.gold.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.person_rounded,
+                            size: 12,
+                            color: AppColors.gold,
+                          ),
+                          filled: true,
+                          fillColor:
+                              isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : AppColors.pageBg,
                         ),
                         style: TextStyle(fontSize: 11, color: textColor),
-                        items: availableReciters.map((r) => DropdownMenuItem(value: r, child: Text(r.name, overflow: TextOverflow.ellipsis))).toList(),
-                        onChanged: (r) { if (r != null) widget.onReciterChanged(r); },
+                        items:
+                            availableReciters
+                                .map(
+                                  (r) => DropdownMenuItem(
+                                    value: r,
+                                    child: Text(
+                                      r.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (r) {
+                          if (r != null) widget.onReciterChanged(r);
+                        },
                       ),
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Text('Ulang:', style: TextStyle(fontSize: 10, color: textColor.withOpacity(0.5))),
+                  Text(
+                    'Ulang:',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: textColor.withValues(alpha: 0.5),
+                    ),
+                  ),
                   const SizedBox(width: 4),
-                  ...[3, 5, 10].map((c) => Padding(
-                    padding: const EdgeInsets.only(right: 3),
-                    child: InkWell(
-                      onTap: () {
-                        final newCfg = widget.repeatCfg;
-                        newCfg.count = c;
-                        widget.onRepeatCfgChanged(newCfg);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: widget.repeatCfg.count == c ? AppColors.gold : AppColors.gold.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.gold.withOpacity(0.2)),
+                  ...[3, 5, 10].map(
+                    (c) => Padding(
+                      padding: const EdgeInsets.only(right: 3),
+                      child: InkWell(
+                        onTap: () {
+                          final newCfg = widget.repeatCfg;
+                          newCfg.count = c;
+                          widget.onRepeatCfgChanged(newCfg);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                widget.repeatCfg.count == c
+                                    ? AppColors.gold
+                                    : AppColors.gold.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: AppColors.gold.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Text(
+                            '${c}x',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  widget.repeatCfg.count == c
+                                      ? Colors.white
+                                      : AppColors.gold,
+                            ),
+                          ),
                         ),
-                        child: Text('${c}x', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: widget.repeatCfg.count == c ? Colors.white : AppColors.gold)),
                       ),
                     ),
-                  )),
+                  ),
                 ],
               ),
             ],
@@ -345,153 +499,95 @@ class _HafalanTabState extends State<HafalanTab> {
   // ─────────────────────────────────────────
   // BUILD VERSE ROW
   // ─────────────────────────────────────────
-  Widget _buildVerseRow(
-    int verse,
-  ) {
+  Widget _buildVerseRow(int verse) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final st = widget.getState(
-      widget.surah,
-      verse,
-    );
+    final st = widget.getState(widget.surah, verse);
 
-    final isActivePlay =
-
-        widget.playing &&
-            widget.playVerse ==
-                verse;
+    final isActivePlay = widget.playing && widget.playVerse == verse;
 
     final isRepeatVerse =
-
-        widget.repeatActive &&
-            widget
-                    .repeatCurrentVerse ==
-                verse;
+        widget.repeatActive && widget.repeatCurrentVerse == verse;
 
     return GestureDetector(
-
       onTap: () {
-
-        if (
-            widget.hideMode !=
-                HideMode.none
-        ) {
-
-          widget.onRevealVerse(
-            widget.surah,
-            verse,
-          );
-
+        if (widget.hideMode != HideMode.none) {
+          widget.onRevealVerse(widget.surah, verse);
         } else {
-
-          widget.onPlayVerse(
-            verse,
-          );
+          widget.onPlayVerse(verse);
         }
       },
 
-      onLongPress: () =>
-          _showVerseMenu(
-        verse,
-        st,
-      ),
+      onLongPress: () => _showVerseMenu(verse, st),
 
       child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
 
-        duration:
-            const Duration(
-          milliseconds: 180,
-        ),
+        margin: const EdgeInsets.symmetric(vertical: 4),
 
-        margin:
-            const EdgeInsets.symmetric(
-          vertical: 4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
 
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 10,
-        ),
-
-        decoration:
-            BoxDecoration(
-
+        decoration: BoxDecoration(
           color:
-              isActivePlay ||
-                      isRepeatVerse
-                  ? AppColors.hl
-                      .withOpacity(
-                          0.06)
+              isActivePlay || isRepeatVerse
+                  ? AppColors.hl.withValues(alpha: 0.06)
                   : (isDark ? const Color(0xFF222222) : Colors.white),
 
-          borderRadius:
-              BorderRadius.circular(
-                  10),
+          borderRadius: BorderRadius.circular(10),
 
           border: Border.all(
-
-            color: activeBorder(
-              st,
-              isActivePlay,
-              isRepeatVerse,
-            ),
+            color: activeBorder(st, isActivePlay, isRepeatVerse),
           ),
           boxShadow: [
-            if (!isDark) BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 2))
+            if (!isDark)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
           ],
         ),
 
         child: Row(
-
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-
             // STATUS
             GestureDetector(
-
               onTap: () {
-
-                widget.onCycleStatus(
-                  widget.surah,
-                  verse,
-                );
+                widget.onCycleStatus(widget.surah, verse);
               },
 
               child: Container(
-
                 width: 26,
                 height: 26,
 
-                decoration:
-                    BoxDecoration(
+                decoration: BoxDecoration(
+                  color: _statusColor(st.status).withValues(alpha: 0.12),
 
-                  color:
-                      _statusColor(
-                    st.status,
-                  ).withOpacity(0.12),
-
-                  shape:
-                      BoxShape.circle,
+                  shape: BoxShape.circle,
                 ),
 
-                child: (widget.hideMode == HideMode.allText && st.status != HafalanStatus.hafal)
-                    ? Center(
-                        child: Text(
-                          '$verse',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white70 : AppColors.dark.withOpacity(0.7),
+                child:
+                    (widget.hideMode == HideMode.allText &&
+                            st.status != HafalanStatus.hafal)
+                        ? Center(
+                          child: Text(
+                            '$verse',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  isDark
+                                      ? Colors.white70
+                                      : AppColors.dark.withValues(alpha: 0.7),
+                            ),
                           ),
+                        )
+                        : Icon(
+                          _statusIcon(st.status),
+                          size: 14,
+                          color: _statusColor(st.status),
                         ),
-                      )
-                    : Icon(
-                        _statusIcon(st.status),
-                        size: 14,
-                        color: _statusColor(st.status),
-                      ),
               ),
             ),
 
@@ -499,35 +595,15 @@ class _HafalanTabState extends State<HafalanTab> {
 
             // QURAN TEXT
             Expanded(
-
-              child:
-                  _buildVerseText(
-
-                verse,
-
-                st,
-
-                isActivePlay ||
-                    isRepeatVerse,
-              ),
+              child: _buildVerseText(verse, st, isActivePlay || isRepeatVerse),
             ),
 
             // BOOKMARK
             if (st.isBookmarked)
-
               Padding(
+                padding: const EdgeInsets.only(left: 6),
 
-                padding:
-                    const EdgeInsets.only(
-                  left: 6,
-                ),
-
-                child: Icon(
-                  Icons.bookmark,
-                  size: 14,
-                  color:
-                      AppColors.gold,
-                ),
+                child: Icon(Icons.bookmark, size: 14, color: AppColors.gold),
               ),
           ],
         ),
@@ -538,23 +614,25 @@ class _HafalanTabState extends State<HafalanTab> {
   // ─────────────────────────────────────────
   // BUILD VERSE TEXT
   // ─────────────────────────────────────────
-  Widget _buildVerseText(
-    int verse,
-    VerseState st,
-    bool active,
-  ) {
+  Widget _buildVerseText(int verse, VerseState st, bool active) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : AppColors.ink;
 
     // SINGLE source of truth: get text WITHOUT symbol, add ONE badge via _ar()
-    final cleanText = QuranUtils.getCleanVerse(widget.surah, verse, verseEndSymbol: false);
+    final cleanText = QuranUtils.getCleanVerse(
+      widget.surah,
+      verse,
+      verseEndSymbol: false,
+    );
 
     // HIDE MODE
     if (widget.hideMode == HideMode.allText && !st.isRevealed) {
       return Container(
         height: 38,
         decoration: BoxDecoration(
-          color: (isDark ? Colors.white : AppColors.dark).withOpacity(0.06),
+          color: (isDark ? Colors.white : AppColors.dark).withValues(
+            alpha: 0.06,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -562,7 +640,9 @@ class _HafalanTabState extends State<HafalanTab> {
             'Tap untuk tampilkan ayat',
             style: TextStyle(
               fontSize: 11,
-              color: (isDark ? Colors.white : AppColors.dark).withOpacity(0.45),
+              color: (isDark ? Colors.white : AppColors.dark).withValues(
+                alpha: 0.45,
+              ),
             ),
           ),
         ),
@@ -571,11 +651,7 @@ class _HafalanTabState extends State<HafalanTab> {
 
     // PARTIAL MODE — pass clean text (no symbol), PartialHideText handles display
     if (widget.hideMode == HideMode.partialWords) {
-      return PartialHideText(
-        text: cleanText,
-        active: active,
-        fontSize: 21,
-      );
+      return PartialHideText(text: cleanText, active: active, fontSize: 21);
     }
 
     // NORMAL MODE — render text + ONE verse-number badge
@@ -588,7 +664,8 @@ class _HafalanTabState extends State<HafalanTab> {
               fontSize: 21,
               height: 2.0,
               color: active ? AppColors.hl : textColor,
-              backgroundColor: active ? AppColors.hl.withOpacity(0.05) : null,
+              backgroundColor:
+                  active ? AppColors.hl.withValues(alpha: 0.05) : null,
             ),
           ),
           TextSpan(text: ' '),
@@ -597,7 +674,10 @@ class _HafalanTabState extends State<HafalanTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
-                color: active ? AppColors.hl.withOpacity(0.12) : AppColors.gold.withOpacity(0.12),
+                color:
+                    active
+                        ? AppColors.hl.withValues(alpha: 0.12)
+                        : AppColors.gold.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -626,52 +706,33 @@ class _HafalanTabState extends State<HafalanTab> {
   // ─────────────────────────────────────────
   // SHOW MENU
   // ─────────────────────────────────────────
-  void _showVerseMenu(
-    int verse,
-    VerseState st,
-  ) {
+  void _showVerseMenu(int verse, VerseState st) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
-
       context: context,
       backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) {
-
         return SafeArea(
-
           child: Wrap(
-
             children: [
-
               ListTile(
-
-                leading:
-                    Icon(
-                  Icons.bookmark,
-                  color: AppColors.gold,
-                ),
+                leading: Icon(Icons.bookmark, color: AppColors.gold),
 
                 title: Text(
-
-                  st.isBookmarked
-                      ? 'Hapus Bookmark'
-                      : 'Tambah Bookmark',
-                  style: TextStyle(color: isDark ? Colors.white : AppColors.dark),
+                  st.isBookmarked ? 'Hapus Bookmark' : 'Tambah Bookmark',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : AppColors.dark,
+                  ),
                 ),
 
                 onTap: () {
+                  Navigator.pop(context);
 
-                  Navigator.pop(
-                    context,
-                  );
-
-                  widget
-                      .onToggleBookmark(
-                    widget.surah,
-                    verse,
-                  );
+                  widget.onToggleBookmark(widget.surah, verse);
                 },
               ),
             ],
@@ -691,7 +752,6 @@ class _HafalanTabState extends State<HafalanTab> {
       case HafalanStatus.murojaah:
         return Icons.refresh;
       case HafalanStatus.belum:
-      default:
         return Icons.radio_button_unchecked;
     }
   }
@@ -706,28 +766,24 @@ class _HafalanTabState extends State<HafalanTab> {
       case HafalanStatus.murojaah:
         return Colors.orange;
       case HafalanStatus.belum:
-      default:
         return Colors.grey;
     }
   }
 
-  Color activeBorder(
-    VerseState st,
-    bool active,
-    bool repeat,
-  ) {
+  Color activeBorder(VerseState st, bool active, bool repeat) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (active || repeat) {
-      return AppColors.hl
-          .withOpacity(0.25);
+      return AppColors.hl.withValues(alpha: 0.25);
     }
 
     if (st.isBookmarked) {
-      return AppColors.gold.withOpacity(0.25);
+      return AppColors.gold.withValues(alpha: 0.25);
     }
 
-    return isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.12);
+    return isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.grey.withValues(alpha: 0.12);
   }
 }
 
@@ -746,7 +802,6 @@ class _HideModeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -754,21 +809,19 @@ class _HideModeChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: active ? AppColors.gold : AppColors.gold.withOpacity(0.05),
+          color:
+              active ? AppColors.gold : AppColors.gold.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? AppColors.gold : AppColors.gold.withOpacity(0.2),
+            color:
+                active ? AppColors.gold : AppColors.gold.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: active ? Colors.white : AppColors.gold,
-            ),
+            Icon(icon, size: 14, color: active ? Colors.white : AppColors.gold),
             const SizedBox(width: 4),
             Text(
               label,

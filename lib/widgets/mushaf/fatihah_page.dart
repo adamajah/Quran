@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:quran/quran.dart' as q;
 import 'package:quran_library/quran_library.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
@@ -57,13 +56,24 @@ class _FatihahPageState extends State<FatihahPage> {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 10),
-            Text('$name: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-            Expanded(child: Text(desc, style: const TextStyle(fontSize: 12, color: Colors.white70))),
+            Text(
+              '$name: ',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                desc,
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ),
           ],
         ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.dark.withOpacity(0.9),
+        backgroundColor: AppColors.dark.withValues(alpha: 0.9),
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 80),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -72,29 +82,39 @@ class _FatihahPageState extends State<FatihahPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      PageHeader(data: widget.data),
-      const MushafRule(thick: true),
-      const FatihahSurahBanner(),
-      Expanded(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Column(
-            children: widget.data.verses.map((v) => _buildVerseRow(v)).toList(),
+    return Column(
+      children: [
+        PageHeader(data: widget.data),
+        const MushafRule(thick: true),
+        const FatihahSurahBanner(),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Column(
+              children:
+                  widget.data.verses.map((v) => _buildVerseRow(v)).toList(),
+            ),
           ),
         ),
-      ),
-      const MushafRule(thick: true),
-      PageNum(n: widget.data.pageNum),
-    ]);
+        const MushafRule(thick: true),
+        PageNum(n: widget.data.pageNum),
+      ],
+    );
   }
 
   Widget _buildVerseRow(VerseRef v) {
-    final active = (widget.isPlayingPage && v.surah == widget.playSurah && v.verse == widget.playVerse) ||
+    final active =
+        (widget.isPlayingPage &&
+            v.surah == widget.playSurah &&
+            v.verse == widget.playVerse) ||
         (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse);
     final key = '${v.surah}:${v.verse}';
     final isBookmarked = widget.bookmarkedVerses.contains(key);
-    final text = QuranUtils.getCleanVerse(v.surah, v.verse, verseEndSymbol: false);
+    final text = QuranUtils.getCleanVerse(
+      v.surah,
+      v.verse,
+      verseEndSymbol: false,
+    );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inkColor = isDark ? Colors.white : AppColors.ink;
@@ -107,39 +127,61 @@ class _FatihahPageState extends State<FatihahPage> {
         margin: const EdgeInsets.symmetric(vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: active
-              ? (isDark ? Colors.white.withOpacity(0.12) : AppColors.hl.withOpacity(0.06))
-              : isBookmarked
-                  ? AppColors.gold.withOpacity(0.08)
+          color:
+              active
+                  ? (isDark
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : AppColors.hl.withValues(alpha: 0.06))
+                  : isBookmarked
+                  ? AppColors.gold.withValues(alpha: 0.08)
                   : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          border: isBookmarked
-              ? Border.all(color: AppColors.gold.withOpacity(0.3), width: 0.8)
-              : null,
+          border:
+              isBookmarked
+                  ? Border.all(
+                    color: AppColors.gold.withValues(alpha: 0.3),
+                    width: 0.8,
+                  )
+                  : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             if (isBookmarked)
               Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child:
-                      Icon(Icons.bookmark_rounded, size: 10, color: AppColors.gold)),
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.bookmark_rounded,
+                  size: 10,
+                  color: AppColors.gold,
+                ),
+              ),
             Expanded(
               child: Text.rich(
-                TextSpan(children: [
-                  ..._buildTajwidSpans(
-                      text, 23 * widget.fontScale, 2.2, active, widget.showTajwid, inkColor),
-                  TextSpan(
-                    text: ' ${_ar(v.verse)}',
-                    style: QuranLibrary().hafsStyle.copyWith(
-                          fontSize: 15 * widget.fontScale,
-                          color: active ? (isDark ? Colors.white : AppColors.hl) : AppColors.gold,
-                          fontWeight: FontWeight.bold,
-                          height: 2.2,
-                        ),
-                  ),
-                ]),
+                TextSpan(
+                  children: [
+                    ..._buildTajwidSpans(
+                      text,
+                      23 * widget.fontScale,
+                      2.2,
+                      active,
+                      widget.showTajwid,
+                      inkColor,
+                    ),
+                    TextSpan(
+                      text: ' ${_ar(v.verse)}',
+                      style: QuranLibrary().hafsStyle.copyWith(
+                        fontSize: 15 * widget.fontScale,
+                        color:
+                            active
+                                ? (isDark ? Colors.white : AppColors.hl)
+                                : AppColors.gold,
+                        fontWeight: FontWeight.bold,
+                        height: 2.2,
+                      ),
+                    ),
+                  ],
+                ),
                 textAlign: TextAlign.center,
                 textDirection: TextDirection.rtl,
               ),
@@ -151,19 +193,30 @@ class _FatihahPageState extends State<FatihahPage> {
   }
 
   List<InlineSpan> _buildTajwidSpans(
-      String text, double fontSize, double height, bool active, bool showTajwid, Color inkColor) {
+    String text,
+    double fontSize,
+    double height,
+    bool active,
+    bool showTajwid,
+    Color inkColor,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (!showTajwid) {
       return [
         TextSpan(
           text: text,
           style: QuranLibrary().hafsStyle.copyWith(
-                fontSize: fontSize,
-                height: height,
-                color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
-                backgroundColor: active ? (isDark ? Colors.white.withOpacity(0.12) : AppColors.hl.withOpacity(0.06)) : null,
-              ),
-        )
+            fontSize: fontSize,
+            height: height,
+            color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
+            backgroundColor:
+                active
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : AppColors.hl.withValues(alpha: 0.06))
+                    : null,
+          ),
+        ),
       ];
     }
     final spans = <InlineSpan>[];
@@ -172,21 +225,30 @@ class _FatihahPageState extends State<FatihahPage> {
       final nextChar = i + 1 < text.length ? text[i + 1] : null;
       final info = TajwidUtils.getTajwidInfo(char, nextChar);
       final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
-      final color = active 
-          ? (isDark ? Colors.white : AppColors.hl) 
-          : (isDefaultColor ? inkColor : info.$1);
+      final color =
+          active
+              ? (isDark ? Colors.white : AppColors.hl)
+              : (isDefaultColor ? inkColor : info.$1);
 
-      spans.add(TextSpan(
-        text: char,
-        recognizer: TapGestureRecognizer()
-            ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
-        style: QuranLibrary().hafsStyle.copyWith(
-              fontSize: fontSize,
-              height: height,
-              color: color,
-              backgroundColor: active ? (isDark ? Colors.white.withOpacity(0.12) : AppColors.hl.withOpacity(0.06)) : null,
-            ),
-      ));
+      spans.add(
+        TextSpan(
+          text: char,
+          recognizer:
+              TapGestureRecognizer()
+                ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
+          style: QuranLibrary().hafsStyle.copyWith(
+            fontSize: fontSize,
+            height: height,
+            color: color,
+            backgroundColor:
+                active
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : AppColors.hl.withValues(alpha: 0.06))
+                    : null,
+          ),
+        ),
+      );
     }
     return spans;
   }
@@ -201,21 +263,30 @@ class FatihahSurahBanner extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(6, 4, 6, 2),
-      child: Row(children: [
-        const Expanded(child: OrnamentSide(mirror: false)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF252525) : const Color(0xFFF0E8D8),
-            border: Border.all(color: AppColors.gold.withOpacity(0.6), width: 0.8),
+      child: Row(
+        children: [
+          const Expanded(child: OrnamentSide(mirror: false)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF252525) : const Color(0xFFF0E8D8),
+              border: Border.all(
+                color: AppColors.gold.withValues(alpha: 0.6),
+                width: 0.8,
+              ),
+            ),
+            child: Text(
+              'سُورَةُ ٱلْفَاتِحَةِ',
+              style: AppTextStyle.quranSurahNameStyle(
+                fontSize: 18,
+                color: textColor,
+              ),
+              textDirection: TextDirection.rtl,
+            ),
           ),
-          child: Text('سُورَةُ ٱلْفَاتِحَةِ',
-              style:
-                  AppTextStyle.quranSurahNameStyle(fontSize: 18, color: textColor),
-              textDirection: TextDirection.rtl),
-        ),
-        const Expanded(child: OrnamentSide(mirror: true)),
-      ]),
+          const Expanded(child: OrnamentSide(mirror: true)),
+        ],
+      ),
     );
   }
 }
@@ -228,12 +299,12 @@ class OrnamentSide extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final darkColor = isDark ? Colors.white : AppColors.dark;
     return Transform.scale(
-        scaleX: mirror ? -1 : 1,
-        child: CustomPaint(
-          painter: OrnamentPainter(gold: AppColors.gold, dark: darkColor),
-          child: const SizedBox(height: 36),
-        ),
-      );
+      scaleX: mirror ? -1 : 1,
+      child: CustomPaint(
+        painter: OrnamentPainter(gold: AppColors.gold, dark: darkColor),
+        child: const SizedBox(height: 36),
+      ),
+    );
   }
 }
 
@@ -244,37 +315,42 @@ class OrnamentPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final fillPaint = Paint()
-      ..color = gold.withOpacity(0.15)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = gold
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
+    final fillPaint =
+        Paint()
+          ..color = gold.withValues(alpha: 0.15)
+          ..style = PaintingStyle.fill;
+    final strokePaint =
+        Paint()
+          ..color = gold
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8;
     const sz = 8.0;
     const step = 14.0;
     for (double x = sz; x < w - sz / 2; x += step) {
-      final p = Path()
-        ..moveTo(x, h / 2 - sz / 2)
-        ..lineTo(x + sz / 2, h / 2)
-        ..lineTo(x, h / 2 + sz / 2)
-        ..lineTo(x - sz / 2, h / 2)
-        ..close();
+      final p =
+          Path()
+            ..moveTo(x, h / 2 - sz / 2)
+            ..lineTo(x + sz / 2, h / 2)
+            ..lineTo(x, h / 2 + sz / 2)
+            ..lineTo(x - sz / 2, h / 2)
+            ..close();
       canvas.drawPath(p, fillPaint);
       canvas.drawPath(p, strokePaint);
     }
     canvas.drawLine(
-        Offset(0, h * 0.25),
-        Offset(w, h * 0.25),
-        Paint()
-          ..color = gold.withOpacity(0.5)
-          ..strokeWidth = 0.6);
+      Offset(0, h * 0.25),
+      Offset(w, h * 0.25),
+      Paint()
+        ..color = gold.withValues(alpha: 0.5)
+        ..strokeWidth = 0.6,
+    );
     canvas.drawLine(
-        Offset(0, h * 0.75),
-        Offset(w, h * 0.75),
-        Paint()
-          ..color = gold.withOpacity(0.5)
-          ..strokeWidth = 0.6);
+      Offset(0, h * 0.75),
+      Offset(w, h * 0.75),
+      Paint()
+        ..color = gold.withValues(alpha: 0.5)
+        ..strokeWidth = 0.6,
+    );
   }
 
   @override

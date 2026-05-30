@@ -11,7 +11,8 @@ class AudioService {
   Future<void> playOffline(String path) async {
     if (_currentPlayingPath == path && _player.state == PlayerState.playing) {
       await _player.pause();
-    } else if (_currentPlayingPath == path && _player.state == PlayerState.paused) {
+    } else if (_currentPlayingPath == path &&
+        _player.state == PlayerState.paused) {
       await _player.resume();
     } else {
       await _player.stop();

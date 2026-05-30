@@ -1,11 +1,14 @@
-
 import 'package:quran/quran.dart' as q;
 
 class QuranUtils {
   /// Returns the verse text without the Bismillah prefix for surahs other than Al-Fatihah.
-  static String getCleanVerse(int surah, int verse, {bool verseEndSymbol = false}) {
+  static String getCleanVerse(
+    int surah,
+    int verse, {
+    bool verseEndSymbol = false,
+  }) {
     String text = q.getVerse(surah, verse, verseEndSymbol: verseEndSymbol);
-    
+
     // Al-Fatihah (1) should keep its Bismillah as it's the first verse.
     // At-Tawbah (9) doesn't have Bismillah.
     if (surah != 1 && verse == 1 && surah != 9) {

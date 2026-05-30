@@ -13,7 +13,6 @@ class ThemeManager {
       case AppTheme.sepia:
         return _sepiaTheme;
       case AppTheme.light:
-      default:
         return _lightTheme;
     }
   }
@@ -23,13 +22,11 @@ class ThemeManager {
     primaryColor: AppColors.gold,
     scaffoldBackgroundColor: AppColors.pageBg,
     cardColor: Colors.white,
-    dialogBackgroundColor: Colors.white,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.gold,
       brightness: Brightness.light,
       primary: AppColors.gold,
       surface: Colors.white,
-      background: AppColors.pageBg,
     ),
     textTheme: GoogleFonts.amiriTextTheme().apply(
       bodyColor: AppColors.dark,
@@ -40,6 +37,7 @@ class ThemeManager {
       foregroundColor: AppColors.dark,
       elevation: 0,
     ),
+    dialogTheme: DialogThemeData(backgroundColor: Colors.white),
   );
 
   static final ThemeData _darkTheme = ThemeData(
@@ -47,13 +45,11 @@ class ThemeManager {
     primaryColor: AppColors.gold,
     scaffoldBackgroundColor: const Color(0xFF121212),
     cardColor: const Color(0xFF1E1E1E),
-    dialogBackgroundColor: const Color(0xFF1E1E1E),
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.gold,
       brightness: Brightness.dark,
       primary: AppColors.gold,
       surface: const Color(0xFF1E1E1E),
-      background: const Color(0xFF121212),
     ),
     textTheme: GoogleFonts.amiriTextTheme().apply(
       bodyColor: Colors.white,
@@ -64,6 +60,7 @@ class ThemeManager {
       foregroundColor: Colors.white,
       elevation: 0,
     ),
+    dialogTheme: DialogThemeData(backgroundColor: const Color(0xFF1E1E1E)),
   );
 
   static final ThemeData _goldTheme = ThemeData(
@@ -71,13 +68,11 @@ class ThemeManager {
     primaryColor: AppColors.gold,
     scaffoldBackgroundColor: const Color(0xFFFDF8E1),
     cardColor: const Color(0xFFFFFDF5),
-    dialogBackgroundColor: const Color(0xFFFFFDF5),
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.gold,
       brightness: Brightness.light,
       primary: AppColors.gold,
       surface: const Color(0xFFFFFDF5),
-      background: const Color(0xFFFDF8E1),
     ),
     textTheme: GoogleFonts.amiriTextTheme().apply(
       bodyColor: const Color(0xFF4A3423),
@@ -88,6 +83,7 @@ class ThemeManager {
       foregroundColor: Color(0xFF4A3423),
       elevation: 0,
     ),
+    dialogTheme: DialogThemeData(backgroundColor: const Color(0xFFFFFDF5)),
   );
 
   static final ThemeData _sepiaTheme = ThemeData(
@@ -95,13 +91,11 @@ class ThemeManager {
     primaryColor: const Color(0xFF704214),
     scaffoldBackgroundColor: const Color(0xFFF1E7D0),
     cardColor: const Color(0xFFF8F1E1),
-    dialogBackgroundColor: const Color(0xFFF8F1E1),
     colorScheme: ColorScheme.fromSeed(
       seedColor: const Color(0xFF704214),
       brightness: Brightness.light,
       primary: const Color(0xFF704214),
       surface: const Color(0xFFF8F1E1),
-      background: const Color(0xFFF1E7D0),
     ),
     textTheme: GoogleFonts.amiriTextTheme().apply(
       bodyColor: const Color(0xFF433422),
@@ -112,5 +106,6 @@ class ThemeManager {
       foregroundColor: Color(0xFF433422),
       elevation: 0,
     ),
+    dialogTheme: DialogThemeData(backgroundColor: const Color(0xFFF8F1E1)),
   );
 }

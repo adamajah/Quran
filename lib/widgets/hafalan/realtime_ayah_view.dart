@@ -37,7 +37,7 @@ class RealtimeAyahView extends StatelessWidget {
           children: List.generate(words.length, (idx) {
             final w = words[idx];
             final isCurrent = idx == currentIndex;
-            
+
             // Determine word color based on status
             Color wColor;
             List<Shadow>? wShadows;
@@ -54,7 +54,6 @@ class RealtimeAyahView extends StatelessWidget {
                 wColor = Colors.red;
                 break;
               case WordStatus.pending:
-              default:
                 wColor = textColor;
                 break;
             }
@@ -62,15 +61,24 @@ class RealtimeAyahView extends StatelessWidget {
             // Glow effect for the currently active word
             if (isCurrent && isRecording) {
               wColor = AppColors.gold;
-              wBg = AppColors.gold.withOpacity(0.1);
+              wBg = AppColors.gold.withValues(alpha: 0.1);
               wShadows = [
-                Shadow(color: AppColors.gold.withOpacity(0.6), blurRadius: 15),
-                Shadow(color: AppColors.gold.withOpacity(0.3), blurRadius: 30),
+                Shadow(
+                  color: AppColors.gold.withValues(alpha: 0.6),
+                  blurRadius: 15,
+                ),
+                Shadow(
+                  color: AppColors.gold.withValues(alpha: 0.3),
+                  blurRadius: 30,
+                ),
               ];
             }
 
             // Hide logic
-            bool shouldHide = hideMode == HideMode.allText && w.status == WordStatus.pending && !isCurrent;
+            bool shouldHide =
+                hideMode == HideMode.allText &&
+                w.status == WordStatus.pending &&
+                !isCurrent;
 
             return AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -89,8 +97,11 @@ class RealtimeAyahView extends StatelessWidget {
                 ).copyWith(
                   height: 1.8,
                   // Add a subtle underline for the next expected word
-                  decoration: isCurrent && !w.isVerseMarker ? TextDecoration.underline : null,
-                  decorationColor: AppColors.gold.withOpacity(0.5),
+                  decoration:
+                      isCurrent && !w.isVerseMarker
+                          ? TextDecoration.underline
+                          : null,
+                  decorationColor: AppColors.gold.withValues(alpha: 0.5),
                 ),
               ),
             );

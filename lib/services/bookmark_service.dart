@@ -15,20 +15,30 @@ class BookmarkService {
   static Future<void> addBookmark(BookmarkEntry entry) async {
     final prefs = await SharedPreferences.getInstance();
     final List<BookmarkEntry> current = await getBookmarks();
-    
-    current.removeWhere((e) => e.surah == entry.surah && e.verse == entry.verse);
+
+    current.removeWhere(
+      (e) => e.surah == entry.surah && e.verse == entry.verse,
+    );
     current.insert(0, entry);
-    
-    await prefs.setStringList(_key, current.map((e) => jsonEncode(e.toJson())).toList());
+
+    await prefs.setStringList(
+      _key,
+      current.map((e) => jsonEncode(e.toJson())).toList(),
+    );
   }
 
   static Future<void> updateBookmark(BookmarkEntry entry) async {
     final prefs = await SharedPreferences.getInstance();
     final List<BookmarkEntry> current = await getBookmarks();
-    final idx = current.indexWhere((e) => e.surah == entry.surah && e.verse == entry.verse);
+    final idx = current.indexWhere(
+      (e) => e.surah == entry.surah && e.verse == entry.verse,
+    );
     if (idx != -1) {
       current[idx] = entry;
-      await prefs.setStringList(_key, current.map((e) => jsonEncode(e.toJson())).toList());
+      await prefs.setStringList(
+        _key,
+        current.map((e) => jsonEncode(e.toJson())).toList(),
+      );
     }
   }
 
@@ -36,7 +46,10 @@ class BookmarkService {
     final prefs = await SharedPreferences.getInstance();
     final List<BookmarkEntry> current = await getBookmarks();
     current.removeWhere((e) => e.surah == surah && e.verse == verse);
-    await prefs.setStringList(_key, current.map((e) => jsonEncode(e.toJson())).toList());
+    await prefs.setStringList(
+      _key,
+      current.map((e) => jsonEncode(e.toJson())).toList(),
+    );
   }
 
   static Future<void> toggleFavorite(int surah, int verse) async {
@@ -46,14 +59,18 @@ class BookmarkService {
     if (idx != -1) {
       final old = current[idx];
       current[idx] = old.copyWith(isFavorite: !old.isFavorite);
-      await prefs.setStringList(_key, current.map((e) => jsonEncode(e.toJson())).toList());
+      await prefs.setStringList(
+        _key,
+        current.map((e) => jsonEncode(e.toJson())).toList(),
+      );
     }
   }
 
   // Folder Management
   static Future<List<String>> getFolders() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_folderKey) ?? ['Umum', 'Favorit', 'Hafalan', 'Tafsir'];
+    return prefs.getStringList(_folderKey) ??
+        ['Umum', 'Favorit', 'Hafalan', 'Tafsir'];
   }
 
   static Future<void> addFolder(String name) async {
@@ -72,11 +89,17 @@ class BookmarkService {
     if (idx != -1) {
       current[idx] = newName;
       await prefs.setStringList(_folderKey, current);
-      
+
       // Update all bookmarks in this folder
       final bms = await getBookmarks();
-      final updatedBms = bms.map((b) => b.folder == oldName ? b.copyWith(folder: newName) : b).toList();
-      await prefs.setStringList(_key, updatedBms.map((e) => jsonEncode(e.toJson())).toList());
+      final updatedBms =
+          bms
+              .map((b) => b.folder == oldName ? b.copyWith(folder: newName) : b)
+              .toList();
+      await prefs.setStringList(
+        _key,
+        updatedBms.map((e) => jsonEncode(e.toJson())).toList(),
+      );
     }
   }
 
@@ -85,10 +108,16 @@ class BookmarkService {
     final List<String> current = await getFolders();
     current.remove(name);
     await prefs.setStringList(_folderKey, current);
-    
+
     // Move bookmarks back to 'Umum'
     final bms = await getBookmarks();
-    final updatedBms = bms.map((b) => b.folder == name ? b.copyWith(folder: 'Umum') : b).toList();
-    await prefs.setStringList(_key, updatedBms.map((e) => jsonEncode(e.toJson())).toList());
+    final updatedBms =
+        bms
+            .map((b) => b.folder == name ? b.copyWith(folder: 'Umum') : b)
+            .toList();
+    await prefs.setStringList(
+      _key,
+      updatedBms.map((e) => jsonEncode(e.toJson())).toList(),
+    );
   }
 }

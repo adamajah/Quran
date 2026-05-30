@@ -26,11 +26,15 @@ class ReciterDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Pilih Qari (Syekh)',
-                style: AppTextStyle.quranSurahNameStyle(
-                    fontSize: 18, color: textColor)),
+            Text(
+              'Pilih Qari (Syekh)',
+              style: AppTextStyle.quranSurahNameStyle(
+                fontSize: 18,
+                color: textColor,
+              ),
+            ),
             const SizedBox(height: 12),
-            Container(height: 1, color: AppColors.gold.withOpacity(0.2)),
+            Container(height: 1, color: AppColors.gold.withValues(alpha: 0.2)),
             const SizedBox(height: 8),
             Flexible(
               child: ListView.builder(
@@ -39,17 +43,29 @@ class ReciterDialog extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final reciter = availableReciters[index];
                   final isSelected = reciter.id == currentReciter.id;
-                  
+
                   return ListTile(
-                    title: Text(reciter.name,
-                        style: TextStyle(
-                          fontSize: 14, 
-                          color: isSelected ? AppColors.gold : textColor,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        )),
-                    trailing: isSelected 
-                        ? const Icon(Icons.check_circle, color: AppColors.gold, size: 18)
-                        : const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+                    title: Text(
+                      reciter.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isSelected ? AppColors.gold : textColor,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    trailing:
+                        isSelected
+                            ? const Icon(
+                              Icons.check_circle,
+                              color: AppColors.gold,
+                              size: 18,
+                            )
+                            : const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 12,
+                              color: Colors.grey,
+                            ),
                     onTap: () {
                       onSelect(reciter);
                       Navigator.pop(context);

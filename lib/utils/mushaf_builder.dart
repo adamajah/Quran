@@ -25,24 +25,29 @@ List<PageData> buildMushafPages() {
       final cur = verses[i].surah;
       final grpVerses = <VerseRef>[];
       while (i < verses.length && verses[i].surah == cur) {
-        grpVerses.add(verses[i]); i++;
+        grpVerses.add(verses[i]);
+        i++;
       }
-      groups.add(SurahGroup(
-        surah: cur,
-        surahNameAr: q.getSurahNameArabic(cur),
-        isFirstInMushaf: grpVerses.first.verse == 1,
-        verses: grpVerses,
-      ));
+      groups.add(
+        SurahGroup(
+          surah: cur,
+          surahNameAr: q.getSurahNameArabic(cur),
+          isFirstInMushaf: grpVerses.first.verse == 1,
+          verses: grpVerses,
+        ),
+      );
     }
-    pages.add(PageData(
-      pageNum: pgNum,
-      juz: q.getJuzNumber(domSurah, verses.first.verse),
-      surah: domSurah,
-      surahName: q.getSurahName(domSurah),
-      surahNameAr: q.getSurahNameArabic(domSurah),
-      verses: verses,
-      groups: groups,
-    ));
+    pages.add(
+      PageData(
+        pageNum: pgNum,
+        juz: q.getJuzNumber(domSurah, verses.first.verse),
+        surah: domSurah,
+        surahName: q.getSurahName(domSurah),
+        surahNameAr: q.getSurahNameArabic(domSurah),
+        verses: verses,
+        groups: groups,
+      ),
+    );
   }
   return pages;
 }

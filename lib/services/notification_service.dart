@@ -5,7 +5,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter/material.dart';
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
     tz.initializeTimeZones();
@@ -19,14 +20,18 @@ class NotificationService {
       requestSoundPermission: true,
     );
     const settings = InitializationSettings(android: android, iOS: ios);
-    
+
     await _notifications.initialize(
       settings: settings,
       onDidReceiveNotificationResponse: (details) {},
     );
 
     // Request permissions for Android 13+ (Safe check)
-    final androidPlugin = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin =
+        _notifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
     if (androidPlugin != null) {
       try {
         await androidPlugin.requestNotificationsPermission();
@@ -83,21 +88,24 @@ class NotificationService {
     required int progress,
     required int maxProgress,
   }) async {
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'download_channel',
-      'Downloads',
-      channelDescription: 'Notifications for audio downloads',
-      importance: Importance.low,
-      priority: Priority.low,
-      onlyAlertOnce: true,
-      showProgress: true,
-      maxProgress: maxProgress,
-      progress: progress,
-      ongoing: true,
-      autoCancel: false,
-    );
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'download_channel',
+          'Downloads',
+          channelDescription: 'Notifications for audio downloads',
+          importance: Importance.low,
+          priority: Priority.low,
+          onlyAlertOnce: true,
+          showProgress: true,
+          maxProgress: maxProgress,
+          progress: progress,
+          ongoing: true,
+          autoCancel: false,
+        );
 
-    final NotificationDetails details = NotificationDetails(android: androidDetails);
+    final NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
     await _notifications.show(
       id: id,
       title: 'Mengunduh $title',
@@ -110,15 +118,18 @@ class NotificationService {
     required int id,
     required String title,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'download_channel',
-      'Downloads',
-      channelDescription: 'Notifications for audio downloads',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'download_channel',
+          'Downloads',
+          channelDescription: 'Notifications for audio downloads',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
 
-    const NotificationDetails details = NotificationDetails(android: androidDetails);
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
     await _notifications.show(
       id: id,
       title: 'Unduhan Selesai',
@@ -132,15 +143,18 @@ class NotificationService {
     required String title,
     required String error,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'download_channel',
-      'Downloads',
-      channelDescription: 'Notifications for audio downloads',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'download_channel',
+          'Downloads',
+          channelDescription: 'Notifications for audio downloads',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
 
-    const NotificationDetails details = NotificationDetails(android: androidDetails);
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
     await _notifications.show(
       id: id,
       title: 'Unduhan Gagal',

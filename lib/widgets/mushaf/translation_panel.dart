@@ -31,23 +31,30 @@ class TranslationPanel extends StatelessWidget {
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.98) : Colors.white,
+        color:
+            isDark
+                ? const Color(0xFF1E1E1E).withValues(alpha: 0.98)
+                : Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
         ],
         border: Border(
           top: BorderSide(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05), 
-            width: 1
+            color:
+                isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.05),
+            width: 1,
           ),
         ),
       ),
-      child: ClipRRect( // Clip contents to prevent visual overflow during fast drags
+      child: ClipRRect(
+        // Clip contents to prevent visual overflow during fast drags
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         child: Column(
           children: [
@@ -66,33 +73,42 @@ class TranslationPanel extends StatelessWidget {
                     width: 36.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white12 : Colors.black.withOpacity(0.08),
+                      color:
+                          isDark
+                              ? Colors.white12
+                              : Colors.black.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(2.r),
                     ),
                   ),
                 ),
               ),
             ),
-            
+
             // Header & Content - Wrapped in a layout that handles small heights
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   // Only show header if we have at least 40px of vertical space
                   final bool showHeader = constraints.maxHeight > 40.h;
-                  
+
                   return Column(
                     children: [
                       if (showHeader)
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20.w,
+                            vertical: 2.h,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 3.h,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: gold.withOpacity(0.1),
+                                  color: gold.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20.r),
                                 ),
                                 child: Text(
@@ -111,28 +127,45 @@ class TranslationPanel extends StatelessWidget {
                                   padding: EdgeInsets.all(4.r),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                                    color:
+                                        isDark
+                                            ? Colors.white.withValues(
+                                              alpha: 0.05,
+                                            )
+                                            : Colors.black.withValues(
+                                              alpha: 0.03,
+                                            ),
                                   ),
-                                  child: Icon(Icons.close_rounded, size: 14.r, 
-                                      color: isDark ? Colors.white24 : Colors.black26),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    size: 14.r,
+                                    color:
+                                        isDark
+                                            ? Colors.white24
+                                            : Colors.black26,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      
+
                       if (showHeader) SizedBox(height: 6.h),
-                      
+
                       // Verses List
                       Expanded(
                         child: ListView.separated(
                           padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
                           physics: const BouncingScrollPhysics(),
                           itemCount: verses.length,
-                          separatorBuilder: (_, __) => Divider(
-                            height: 20.h,
-                            color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02),
-                          ),
+                          separatorBuilder:
+                              (_, _) => Divider(
+                                height: 20.h,
+                                color:
+                                    isDark
+                                        ? Colors.white.withValues(alpha: 0.03)
+                                        : Colors.black.withValues(alpha: 0.02),
+                              ),
                           itemBuilder: (context, index) {
                             final v = verses[index];
                             return Row(
@@ -144,7 +177,7 @@ class TranslationPanel extends StatelessWidget {
                                     "${v['verse']}",
                                     style: TextStyle(
                                       fontSize: 10.sp,
-                                      color: gold.withOpacity(0.4),
+                                      color: gold.withValues(alpha: 0.4),
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),
@@ -153,7 +186,10 @@ class TranslationPanel extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     v['text'],
-                                    style: AppTextStyle.quranTranslationStyle(isDark: isDark, fontSize: 13.sp),
+                                    style: AppTextStyle.quranTranslationStyle(
+                                      isDark: isDark,
+                                      fontSize: 13.sp,
+                                    ),
                                   ),
                                 ),
                               ],

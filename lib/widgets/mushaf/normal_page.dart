@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:quran/quran.dart' as q;
 import 'package:quran_library/quran_library.dart';
 
 import '../../constants/app_colors.dart';
@@ -36,17 +35,14 @@ class NormalPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
 
       children: [
-
         PageHeader(data: data),
 
         const MushafRule(thick: true),
 
         Expanded(
-
           child: NormalBody(
             data: data,
             playSurah: playSurah,
@@ -55,21 +51,17 @@ class NormalPage extends StatelessWidget {
 
             tappedVerse: tappedVerse,
 
-            isPlayingPage:
-                isPlayingPage,
+            isPlayingPage: isPlayingPage,
 
             fontScale: fontScale,
 
             showTajwid: showTajwid,
 
-            bookmarkedVerses:
-                bookmarkedVerses,
+            bookmarkedVerses: bookmarkedVerses,
 
-            onTapVerse:
-                onTapVerse,
+            onTapVerse: onTapVerse,
 
-            onBookmarkVerse:
-                onBookmarkVerse,
+            onBookmarkVerse: onBookmarkVerse,
           ),
         ),
 
@@ -82,7 +74,6 @@ class NormalPage extends StatelessWidget {
 }
 
 class NormalBody extends StatelessWidget {
-
   final PageData data;
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
@@ -117,11 +108,20 @@ class NormalBody extends StatelessWidget {
     double maxW,
     Color inkColor,
   ) {
-    final s = QuranLibrary().hafsStyle.copyWith(fontSize: fs, height: lh, color: inkColor);
-    final spans = vv.map((v) {
-      final t = QuranUtils.getCleanVerse(v.surah, v.verse, verseEndSymbol: false);
-      return TextSpan(text: '$t ${_ar(v.verse)} ', style: s);
-    }).toList();
+    final s = QuranLibrary().hafsStyle.copyWith(
+      fontSize: fs,
+      height: lh,
+      color: inkColor,
+    );
+    final spans =
+        vv.map((v) {
+          final t = QuranUtils.getCleanVerse(
+            v.surah,
+            v.verse,
+            verseEndSymbol: false,
+          );
+          return TextSpan(text: '$t ${_ar(v.verse)} ', style: s);
+        }).toList();
     final tp = TextPainter(
       text: TextSpan(children: spans),
       textDirection: TextDirection.rtl,
@@ -136,26 +136,10 @@ class NormalBody extends StatelessWidget {
     double maxH,
     Color inkColor,
   ) {
-
     if (maxH <= 20) return 7.0;
 
-    for (
-      double fs = 22.0;
-      fs >= 6.0;
-      fs -= 0.2
-    ) {
-
-      if (
-          _measureH(
-                vv,
-                fs,
-                1.85,
-                maxW,
-                inkColor,
-              ) <=
-              maxH
-      ) {
-
+    for (double fs = 22.0; fs >= 6.0; fs -= 0.2) {
+      if (_measureH(vv, fs, 1.85, maxW, inkColor) <= maxH) {
         return fs;
       }
     }
@@ -165,17 +149,12 @@ class NormalBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return LayoutBuilder(
-
       builder: (ctx, bc) {
-
         double reservedH = 0.0;
 
         for (final g in data.groups) {
-
           if (g.isFirstInMushaf) {
-
             reservedH += 54.0;
 
             if (g.surah != 9) {
@@ -184,103 +163,62 @@ class NormalBody extends StatelessWidget {
           }
         }
 
-        final availH =
-            bc.maxHeight - reservedH;
+        final availH = bc.maxHeight - reservedH;
 
-        final availW =
-            bc.maxWidth - 28.0;
+        final availW = bc.maxWidth - 28.0;
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final inkColor = isDark ? Colors.white : AppColors.ink;
 
-        final fs = _bestFs(
-          data.verses,
-          availW,
-          availH,
-          inkColor,
-        );
+        final fs = _bestFs(data.verses, availW, availH, inkColor);
 
-        final List<Widget>
-            children = [];
+        final List<Widget> children = [];
 
         for (final g in data.groups) {
-
           if (g.isFirstInMushaf) {
-
             children.add(
-
-              SurahBanner(
-
-                surahIndex: g.surah,
-
-                surahNameAr:
-                    g.surahNameAr,
-              ),
+              SurahBanner(surahIndex: g.surah, surahNameAr: g.surahNameAr),
             );
           }
 
-          if (
-              g.isFirstInMushaf &&
-              g.surah != 9
-          ) {
-
-            children.add(
-              const Basmalah(),
-            );
+          if (g.isFirstInMushaf && g.surah != 9) {
+            children.add(const Basmalah());
           }
 
           children.add(
-
             TappableVerseBlock(
-
               group: g,
 
               fs: fs,
 
-              fontScale:
-                  fontScale,
+              fontScale: fontScale,
 
-              showTajwid:
-                  showTajwid,
-              playSurah:
-                  playSurah,
-              playVerse:
-                  playVerse,
+              showTajwid: showTajwid,
+              playSurah: playSurah,
+              playVerse: playVerse,
 
-              tappedSurah:
-                  tappedSurah,
+              tappedSurah: tappedSurah,
 
-              tappedVerse:
-                  tappedVerse,
+              tappedVerse: tappedVerse,
 
-              isPlayingPage:
-                  isPlayingPage,
+              isPlayingPage: isPlayingPage,
 
-              bookmarkedVerses:
-                  bookmarkedVerses,
+              bookmarkedVerses: bookmarkedVerses,
 
-              onTapVerse:
-                  onTapVerse,
+              onTapVerse: onTapVerse,
 
-              onBookmarkVerse:
-                  onBookmarkVerse,
+              onBookmarkVerse: onBookmarkVerse,
             ),
           );
         }
 
         return SingleChildScrollView(
-
-          physics:
-              const BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
 
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
 
-            crossAxisAlignment:
-                CrossAxisAlignment
-                    .stretch,
-
-            mainAxisSize:
-                MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
 
             children: children,
           ),
@@ -290,9 +228,7 @@ class NormalBody extends StatelessWidget {
   }
 }
 
-class TappableVerseBlock
-    extends StatefulWidget {
-
+class TappableVerseBlock extends StatefulWidget {
   final SurahGroup group;
   final double fs, fontScale;
   final bool showTajwid, isPlayingPage;
@@ -317,13 +253,10 @@ class TappableVerseBlock
   });
 
   @override
-  State<TappableVerseBlock>
-      createState() =>
-          _TappableVerseBlockState();
+  State<TappableVerseBlock> createState() => _TappableVerseBlockState();
 }
 
 class _TappableVerseBlockState extends State<TappableVerseBlock> {
-
   int _hoveredVerse = 0;
 
   static String _ar(int n) {
@@ -337,45 +270,88 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
 
     for (final v in widget.group.verses) {
       final active =
-          (widget.isPlayingPage && v.surah == widget.playSurah && v.verse == widget.playVerse) ||
+          (widget.isPlayingPage &&
+              v.surah == widget.playSurah &&
+              v.verse == widget.playVerse) ||
           (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse) ||
           _hoveredVerse == v.verse;
 
       // Always use verseEndSymbol: false — verse number is rendered separately below
-      final text = QuranUtils.getCleanVerse(v.surah, v.verse, verseEndSymbol: false);
+      final text = QuranUtils.getCleanVerse(
+        v.surah,
+        v.verse,
+        verseEndSymbol: false,
+      );
 
-      out.addAll(_buildTajwidSpans(text, widget.fs * widget.fontScale, 1.85, active, widget.showTajwid, inkColor));
-      out.add(TextSpan(text: ' ', style: QuranLibrary().hafsStyle.copyWith(fontSize: widget.fs * widget.fontScale, height: 1.85, color: inkColor)));
+      out.addAll(
+        _buildTajwidSpans(
+          text,
+          widget.fs * widget.fontScale,
+          1.85,
+          active,
+          widget.showTajwid,
+          inkColor,
+        ),
+      );
+      out.add(
+        TextSpan(
+          text: ' ',
+          style: QuranLibrary().hafsStyle.copyWith(
+            fontSize: widget.fs * widget.fontScale,
+            height: 1.85,
+            color: inkColor,
+          ),
+        ),
+      );
 
       // ONE verse number badge — the only source of the verse symbol
-      out.add(WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: GestureDetector(
-          onTap: () => widget.onTapVerse(v.surah, v.verse),
-          onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
-          onTapDown: (_) => setState(() => _hoveredVerse = v.verse),
-          onTapUp: (_) => setState(() => _hoveredVerse = 0),
-          onTapCancel: () => setState(() => _hoveredVerse = 0),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-            decoration: BoxDecoration(
-              color: active ? (isDark ? Colors.white.withOpacity(0.12) : AppColors.hl.withOpacity(0.10)) : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              _ar(v.verse),
-              style: QuranLibrary().hafsStyle.copyWith(
-                fontSize: numFs * widget.fontScale,
-                color: active ? (isDark ? Colors.white : AppColors.hl) : AppColors.gold,
-                fontWeight: FontWeight.bold,
-                height: 1.85,
+      out.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: GestureDetector(
+            onTap: () => widget.onTapVerse(v.surah, v.verse),
+            onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
+            onTapDown: (_) => setState(() => _hoveredVerse = v.verse),
+            onTapUp: (_) => setState(() => _hoveredVerse = 0),
+            onTapCancel: () => setState(() => _hoveredVerse = 0),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+              decoration: BoxDecoration(
+                color:
+                    active
+                        ? (isDark
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : AppColors.hl.withValues(alpha: 0.10))
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                _ar(v.verse),
+                style: QuranLibrary().hafsStyle.copyWith(
+                  fontSize: numFs * widget.fontScale,
+                  color:
+                      active
+                          ? (isDark ? Colors.white : AppColors.hl)
+                          : AppColors.gold,
+                  fontWeight: FontWeight.bold,
+                  height: 1.85,
+                ),
               ),
             ),
           ),
         ),
-      ));
-      out.add(TextSpan(text: ' ', style: QuranLibrary().hafsStyle.copyWith(fontSize: widget.fs * widget.fontScale, height: 1.85, color: inkColor)));
+      );
+      out.add(
+        TextSpan(
+          text: ' ',
+          style: QuranLibrary().hafsStyle.copyWith(
+            fontSize: widget.fs * widget.fontScale,
+            height: 1.85,
+            color: inkColor,
+          ),
+        ),
+      );
     }
     return out;
   }
@@ -394,13 +370,24 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 10),
-            Text('$name: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-            Expanded(child: Text(desc, style: const TextStyle(fontSize: 12, color: Colors.white70))),
+            Text(
+              '$name: ',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                desc,
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ),
           ],
         ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.dark.withOpacity(0.9),
+        backgroundColor: AppColors.dark.withValues(alpha: 0.9),
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 80),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -421,11 +408,16 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
         TextSpan(
           text: text,
           style: QuranLibrary().hafsStyle.copyWith(
-                fontSize: fontSize,
-                height: height,
-                color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
-                backgroundColor: active ? (isDark ? Colors.white.withOpacity(0.1) : AppColors.hl.withOpacity(0.06)) : null,
-              ),
+            fontSize: fontSize,
+            height: height,
+            color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
+            backgroundColor:
+                active
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppColors.hl.withValues(alpha: 0.06))
+                    : null,
+          ),
         ),
       ];
     }
@@ -436,21 +428,28 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       final nextChar = i + 1 < text.length ? text[i + 1] : null;
       final info = TajwidUtils.getTajwidInfo(char, nextChar);
       final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
-      final color = active 
-          ? (isDark ? Colors.white : AppColors.hl) 
-          : (isDefaultColor ? inkColor : info.$1);
+      final color =
+          active
+              ? (isDark ? Colors.white : AppColors.hl)
+              : (isDefaultColor ? inkColor : info.$1);
 
       spans.add(
         TextSpan(
           text: char,
-          recognizer: TapGestureRecognizer()
-            ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
+          recognizer:
+              TapGestureRecognizer()
+                ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
           style: QuranLibrary().hafsStyle.copyWith(
-                fontSize: fontSize,
-                height: height,
-                color: color,
-                backgroundColor: active ? (isDark ? Colors.white.withOpacity(0.1) : AppColors.hl.withOpacity(0.06)) : null,
-              ),
+            fontSize: fontSize,
+            height: height,
+            color: color,
+            backgroundColor:
+                active
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppColors.hl.withValues(alpha: 0.06))
+                    : null,
+          ),
         ),
       );
     }
@@ -458,32 +457,21 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
   }
 
   @override
-  Widget build(
-      BuildContext context) {
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inkColor = isDark ? Colors.white : AppColors.ink;
 
     return Padding(
-
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 14,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
 
       child: Text.rich(
+        TextSpan(children: _buildSpans(inkColor, isDark)),
 
-        TextSpan(
-          children: _buildSpans(inkColor, isDark),
-        ),
+        textAlign: TextAlign.justify,
 
-        textAlign:
-            TextAlign.justify,
+        textDirection: TextDirection.rtl,
 
-        textDirection:
-            TextDirection.rtl,
-
-        overflow:
-            TextOverflow.visible,
+        overflow: TextOverflow.visible,
 
         softWrap: true,
       ),

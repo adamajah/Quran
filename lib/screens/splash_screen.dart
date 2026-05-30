@@ -24,6 +24,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   /// OFFSET ANIMATION
   late Animation<Offset> _offsetAnimation;
+
+  late final Timer _navigationTimer;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -50,7 +53,9 @@ class _SplashScreenState extends State<SplashScreen>
     _initNotifications();
 
     /// TIMER FOR SPLASH DURATION
-    Timer(const Duration(seconds: 3), () {
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+
       /// NAVIGATING TO HOME SCREEN
       Navigator.of(
         context,
@@ -68,6 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    _navigationTimer.cancel();
     _controller.dispose();
     super.dispose();
   }

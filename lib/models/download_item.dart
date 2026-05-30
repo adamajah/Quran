@@ -1,10 +1,4 @@
-enum DownloadStatus {
-  notDownloaded,
-  downloading,
-  paused,
-  completed,
-  failed,
-}
+enum DownloadStatus { notDownloaded, downloading, paused, completed, failed }
 
 class DownloadItem {
   final String id;

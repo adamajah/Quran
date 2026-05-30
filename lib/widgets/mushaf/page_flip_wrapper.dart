@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class PageFlipWrapper extends StatelessWidget {
@@ -18,9 +17,10 @@ class PageFlipWrapper extends StatelessWidget {
     if (!flipping) return child;
     return Transform(
       alignment: Alignment.centerRight,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.001)
-        ..rotateY(angle),
+      transform:
+          Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle),
       child: child,
     );
   }

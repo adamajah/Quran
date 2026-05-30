@@ -30,7 +30,10 @@ class StorageService {
       final dir = Directory(downloadDir);
       int totalSize = 0;
       if (await dir.exists()) {
-        await for (var entity in dir.list(recursive: true, followLinks: false)) {
+        await for (var entity in dir.list(
+          recursive: true,
+          followLinks: false,
+        )) {
           if (entity is File) {
             totalSize += await entity.length();
           }
@@ -54,7 +57,7 @@ class StorageService {
     if (await cacheDir.exists()) {
       await cacheDir.delete(recursive: true);
     }
-    
+
     final downloadDir = await getDownloadPath();
     final dir = Directory(downloadDir);
     if (await dir.exists()) {

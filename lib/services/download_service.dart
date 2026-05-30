@@ -22,7 +22,9 @@ class DownloadService {
         onReceiveProgress: onProgress,
         cancelToken: cancelToken,
         options: Options(
-          headers: {'Accept-Encoding': 'identity'}, // Ensure correct size reporting
+          headers: {
+            'Accept-Encoding': 'identity',
+          }, // Ensure correct size reporting
         ),
       );
 

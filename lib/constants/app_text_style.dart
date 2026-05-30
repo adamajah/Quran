@@ -5,17 +5,25 @@ import 'app_colors.dart';
 abstract class AppTextStyle {
   // ── Legacy Widget Builders (used in SplashScreen)
   static Widget headlineText(BuildContext context, String text) {
-    return Text(text,
-        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            color: AppColors.gold, fontWeight: FontWeight.bold),
-        textAlign: TextAlign.center);
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+        color: AppColors.gold,
+        fontWeight: FontWeight.bold,
+      ),
+      textAlign: TextAlign.center,
+    );
   }
 
   static Widget titleMediumText(BuildContext context, String text) {
-    return Text(text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColors.gold.withOpacity(0.7), fontSize: 14),
-        textAlign: TextAlign.center);
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        color: AppColors.gold.withValues(alpha: 0.7),
+        fontSize: 14,
+      ),
+      textAlign: TextAlign.center,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -40,10 +48,7 @@ abstract class AppTextStyle {
   }
 
   /// Teks NAMA SURAH — font Hafs untuk nama surah
-  static TextStyle quranSurahNameStyle({
-    double? fontSize,
-    Color? color,
-  }) {
+  static TextStyle quranSurahNameStyle({double? fontSize, Color? color}) {
     return QuranLibrary().hafsStyle.copyWith(
       fontSize: fontSize ?? 20,
       color: color ?? AppColors.dark,
@@ -70,7 +75,7 @@ abstract class AppTextStyle {
   }) {
     return QuranLibrary().naskhStyle.copyWith(
       fontSize: fontSize,
-      color: color.withOpacity(0.8),
+      color: color.withValues(alpha: 0.8),
     );
   }
 
@@ -85,7 +90,10 @@ abstract class AppTextStyle {
       fontWeight: FontWeight.w300,
       letterSpacing: 0.2,
       fontFamily: 'Roboto', // Or any clean sans-serif
-      color: isDark ? Colors.white.withOpacity(0.65) : AppColors.dark.withOpacity(0.7),
+      color:
+          isDark
+              ? Colors.white.withValues(alpha: 0.65)
+              : AppColors.dark.withValues(alpha: 0.7),
     );
   }
 }

@@ -2,14 +2,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
-import 'package:speech_to_text/speech_recognition_result.dart';
 
 class SpeechService {
   final SpeechToText _speech = SpeechToText();
   bool _isInitialized = false;
   bool _shouldBeListening = false;
   int _reconnectCount = 0;
-  final int _maxReconnects = 50; 
+  final int _maxReconnects = 50;
   DateTime? _lastReconnectTime;
 
   Function(String)? _onResult;
@@ -21,7 +20,7 @@ class SpeechService {
     Function(String)? onError,
   }) async {
     if (_isInitialized) return true;
-    
+
     _onStatus = onStatus;
     _onError = onError;
 
@@ -52,9 +51,11 @@ class SpeechService {
   }
 
   void _handleError(SpeechRecognitionError error) {
-    debugPrint('Speech Error: ${error.errorMsg} - Permanent: ${error.permanent}');
+    debugPrint(
+      'Speech Error: ${error.errorMsg} - Permanent: ${error.permanent}',
+    );
     _onError?.call(error.errorMsg);
-    
+
     if (_shouldBeListening && !error.permanent) {
       _attemptReconnect();
     }
@@ -69,17 +70,18 @@ class SpeechService {
 
     // Rate limit reconnects to once every 1.2 seconds (loosened from 2s)
     final now = DateTime.now();
-    if (_lastReconnectTime != null && now.difference(_lastReconnectTime!).inMilliseconds < 1200) {
+    if (_lastReconnectTime != null &&
+        now.difference(_lastReconnectTime!).inMilliseconds < 1200) {
       return;
     }
     _lastReconnectTime = now;
 
     _reconnectCount++;
     debugPrint('Attempting auto-reconnect #$_reconnectCount / $_maxReconnects');
-    
+
     // Slightly longer delay before restarting to allow OS to clean up
     await Future.delayed(const Duration(milliseconds: 2000));
-    
+
     if (_shouldBeListening) {
       // Self-healing: if it's been many retries, try to re-initialize
       if (_reconnectCount % 5 == 0) {
@@ -101,7 +103,7 @@ class SpeechService {
     };
     _shouldBeListening = true;
     _reconnectCount = 0;
-    
+
     if (!_isInitialized) {
       await init();
     }
@@ -119,9 +121,11 @@ class SpeechService {
         },
         listenFor: const Duration(minutes: 20),
         pauseFor: const Duration(seconds: 60),
-        partialResults: true,
-        cancelOnError: false,
-        listenMode: ListenMode.dictation,
+        listenOptions: SpeechListenOptions(
+          partialResults: true,
+          cancelOnError: false,
+          listenMode: ListenMode.dictation,
+        ),
         localeId: localeId,
       );
     } catch (e) {

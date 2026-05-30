@@ -34,7 +34,7 @@ class PremiumCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -59,7 +59,13 @@ class PremiumCard extends StatelessWidget {
               right: 4,
               child: IconButton(
                 onPressed: onDelete,
-                icon: Icon(Icons.close_rounded, size: 16, color: (isDark ? Colors.white70 : AppColors.dark).withOpacity(0.3)),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: (isDark ? Colors.white70 : AppColors.dark).withValues(
+                    alpha: 0.3,
+                  ),
+                ),
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -89,9 +95,14 @@ class PremiumHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : AppColors.dark;
-    
+
     return Container(
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 10, 20, 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 10,
+        20,
+        20,
+      ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
@@ -108,10 +119,17 @@ class PremiumHeader extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.05) : AppColors.pageBg,
+                      color:
+                          isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : AppColors.pageBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: textColor),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 18,
+                      color: textColor,
+                    ),
                   ),
                 )
               else
@@ -135,7 +153,7 @@ class PremiumHeader extends StatelessWidget {
               subtitle!,
               style: TextStyle(
                 fontSize: 12,
-                color: textColor.withOpacity(0.5),
+                color: textColor.withValues(alpha: 0.5),
               ),
             ),
           ],

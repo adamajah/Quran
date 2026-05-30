@@ -51,14 +51,19 @@ class SettingsService {
     await _prefs.setString(_keyDefaultReciterId, settings.defaultReciterId);
     await _prefs.setBool(_keyReadReminder, settings.readReminder);
     if (settings.reminderTime != null) {
-      await _prefs.setString(_keyReminderTime, '${settings.reminderTime!.hour}:${settings.reminderTime!.minute}');
+      await _prefs.setString(
+        _keyReminderTime,
+        '${settings.reminderTime!.hour}:${settings.reminderTime!.minute}',
+      );
     }
     await _prefs.setBool(_keyDailyMotivation, settings.dailyMotivation);
     await _prefs.setBool(_keyShowTajwid, settings.showTajwid);
   }
 
   TimeOfDay? _parseTime(String? timeStr) {
-    if (timeStr == null || !timeStr.contains(':')) return const TimeOfDay(hour: 5, minute: 0);
+    if (timeStr == null || !timeStr.contains(':')) {
+      return const TimeOfDay(hour: 5, minute: 0);
+    }
     final parts = timeStr.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }

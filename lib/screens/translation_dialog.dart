@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quran/quran.dart' show Translation;
 import '../constants/app_colors.dart';
-import '../constants/app_text_style.dart';
 
 const Map<String, Translation> language = {
   'Indonesian': Translation.indonesian,
@@ -38,7 +37,7 @@ class TranslationDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(28.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.5 : 0.1),
+              color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.1),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),
@@ -55,10 +54,14 @@ class TranslationDialog extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(10.r),
                     decoration: BoxDecoration(
-                      color: gold.withOpacity(0.1),
+                      color: gold.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.translate_rounded, color: gold, size: 20.r),
+                    child: Icon(
+                      Icons.translate_rounded,
+                      color: gold,
+                      size: 20.r,
+                    ),
                   ),
                   SizedBox(width: 16.w),
                   Text(
@@ -72,8 +75,14 @@ class TranslationDialog extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(height: 1, color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
-            
+            Divider(
+              height: 1,
+              color:
+                  isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.05),
+            ),
+
             // List
             Flexible(
               child: ListView.builder(
@@ -85,12 +94,15 @@ class TranslationDialog extends StatelessWidget {
                   return Material(
                     color: Colors.transparent,
                     child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 0),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 24.w,
+                        vertical: 0,
+                      ),
                       leading: Text(
                         "${index + 1}",
                         style: TextStyle(
                           fontSize: 10.sp,
-                          color: gold.withOpacity(0.4),
+                          color: gold.withValues(alpha: 0.4),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -98,12 +110,18 @@ class TranslationDialog extends StatelessWidget {
                         entry.key,
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: isDark ? Colors.white.withOpacity(0.8) : AppColors.dark.withOpacity(0.8),
+                          color:
+                              isDark
+                                  ? Colors.white.withValues(alpha: 0.8)
+                                  : AppColors.dark.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      trailing: Icon(Icons.chevron_right_rounded, 
-                          size: 18.r, color: gold.withOpacity(0.3)),
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18.r,
+                        color: gold.withValues(alpha: 0.3),
+                      ),
                       onTap: () {
                         onSelect(entry.value);
                         Navigator.pop(context);
@@ -113,16 +131,24 @@ class TranslationDialog extends StatelessWidget {
                 },
               ),
             ),
-            
+
             // Footer Action
             Padding(
               padding: EdgeInsets.all(16.r),
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                  backgroundColor: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.w,
+                    vertical: 12.h,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  backgroundColor:
+                      isDark
+                          ? Colors.white.withValues(alpha: 0.03)
+                          : Colors.black.withValues(alpha: 0.03),
                 ),
                 child: Text(
                   'Batal',

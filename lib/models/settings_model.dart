@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum MushafFont { hafs, uthmani, kfgqpc, amiri, indopak }
+
 enum AppTheme { light, dark, gold, sepia }
 
 class AppSettings {
@@ -81,11 +82,16 @@ class AppSettings {
 
   String get mushafFontName {
     switch (mushafFont) {
-      case MushafFont.hafs: return 'Hafs Madinah';
-      case MushafFont.uthmani: return 'Uthmani';
-      case MushafFont.kfgqpc: return 'KFGQPC';
-      case MushafFont.amiri: return 'Amiri Quran';
-      case MushafFont.indopak: return 'IndoPak';
+      case MushafFont.hafs:
+        return 'Hafs Madinah';
+      case MushafFont.uthmani:
+        return 'Uthmani';
+      case MushafFont.kfgqpc:
+        return 'KFGQPC';
+      case MushafFont.amiri:
+        return 'Amiri Quran';
+      case MushafFont.indopak:
+        return 'IndoPak';
     }
   }
 

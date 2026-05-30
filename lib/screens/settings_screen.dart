@@ -5,7 +5,6 @@ import '../models/settings_model.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/common/premium_card.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:intl/intl.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -97,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildSettingTile(
                         Icons.access_time_rounded,
                         'Waktu Pengingat',
-                        '${settings.reminderTime?.format(context) ?? "05:00"}',
+                        settings.reminderTime?.format(context) ?? "05:00",
                         () => _showTimePicker(context, controller),
                       ),
                       _buildToggleTile(
@@ -130,8 +129,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'v2.4.0 (Premium)',
                         () => _showAppInfo(context),
                       ),
-                      _buildSettingTile(Icons.policy_rounded, 'Kebijakan Privasi', '', () {}),
-                      _buildSettingTile(Icons.star_outline_rounded, 'Beri Rating', '', () {}),
+                      _buildSettingTile(
+                        Icons.policy_rounded,
+                        'Kebijakan Privasi',
+                        '',
+                        () {},
+                      ),
+                      _buildSettingTile(
+                        Icons.star_outline_rounded,
+                        'Beri Rating',
+                        '',
+                        () {},
+                      ),
                     ]),
                     const SizedBox(height: 40),
                   ],
@@ -157,7 +166,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 8, bottom: 12),
-          child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
         PremiumCard(
           padding: EdgeInsets.zero,
@@ -167,59 +179,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingTile(IconData icon, String title, String value, VoidCallback onTap) {
+  Widget _buildSettingTile(
+    IconData icon,
+    String title,
+    String value,
+    VoidCallback onTap,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       onTap: onTap,
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: AppColors.gold.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          color: AppColors.gold.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Icon(icon, color: AppColors.gold, size: 20),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (value.isNotEmpty) Text(value, style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.grey.shade600)),
+          if (value.isNotEmpty)
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white60 : Colors.grey.shade600,
+              ),
+            ),
           const SizedBox(width: 8),
-          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDark ? Colors.white30 : Colors.grey),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: isDark ? Colors.white30 : Colors.grey,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildToggleTile(IconData icon, String title, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildToggleTile(
+    IconData icon,
+    String title,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: AppColors.gold.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          color: AppColors.gold.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Icon(icon, color: AppColors.gold, size: 20),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
       trailing: CupertinoSwitch(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.gold,
+        activeTrackColor: AppColors.gold,
       ),
     );
   }
 
-  Widget _buildThemeSelector(BuildContext context, SettingsController controller) {
+  Widget _buildThemeSelector(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildThemeItem('Light', Colors.white, AppTheme.light, controller),
-          _buildThemeItem('Dark', Colors.grey.shade900, AppTheme.dark, controller),
-          _buildThemeItem('Gold', const Color(0xFFFDF8E1), AppTheme.gold, controller),
-          _buildThemeItem('Sepia', const Color(0xFFF1E7D0), AppTheme.sepia, controller),
+          _buildThemeItem(
+            'Dark',
+            Colors.grey.shade900,
+            AppTheme.dark,
+            controller,
+          ),
+          _buildThemeItem(
+            'Gold',
+            const Color(0xFFFDF8E1),
+            AppTheme.gold,
+            controller,
+          ),
+          _buildThemeItem(
+            'Sepia',
+            const Color(0xFFF1E7D0),
+            AppTheme.sepia,
+            controller,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildThemeItem(String label, Color color, AppTheme theme, SettingsController controller) {
+  Widget _buildThemeItem(
+    String label,
+    Color color,
+    AppTheme theme,
+    SettingsController controller,
+  ) {
     final active = controller.settings.theme == theme;
     return GestureDetector(
       onTap: () => controller.updateTheme(theme),
@@ -227,17 +295,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            width: 54, height: 54,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              border: Border.all(color: active ? AppColors.gold : Colors.grey.shade300, width: active ? 3 : 1),
-              boxShadow: active ? [BoxShadow(color: AppColors.gold.withOpacity(0.3), blurRadius: 12)] : null,
+              border: Border.all(
+                color: active ? AppColors.gold : Colors.grey.shade300,
+                width: active ? 3 : 1,
+              ),
+              boxShadow:
+                  active
+                      ? [
+                        BoxShadow(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                        ),
+                      ]
+                      : null,
             ),
-            child: active ? const Icon(Icons.check_rounded, color: AppColors.gold, size: 28) : null,
+            child:
+                active
+                    ? const Icon(
+                      Icons.check_rounded,
+                      color: AppColors.gold,
+                      size: 28,
+                    )
+                    : null,
           ),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: active ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: active ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
@@ -245,41 +338,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // --- Modal Helpers ---
 
-  void _showFontSizeSlider(BuildContext context, SettingsController controller) {
+  void _showFontSizeSlider(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Ukuran Font Arab',
-        StatefulBuilder(
-          builder: (context, setModalState) {
-            return Column(
-              children: [
-                const SizedBox(height: 20),
-                Text('${controller.settings.arabicFontSize.toInt()} px', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Slider(
-                  value: controller.settings.arabicFontSize,
-                  min: 18, max: 40,
-                  divisions: 22,
-                  activeColor: AppColors.gold,
-                  onChanged: (v) {
-                    setModalState(() {});
-                    controller.updateArabicFontSize(v);
-                  },
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [Text('Kecil (18)'), Text('Besar (40)')],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Ukuran Font Arab',
+            StatefulBuilder(
+              builder: (context, setModalState) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      '${controller.settings.arabicFontSize.toInt()} px',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Slider(
+                      value: controller.settings.arabicFontSize,
+                      min: 18,
+                      max: 40,
+                      divisions: 22,
+                      activeColor: AppColors.gold,
+                      onChanged: (v) {
+                        setModalState(() {});
+                        controller.updateArabicFontSize(v);
+                      },
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [Text('Kecil (18)'), Text('Besar (40)')],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
     );
   }
 
@@ -295,26 +399,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Pilih Jenis Font',
-        ListView.builder(
-          shrinkWrap: true,
-          itemCount: fonts.length,
-          itemBuilder: (context, i) {
-            final f = fonts[i];
-            final active = controller.settings.mushafFont == f['value'];
-            return ListTile(
-              title: Text(f['name'] as String, style: TextStyle(fontWeight: active ? FontWeight.bold : FontWeight.normal)),
-              trailing: active ? const Icon(Icons.check_circle_rounded, color: AppColors.gold) : null,
-              onTap: () {
-                controller.updateMushafFont(f['value'] as MushafFont);
-                Navigator.pop(context);
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Pilih Jenis Font',
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: fonts.length,
+              itemBuilder: (context, i) {
+                final f = fonts[i];
+                final active = controller.settings.mushafFont == f['value'];
+                return ListTile(
+                  title: Text(
+                    f['name'] as String,
+                    style: TextStyle(
+                      fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  trailing:
+                      active
+                          ? const Icon(
+                            Icons.check_circle_rounded,
+                            color: AppColors.gold,
+                          )
+                          : null,
+                  onTap: () {
+                    controller.updateMushafFont(f['value'] as MushafFont);
+                    Navigator.pop(context);
+                  },
+                );
               },
-            );
-          },
-        ),
-      ),
+            ),
+          ),
     );
   }
 
@@ -328,26 +444,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Jarak Antar Ayat',
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: options.map((opt) {
-            final active = controller.settings.lineSpacing == opt['value'];
-            return ChoiceChip(
-              label: Text(opt['label'] as String),
-              selected: active,
-              onSelected: (s) {
-                if (s) controller.updateLineSpacing(opt['value'] as double);
-                Navigator.pop(context);
-              },
-              selectedColor: AppColors.gold.withOpacity(0.2),
-              labelStyle: TextStyle(color: active ? AppColors.gold : Colors.black),
-            );
-          }).toList(),
-        ),
-      ),
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Jarak Antar Ayat',
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children:
+                  options.map((opt) {
+                    final active =
+                        controller.settings.lineSpacing == opt['value'];
+                    return ChoiceChip(
+                      label: Text(opt['label'] as String),
+                      selected: active,
+                      onSelected: (s) {
+                        if (s) {
+                          controller.updateLineSpacing(opt['value'] as double);
+                        }
+                        Navigator.pop(context);
+                      },
+                      selectedColor: AppColors.gold.withValues(alpha: 0.2),
+                      labelStyle: TextStyle(
+                        color: active ? AppColors.gold : Colors.black,
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
     );
   }
 
@@ -355,28 +478,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Volume Default',
-        StatefulBuilder(
-          builder: (context, setModalState) {
-            return Column(
-              children: [
-                const SizedBox(height: 20),
-                Icon(controller.settings.defaultVolume == 0 ? Icons.volume_off : Icons.volume_up, size: 40, color: AppColors.gold),
-                Slider(
-                  value: controller.settings.defaultVolume,
-                  activeColor: AppColors.gold,
-                  onChanged: (v) {
-                    setModalState(() {});
-                    controller.updateVolume(v);
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Volume Default',
+            StatefulBuilder(
+              builder: (context, setModalState) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Icon(
+                      controller.settings.defaultVolume == 0
+                          ? Icons.volume_off
+                          : Icons.volume_up,
+                      size: 40,
+                      color: AppColors.gold,
+                    ),
+                    Slider(
+                      value: controller.settings.defaultVolume,
+                      activeColor: AppColors.gold,
+                      onChanged: (v) {
+                        setModalState(() {});
+                        controller.updateVolume(v);
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
     );
   }
 
@@ -385,24 +515,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Kecepatan Putar',
-        Wrap(
-          spacing: 12,
-          children: speeds.map((s) {
-            final active = controller.settings.playbackSpeed == s;
-            return ChoiceChip(
-              label: Text('${s}x'),
-              selected: active,
-              onSelected: (sel) {
-                if (sel) controller.updatePlaybackSpeed(s);
-                Navigator.pop(context);
-              },
-            );
-          }).toList(),
-        ),
-      ),
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Kecepatan Putar',
+            Wrap(
+              spacing: 12,
+              children:
+                  speeds.map((s) {
+                    final active = controller.settings.playbackSpeed == s;
+                    return ChoiceChip(
+                      label: Text('${s}x'),
+                      selected: active,
+                      onSelected: (sel) {
+                        if (sel) controller.updatePlaybackSpeed(s);
+                        Navigator.pop(context);
+                      },
+                    );
+                  }).toList(),
+            ),
+          ),
     );
   }
 
@@ -422,64 +554,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Pilih Qari Default',
-        StatefulBuilder(
-          builder: (context, setModalState) {
-            return SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Cari nama qari...',
-                        prefixIcon: const Icon(Icons.search, color: AppColors.gold),
-                        filled: true,
-                        fillColor: AppColors.gold.withOpacity(0.05),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Pilih Qari Default',
+            StatefulBuilder(
+              builder: (context, setModalState) {
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Cari nama qari...',
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: AppColors.gold,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.gold.withValues(alpha: 0.05),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onChanged: (v) {
+                            // In a real app, you'd filter the list here
+                            setModalState(() {});
+                          },
                         ),
                       ),
-                      onChanged: (v) {
-                        // In a real app, you'd filter the list here
-                        setModalState(() {});
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: qaris.length,
-                      separatorBuilder: (_, __) => Divider(color: Colors.grey.withOpacity(0.1), height: 1),
-                      itemBuilder: (context, i) {
-                        final q = qaris[i];
-                        final active = controller.settings.defaultReciterId == q['id'];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.gold.withOpacity(active ? 1 : 0.1),
-                            child: Text(q['name']![0], style: TextStyle(color: active ? Colors.white : AppColors.gold)),
-                          ),
-                          title: Text(q['name']!, style: TextStyle(fontWeight: active ? FontWeight.bold : FontWeight.normal)),
-                          trailing: active ? const Icon(Icons.check_circle_rounded, color: AppColors.gold) : null,
-                          onTap: () {
-                            controller.updateDefaultReciter(q['id']!);
-                            Navigator.pop(context);
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: qaris.length,
+                          separatorBuilder:
+                              (_, _) => Divider(
+                                color: Colors.grey.withValues(alpha: 0.1),
+                                height: 1,
+                              ),
+                          itemBuilder: (context, i) {
+                            final q = qaris[i];
+                            final active =
+                                controller.settings.defaultReciterId == q['id'];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.gold.withValues(
+                                  alpha: active ? 1 : 0.1,
+                                ),
+                                child: Text(
+                                  q['name']![0],
+                                  style: TextStyle(
+                                    color:
+                                        active ? Colors.white : AppColors.gold,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                q['name']!,
+                                style: TextStyle(
+                                  fontWeight:
+                                      active
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                ),
+                              ),
+                              trailing:
+                                  active
+                                      ? const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: AppColors.gold,
+                                      )
+                                      : null,
+                              onTap: () {
+                                controller.updateDefaultReciter(q['id']!);
+                                Navigator.pop(context);
+                              },
+                            );
                           },
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
     );
   }
 
@@ -487,58 +656,118 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _buildBottomModal(
-        ctx,
-        'Backup & Restore',
-        Column(
-          children: [
-            _buildActionTile(Icons.cloud_upload_rounded, 'Backup ke Cloud', 'Simpan pengaturan ke server', () {
-              Navigator.pop(ctx);
-              _confirmAction(context, 'Backup Data', 'Apakah Anda yakin ingin mencadangkan data ke cloud?', () {
-                _handleBackup(context, controller, true);
-              });
-            }),
-            _buildActionTile(Icons.storage_rounded, 'Backup Lokal', 'Simpan file backup di perangkat', () {
-              Navigator.pop(ctx);
-              _handleBackup(context, controller, false);
-            }),
-            _buildActionTile(Icons.settings_backup_restore_rounded, 'Restore Data', 'Kembalikan data dari backup terakhir', () {
-              Navigator.pop(ctx);
-              _confirmAction(context, 'Restore Data', 'Data saat ini akan ditimpa dengan data backup. Lanjutkan?', () {
-                _handleSync(context, controller); // Reusing sync for restore mock
-              });
-            }),
-          ],
-        ),
-      ),
+      builder:
+          (ctx) => _buildBottomModal(
+            ctx,
+            'Backup & Restore',
+            Column(
+              children: [
+                _buildActionTile(
+                  Icons.cloud_upload_rounded,
+                  'Backup ke Cloud',
+                  'Simpan pengaturan ke server',
+                  () {
+                    Navigator.pop(ctx);
+                    _confirmAction(
+                      context,
+                      'Backup Data',
+                      'Apakah Anda yakin ingin mencadangkan data ke cloud?',
+                      () {
+                        _handleBackup(context, controller, true);
+                      },
+                    );
+                  },
+                ),
+                _buildActionTile(
+                  Icons.storage_rounded,
+                  'Backup Lokal',
+                  'Simpan file backup di perangkat',
+                  () {
+                    Navigator.pop(ctx);
+                    _handleBackup(context, controller, false);
+                  },
+                ),
+                _buildActionTile(
+                  Icons.settings_backup_restore_rounded,
+                  'Restore Data',
+                  'Kembalikan data dari backup terakhir',
+                  () {
+                    Navigator.pop(ctx);
+                    _confirmAction(
+                      context,
+                      'Restore Data',
+                      'Data saat ini akan ditimpa dengan data backup. Lanjutkan?',
+                      () {
+                        _handleSync(
+                          context,
+                          controller,
+                        ); // Reusing sync for restore mock
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
     );
   }
 
-  Widget _buildActionTile(IconData icon, String title, String subtitle, VoidCallback onTap) {
+  Widget _buildActionTile(
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
     return ListTile(
       onTap: onTap,
       leading: Icon(icon, color: AppColors.gold),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
       trailing: const Icon(Icons.chevron_right_rounded),
     );
   }
 
-  void _confirmAction(BuildContext context, String title, String message, VoidCallback onConfirm) {
+  void _confirmAction(
+    BuildContext context,
+    String title,
+    String message,
+    VoidCallback onConfirm,
+  ) {
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontFamily: 'Amiri')),
-        content: Text(message),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
-          TextButton(onPressed: () {
-            Navigator.pop(dialogCtx);
-            onConfirm();
-          }, child: const Text('Ya, Lanjutkan', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold))),
-        ],
-      ),
+      builder:
+          (dialogCtx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Text(title, style: const TextStyle(fontFamily: 'Amiri')),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: const Text(
+                  'Batal',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogCtx);
+                  onConfirm();
+                },
+                child: const Text(
+                  'Ya, Lanjutkan',
+                  style: TextStyle(
+                    color: AppColors.gold,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
     );
   }
 
@@ -546,20 +775,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildBottomModal(
-        context,
-        'Waktu Pengingat',
-        SizedBox(
-          height: 200,
-          child: CupertinoDatePicker(
-            mode: CupertinoDatePickerMode.time,
-            initialDateTime: DateTime(2024, 1, 1, controller.settings.reminderTime?.hour ?? 5, controller.settings.reminderTime?.minute ?? 0),
-            onDateTimeChanged: (dt) {
-              controller.updateReminderTime(TimeOfDay(hour: dt.hour, minute: dt.minute));
-            },
+      builder:
+          (context) => _buildBottomModal(
+            context,
+            'Waktu Pengingat',
+            SizedBox(
+              height: 200,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: DateTime(
+                  2024,
+                  1,
+                  1,
+                  controller.settings.reminderTime?.hour ?? 5,
+                  controller.settings.reminderTime?.minute ?? 0,
+                ),
+                onDateTimeChanged: (dt) {
+                  controller.updateReminderTime(
+                    TimeOfDay(hour: dt.hour, minute: dt.minute),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -568,7 +806,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(child: CupertinoActivityIndicator(radius: 20)),
+      builder:
+          (ctx) => const Center(child: CupertinoActivityIndicator(radius: 20)),
     );
 
     try {
@@ -578,18 +817,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sinkronisasi Berhasil!'), backgroundColor: AppColors.gold),
+          const SnackBar(
+            content: Text('Sinkronisasi Berhasil!'),
+            backgroundColor: AppColors.gold,
+          ),
         );
       }
     }
   }
 
-  void _handleBackup(BuildContext context, SettingsController controller, bool cloud) async {
+  void _handleBackup(
+    BuildContext context,
+    SettingsController controller,
+    bool cloud,
+  ) async {
     // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(child: CupertinoActivityIndicator(radius: 20)),
+      builder:
+          (ctx) => const Center(child: CupertinoActivityIndicator(radius: 20)),
     );
 
     try {
@@ -599,7 +846,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Backup ke ${cloud ? "Cloud" : "Storage"} Berhasil!'), backgroundColor: AppColors.gold),
+          SnackBar(
+            content: Text('Backup ke ${cloud ? "Cloud" : "Storage"} Berhasil!'),
+            backgroundColor: AppColors.gold,
+          ),
         );
       }
     }
@@ -612,7 +862,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       applicationVersion: '2.4.0 (Premium)',
       applicationLegalese: '© 2024 Premium Islamic Apps',
       children: [
-        const Text('Aplikasi Al-Quran premium dengan fitur terlengkap untuk menemani ibadah Anda.'),
+        const Text(
+          'Aplikasi Al-Quran premium dengan fitur terlengkap untuk menemani ibadah Anda.',
+        ),
       ],
     );
   }
@@ -627,9 +879,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 20),
           content,
           const SizedBox(height: 20),

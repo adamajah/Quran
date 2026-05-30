@@ -82,10 +82,15 @@ class BookmarkEntry {
 
 class BookmarkFolder {
   final String name;
-  final String icon; 
+  final String icon;
   final int count;
   final int color; // Added color
-  const BookmarkFolder({required this.name, required this.icon, this.count = 0, this.color = 0xFFA07848});
+  const BookmarkFolder({
+    required this.name,
+    required this.icon,
+    this.count = 0,
+    this.color = 0xFFA07848,
+  });
 }
 
 class PageData {
@@ -94,9 +99,13 @@ class PageData {
   final List<VerseRef> verses;
   final List<SurahGroup> groups;
   const PageData({
-    required this.pageNum, required this.juz,
-    required this.surah, required this.surahName, required this.surahNameAr,
-    required this.verses, required this.groups,
+    required this.pageNum,
+    required this.juz,
+    required this.surah,
+    required this.surahName,
+    required this.surahNameAr,
+    required this.verses,
+    required this.groups,
   });
 }
 
@@ -106,7 +115,9 @@ class SurahGroup {
   final bool isFirstInMushaf;
   final List<VerseRef> verses;
   const SurahGroup({
-    required this.surah, required this.surahNameAr,
-    required this.isFirstInMushaf, required this.verses,
+    required this.surah,
+    required this.surahNameAr,
+    required this.isFirstInMushaf,
+    required this.verses,
   });
 }

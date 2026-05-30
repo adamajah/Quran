@@ -9,7 +9,6 @@ import 'constants/theme_manager.dart';
 import 'controllers/settings_controller.dart';
 import 'services/settings_service.dart';
 
-import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 import 'services/download_service.dart';
 import 'services/audio_service.dart';
@@ -21,7 +20,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await QuranLibrary.init();
   // NotificationService initialization moved to SplashScreen to avoid Activity-not-ready issues
-  
+
   final prefs = await SharedPreferences.getInstance();
   final settingsService = SettingsService(prefs);
   final storageService = StorageService();
@@ -31,9 +30,14 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsController(settingsService)),
+        ChangeNotifierProvider(
+          create: (_) => SettingsController(settingsService),
+        ),
         ChangeNotifierProvider(create: (_) => StorageProvider(storageService)),
-        ChangeNotifierProvider(create: (_) => DownloadProvider(downloadService, storageService, prefs)),
+        ChangeNotifierProvider(
+          create:
+              (_) => DownloadProvider(downloadService, storageService, prefs),
+        ),
         ChangeNotifierProvider(create: (_) => AudioProvider(audioService)),
       ],
       child: const MyApp(),

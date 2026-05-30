@@ -4,54 +4,73 @@ import 'app_colors.dart';
 
 abstract class AppTextStyle {
   /// HeadLineText == 32 Size
-  static Widget headlineText(context, text) {
-    return Text(text,
-        style: Theme.of(context)
-            .textTheme
-            .headlineLarge
-            ?.copyWith(color: AppColors.textColor),
-        textAlign: TextAlign.center);
+  static Widget headlineText(BuildContext context, String text) {
+    return Text(
+      text,
+      style: Theme.of(
+        context,
+      ).textTheme.headlineLarge?.copyWith(color: AppColors.textColor),
+      textAlign: TextAlign.center,
+    );
   }
 
   /// TitleLargeText == 22 Size
-  static Widget titleLargeText(context, text, [color]) {
+  static Widget titleLargeText(
+    BuildContext context,
+    String text, [
+    Color? color,
+  ]) {
     return Text(
       text,
-      style: Theme.of(context)
-          .textTheme
-          .titleLarge
-          ?.copyWith(color: color ?? AppColors.textColor),
+      style: Theme.of(
+        context,
+      ).textTheme.titleLarge?.copyWith(color: color ?? AppColors.textColor),
     );
   }
 
   /// TitleMediumText == 20 Size
-  static Widget titleMediumText(context, text, [color]) {
+  static Widget titleMediumText(
+    BuildContext context,
+    String text, [
+    Color? color,
+  ]) {
     return Text(
       text,
-      style: Theme.of(context)
-          .textTheme
-          .titleMedium
-          ?.copyWith(color: color ?? AppColors.textColor, fontSize: 20),
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        color: color ?? AppColors.textColor,
+        fontSize: 20,
+      ),
     );
   }
 
   /// TitleSmallText == 16 Size
-  static Widget titleSmallText(context, text, [color]) {
-    return Text(text,
-        style: Theme.of(context)
-            .textTheme
-            .titleSmall
-            ?.copyWith(color: color ?? AppColors.textColor, fontSize: 16));
+  static Widget titleSmallText(
+    BuildContext context,
+    String text, [
+    Color? color,
+  ]) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        color: color ?? AppColors.textColor,
+        fontSize: 16,
+      ),
+    );
   }
 
   /// LabelMediumText == 12 Size
-  static Widget labelMediumText(context, text, [color]) {
-    return Text(text,
-        style: Theme.of(context)
-            .textTheme
-            .labelMedium
-            ?.copyWith(color: AppColors.textColor),
-        textAlign: TextAlign.center);
+  static Widget labelMediumText(
+    BuildContext context,
+    String text, [
+    Color? color,
+  ]) {
+    return Text(
+      text,
+      style: Theme.of(
+        context,
+      ).textTheme.labelMedium?.copyWith(color: AppColors.textColor),
+      textAlign: TextAlign.center,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -103,7 +122,7 @@ abstract class AppTextStyle {
   }) {
     return QuranLibrary().naskhStyle.copyWith(
       fontSize: fontSize,
-      color: color.withOpacity(0.8),
+      color: color.withValues(alpha: 0.8),
     );
   }
 }

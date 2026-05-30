@@ -86,13 +86,13 @@ class SettingsController extends ChangeNotifier {
   void toggleReadReminder(bool active) {
     _settings = _settings.copyWith(readReminder: active);
     _service.saveSettings(_settings);
-    
+
     if (active && _settings.reminderTime != null) {
       NotificationService.scheduleReadingReminder(_settings.reminderTime!);
     } else {
       NotificationService.cancelAll();
     }
-    
+
     _hapticFeedback();
     notifyListeners();
   }
@@ -100,11 +100,11 @@ class SettingsController extends ChangeNotifier {
   void updateReminderTime(TimeOfDay time) {
     _settings = _settings.copyWith(reminderTime: time);
     _service.saveSettings(_settings);
-    
+
     if (_settings.readReminder) {
       NotificationService.scheduleReadingReminder(time);
     }
-    
+
     _hapticFeedback();
     notifyListeners();
   }
