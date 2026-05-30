@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 class DownloadService {
@@ -12,13 +14,14 @@ class DownloadService {
     required Function(String error) onError,
     required String id,
   }) async {
+    final partialPath = '$savePath.part';
     try {
       final cancelToken = CancelToken();
       _cancelTokens[id] = cancelToken;
 
-      await _dio.download(
+      final response = await _dio.download(
         url,
-        savePath,
+        partialPath,
         onReceiveProgress: onProgress,
         cancelToken: cancelToken,
         options: Options(
@@ -28,10 +31,21 @@ class DownloadService {
         ),
       );
 
+      await _validateAudioFile(response, partialPath);
+      final completedFile = File(savePath);
+      if (await completedFile.exists()) {
+        await completedFile.delete();
+      }
+      await File(partialPath).rename(savePath);
+
       _cancelTokens.remove(id);
       onCompleted();
     } catch (e) {
       _cancelTokens.remove(id);
+      final partialFile = File(partialPath);
+      if (await partialFile.exists()) {
+        await partialFile.delete();
+      }
       if (e is DioException) {
         if (CancelToken.isCancel(e)) {
           onError("PAUSED");
@@ -51,5 +65,32 @@ class DownloadService {
   void pauseDownload(String id) {
     _cancelTokens[id]?.cancel();
     _cancelTokens.remove(id);
+  }
+
+  Future<void> _validateAudioFile(
+    Response<dynamic> response,
+    String path,
+  ) async {
+    final contentType = response.headers.value(Headers.contentTypeHeader);
+    if (contentType == null || !contentType.startsWith('audio/')) {
+      throw FormatException('Server tidak mengirim file audio');
+    }
+
+    final file = File(path);
+    if (!await file.exists() || await file.length() < 1024) {
+      throw FormatException('File audio tidak lengkap');
+    }
+
+    final header = await file.openRead(0, 3).first;
+    final hasId3Header =
+        header.length >= 3 &&
+        header[0] == 0x49 &&
+        header[1] == 0x44 &&
+        header[2] == 0x33;
+    final hasMp3Frame =
+        header.length >= 2 && header[0] == 0xFF && (header[1] & 0xE0) == 0xE0;
+    if (!hasId3Header && !hasMp3Frame) {
+      throw FormatException('Format audio tidak valid');
+    }
   }
 }

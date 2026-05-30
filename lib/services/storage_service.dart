@@ -13,6 +13,14 @@ class StorageService {
     return path;
   }
 
+  Future<String?> resolveDownloadFilePath(String savedPath) async {
+    final fileName = savedPath.split(Platform.pathSeparator).last;
+    final currentPath = '${await getDownloadPath()}/$fileName';
+    final file = File(currentPath);
+    if (!await file.exists() || await file.length() == 0) return null;
+    return currentPath;
+  }
+
   Future<StorageSpace?> getStorageInfo() async {
     try {
       return await getStorageSpace(

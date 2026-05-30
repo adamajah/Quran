@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_quran_app/models/download_item.dart';
@@ -23,8 +26,12 @@ class _FakeDownloadService extends DownloadService {
 }
 
 class _FakeStorageService extends StorageService {
+  _FakeStorageService([this.path = '/tmp']);
+
+  final String path;
+
   @override
-  Future<String> getDownloadPath() async => '/tmp';
+  Future<String> getDownloadPath() async => path;
 }
 
 void main() {
@@ -74,5 +81,40 @@ void main() {
     expect(downloadService.urls, [
       'https://cdn.islamic.network/quran/audio-surah/128/ar.haniarrifai/1.mp3',
     ]);
+  });
+
+  test('completed downloads relocate to the current iOS container', () async {
+    final downloadDir = await Directory.systemTemp.createTemp(
+      'quran-downloads-',
+    );
+    addTearDown(() => downloadDir.delete(recursive: true));
+    final currentPath = '${downloadDir.path}/001.mp3';
+    await File(currentPath).writeAsBytes([0x49, 0x44, 0x33]);
+    SharedPreferences.setMockInitialValues({
+      'pause_low_battery': false,
+      'download_items': jsonEncode([
+        DownloadItem(
+          id: '001',
+          title: 'Al-Faatiha',
+          subtitle: 'Mishary Rashid Alafasy',
+          url:
+              'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3',
+          savePath: '/old-ios-container/Documents/downloads/001.mp3',
+          progress: 1,
+          status: DownloadStatus.completed,
+        ).toJson(),
+      ]),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final provider = DownloadProvider(
+      _FakeDownloadService(),
+      _FakeStorageService(downloadDir.path),
+      prefs,
+    );
+
+    final resolvedPath = await provider.localAudioPathForSurah(1);
+
+    expect(resolvedPath, currentPath);
+    expect(provider.itemForSurah(1)?.savePath, currentPath);
   });
 }

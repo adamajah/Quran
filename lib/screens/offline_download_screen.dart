@@ -632,7 +632,22 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
                   onPressed:
                       item?.savePath == null
                           ? null
-                          : () => audioProvider.playToggle(item!.savePath!),
+                          : () async {
+                            final path = await provider.localAudioPathForSurah(
+                              surah,
+                            );
+                            if (!context.mounted) return;
+                            if (path == null) {
+                              _showAudioMessage(
+                                context,
+                                'File audio tidak ditemukan. Silakan download ulang.',
+                              );
+                              return;
+                            }
+                            final error = await audioProvider.playToggle(path);
+                            if (!context.mounted || error == null) return;
+                            _showAudioMessage(context, error);
+                          },
                   icon: Icon(
                     isPlaying
                         ? Icons.pause_circle_filled_rounded
@@ -667,6 +682,12 @@ class _OfflineDownloadScreenState extends State<OfflineDownloadScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showAudioMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 

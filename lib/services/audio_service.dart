@@ -17,7 +17,12 @@ class AudioService {
     } else {
       await _player.stop();
       _currentPlayingPath = path;
-      await _player.play(DeviceFileSource(path));
+      try {
+        await _player.play(DeviceFileSource(path));
+      } catch (_) {
+        _currentPlayingPath = null;
+        rethrow;
+      }
     }
   }
 

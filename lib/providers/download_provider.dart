@@ -26,6 +26,7 @@ class DownloadProvider with ChangeNotifier {
   DownloadProvider(this._downloadService, this._storageService, this._prefs) {
     _loadSettings();
     _loadItems();
+    _reconcileDownloadedItems();
     _listenToBattery();
   }
 
@@ -72,9 +73,10 @@ class DownloadProvider with ChangeNotifier {
     }
 
     final paddedId = surah.toString().padLeft(3, '0');
-    final id = reciter.id == availableReciters.first.id
-        ? paddedId
-        : '${reciter.id}-$paddedId';
+    final id =
+        reciter.id == availableReciters.first.id
+            ? paddedId
+            : '${reciter.id}-$paddedId';
 
     return DownloadItem(
       id: id,
@@ -152,6 +154,59 @@ class DownloadProvider with ChangeNotifier {
       _items.map((item) => item.toJson()).toList(),
     );
     _prefs.setString('download_items', encoded);
+  }
+
+  Future<void> _reconcileDownloadedItems() async {
+    var changed = false;
+    for (final item in _items) {
+      if (item.status != DownloadStatus.completed) continue;
+      final savedPath = item.savePath;
+      final resolvedPath =
+          savedPath == null
+              ? null
+              : await _storageService.resolveDownloadFilePath(savedPath);
+      if (resolvedPath == null) {
+        item.status = DownloadStatus.notDownloaded;
+        item.savePath = null;
+        item.progress = 0;
+        changed = true;
+      } else if (resolvedPath != savedPath) {
+        item.savePath = resolvedPath;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    _saveItems();
+    notifyListeners();
+  }
+
+  Future<String?> localAudioPathForSurah(int surah) async {
+    final item = itemForSurah(surah);
+    final savedPath = item?.savePath;
+    if (item == null ||
+        item.status != DownloadStatus.completed ||
+        savedPath == null) {
+      return null;
+    }
+
+    final resolvedPath = await _storageService.resolveDownloadFilePath(
+      savedPath,
+    );
+    if (resolvedPath == null) {
+      item.status = DownloadStatus.notDownloaded;
+      item.savePath = null;
+      item.progress = 0;
+      _saveItems();
+      notifyListeners();
+      return null;
+    }
+
+    if (resolvedPath != savedPath) {
+      item.savePath = resolvedPath;
+      _saveItems();
+      notifyListeners();
+    }
+    return resolvedPath;
   }
 
   void setWifiOnly(bool value) {
@@ -369,9 +424,10 @@ class DownloadProvider with ChangeNotifier {
 
     for (var surah = 1; surah <= q.totalSurahCount; surah++) {
       final paddedId = surah.toString().padLeft(3, '0');
-      final id = reciter.id == availableReciters.first.id
-          ? paddedId
-          : '${reciter.id}-$paddedId';
+      final id =
+          reciter.id == availableReciters.first.id
+              ? paddedId
+              : '${reciter.id}-$paddedId';
       final index = _items.indexWhere((item) => item.id == id);
       if (index != -1 && _items[index].status != DownloadStatus.completed) {
         await startDownload(id);

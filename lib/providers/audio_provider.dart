@@ -17,10 +17,17 @@ class AudioProvider with ChangeNotifier {
   PlayerState get playerState => _playerState;
   String? get currentPath => _currentPath;
 
-  Future<void> playToggle(String path) async {
+  Future<String?> playToggle(String path) async {
     _currentPath = path;
-    await _audioService.playOffline(path);
-    notifyListeners();
+    try {
+      await _audioService.playOffline(path);
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _currentPath = null;
+      notifyListeners();
+      return 'File audio tidak dapat diputar. Silakan download ulang.';
+    }
   }
 
   Future<void> stop() async {
