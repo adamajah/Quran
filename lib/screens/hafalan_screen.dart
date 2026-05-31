@@ -24,6 +24,7 @@ import '../widgets/hafalan/realtime_ayah_view.dart';
 import '../widgets/hafalan/recording_controls.dart';
 import '../services/hafalan_engine.dart';
 import '../services/audio_playback_coordinator.dart';
+import '../services/reciter_audio_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HafalanScreen  —  main entry point
@@ -63,6 +64,7 @@ class _HafalanScreenState extends State<HafalanScreen>
   // ── Audio
   final _audioPlayer = AudioPlayer();
   final _playbackOwner = Object();
+  final _reciterAudioService = ReciterAudioService.instance;
   int _playRequestId = 0;
   bool _playing = false;
   int _playingVerse = 0;
@@ -292,14 +294,12 @@ class _HafalanScreenState extends State<HafalanScreen>
       if (requestId != _playRequestId) return;
 
       // Calculate global verse number for the URL
-      if (!_selectedReciter.supportsVerseAudio) {
-        throw StateError(
-          'Reciter ${_selectedReciter.name} does not support verse audio',
-        );
-      }
-
       await _audioPlayer.setUrl(
-        _selectedReciter.verseAudioUrl(_hafalanSurah, verse),
+        await _reciterAudioService.verseAudioUrl(
+          _selectedReciter,
+          _hafalanSurah,
+          verse,
+        ),
       );
       if (requestId != _playRequestId) return;
       unawaited(_audioPlayer.play());

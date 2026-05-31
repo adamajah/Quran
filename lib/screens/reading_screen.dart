@@ -16,6 +16,7 @@ import '../screens/translation_dialog.dart';
 import '../controllers/settings_controller.dart';
 import '../models/settings_model.dart';
 import '../widgets/mushaf/translation_panel.dart';
+import '../services/reciter_audio_service.dart';
 
 class ReadingScreen extends StatefulWidget {
   final int surahIndex;
@@ -28,6 +29,7 @@ class ReadingScreen extends StatefulWidget {
 class _ReadingScreenState extends State<ReadingScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final _playbackOwner = Object();
+  final _reciterAudioService = ReciterAudioService.instance;
   int _playRequestId = 0;
 
   bool _isPlaying = false;
@@ -161,12 +163,9 @@ class _ReadingScreenState extends State<ReadingScreen> {
       if (requestId != _playRequestId) return;
       await _audioPlayer.setVolume(settings.defaultVolume);
       await _audioPlayer.setSpeed(settings.playbackSpeed);
-      if (!reciter.supportsVerseAudio) {
-        throw StateError(
-          'Reciter ${reciter.name} does not support verse audio',
-        );
-      }
-      await _audioPlayer.setUrl(reciter.verseAudioUrl(surah, verse));
+      await _audioPlayer.setUrl(
+        await _reciterAudioService.verseAudioUrl(reciter, surah, verse),
+      );
       if (requestId != _playRequestId) return;
       unawaited(_audioPlayer.play());
     } catch (e) {

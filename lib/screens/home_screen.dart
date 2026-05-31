@@ -24,6 +24,7 @@ import '../widgets/mushaf/tajwid_guide.dart';
 import '../widgets/mushaf/translation_panel.dart';
 import '../controllers/settings_controller.dart';
 import '../utils/quran_page_index.dart';
+import '../services/reciter_audio_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen>
   AudioPlayer? _audio;
   final _playbackOwner = Object();
   final _reciterService = OfflineReciterService();
+  final _reciterAudioService = ReciterAudioService.instance;
   late PageController _pageCtrl;
   late AnimationController _flipCtrl;
 
@@ -260,13 +262,9 @@ class _HomeScreenState extends State<HomeScreen>
         }
       } else {
         _clearStreamPlayback();
-        if (!reciter.supportsVerseAudio) {
-          AudioPlaybackCoordinator.instance.release(_playbackOwner);
-          if (mounted) setState(() => _playing = false);
-          _snack('Qari ini belum tersedia untuk audio ayat per ayat');
-          return;
-        }
-        await audio.setUrl(reciter.verseAudioUrl(r.surah, r.verse));
+        await audio.setUrl(
+          await _reciterAudioService.verseAudioUrl(reciter, r.surah, r.verse),
+        );
         if (requestId != _playRequestId) return;
       }
       unawaited(audio.play());

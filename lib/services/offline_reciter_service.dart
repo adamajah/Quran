@@ -37,7 +37,6 @@ class OfflineReciterService {
 
   Future<List<Reciter>> getRecitersForSurah(int surah) async {
     return availableReciters
-        .where((reciter) => isPopularReciterName(reciter.name))
         .where((reciter) => reciter.supportsSurahDownload(surah))
         .toList(growable: false);
   }
@@ -141,8 +140,6 @@ class OfflineReciterService {
       final name = reciter['name'] as String?;
       final collections = reciter['moshaf'] as List<dynamic>? ?? const [];
       if (name == null || name.isEmpty) continue;
-      if (!isPopularReciterName(name)) continue;
-
       for (final rawCollection in collections) {
         final collection = rawCollection as Map<String, dynamic>;
         final server = collection['server'] as String?;
