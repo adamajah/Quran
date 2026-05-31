@@ -27,7 +27,6 @@ class TranslationPanel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = AppColors.gold;
     final surface = isDark ? const Color(0xFF121212) : const Color(0xFFFDFBF7);
-    final cardSurface = isDark ? const Color(0xFF1C1C1C) : Colors.white;
     final borderColor =
         isDark
             ? Colors.white.withValues(alpha: 0.05)
@@ -67,7 +66,7 @@ class TranslationPanel extends StatelessWidget {
                 child: Column(
                   children: [
                     Container(
-                      width: 40.w,
+                      width: 36.w,
                       height: 4.h,
                       decoration: BoxDecoration(
                         color:
@@ -79,16 +78,16 @@ class TranslationPanel extends StatelessWidget {
                     ),
                     SizedBox(height: 8.h),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      padding: EdgeInsets.symmetric(horizontal: 14.w),
                       child: Row(
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 9.w,
+                              horizontal: 8.w,
                               vertical: 3.h,
                             ),
                             decoration: BoxDecoration(
-                              color: gold.withValues(alpha: 0.10),
+                              color: gold.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -114,7 +113,7 @@ class TranslationPanel extends StatelessWidget {
                           GestureDetector(
                             onTap: onClose,
                             child: Container(
-                              padding: EdgeInsets.all(5.r),
+                              padding: EdgeInsets.all(4.r),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color:
@@ -160,67 +159,87 @@ class TranslationPanel extends StatelessWidget {
                           ),
                         ),
                       )
-                      : ListView.separated(
-                        padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 16.h),
-                        physics: const BouncingScrollPhysics(),
+                      : ListView.builder(
+                        padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 14.h),
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
                         itemCount: verses.length,
-                        separatorBuilder: (_, _) => SizedBox(height: 10.h),
                         itemBuilder: (context, index) {
                           final v = verses[index];
-                          return Container(
-                            padding: EdgeInsets.all(13.r),
-                            decoration: BoxDecoration(
-                              color: cardSurface,
-                              borderRadius: BorderRadius.circular(18.r),
-                              border: Border.all(color: borderColor),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 30.w,
-                                  height: 30.w,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: gold.withValues(alpha: 0.94),
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 8.h),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.02)
+                                    : Colors.black.withValues(alpha: 0.02),
+                                borderRadius: BorderRadius.circular(14.r),
+                                border: Border(
+                                  left: BorderSide(
+                                    color: gold.withValues(alpha: 0.45),
+                                    width: 2,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      '${v['verse']}',
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 26.w,
+                                      height: 26.w,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: gold.withValues(alpha: 0.92),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${v['verse']}',
+                                          style: TextStyle(
+                                            fontSize: 9.sp,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'QS ${v['surah']}:${v['verse']}',
-                                        style: TextStyle(
-                                          fontSize: 9.sp,
-                                          color: gold.withValues(alpha: 0.70),
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'QS ${v['surah']}:${v['verse']}',
+                                            style: TextStyle(
+                                              fontSize: 8.5.sp,
+                                              color: gold.withValues(
+                                                alpha: 0.65,
+                                              ),
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            v['text'],
+                                            style:
+                                                AppTextStyle
+                                                    .quranTranslationStyle(
+                                                      isDark: isDark,
+                                                      fontSize: 13.sp,
+                                                    ),
+                                          ),
+                                        ],
                                       ),
-                                      SizedBox(height: 5.h),
-                                      Text(
-                                        v['text'],
-                                        style: AppTextStyle.quranTranslationStyle(
-                                          isDark: isDark,
-                                          fontSize: 13.sp,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           );
                         },
