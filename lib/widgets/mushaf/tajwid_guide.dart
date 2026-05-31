@@ -51,6 +51,13 @@ class TajwidLegend extends StatelessWidget {
       'قَالَ، قِيلَ',
     ),
     (
+      'Lam Syamsiyah',
+      'لَامُ الشَّمْسِيَّة',
+      Color(0xFFB388FF),
+      'Lam pada ال melebur ke huruf syamsiyah berikutnya.',
+      'الشَّمْس',
+    ),
+    (
       'Tafkhim',
       'تَفْخِيم',
       Color(0xFF8D6E63),

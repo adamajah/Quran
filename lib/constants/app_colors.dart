@@ -34,6 +34,7 @@ class AppColors {
     'qalqalah': Color(0xFFC62828), // Red
     'madd': Color(0xFFFBC02D), // Yellow/Amber
     'tafkhim': Color(0xFF8D6E63), // Brown/Gold
+    'lamSyamsiyah': Color(0xFFB388FF), // Violet
     'default': ink,
   };
 }

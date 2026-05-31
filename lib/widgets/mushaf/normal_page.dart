@@ -425,8 +425,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
     final spans = <InlineSpan>[];
     for (int i = 0; i < text.length; i++) {
       final char = text[i];
-      final nextChar = i + 1 < text.length ? text[i + 1] : null;
-      final info = TajwidUtils.getTajwidInfo(char, nextChar);
+      final info = TajwidUtils.getTajwidInfo(text, i);
       final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
       final color =
           active
