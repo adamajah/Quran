@@ -274,8 +274,6 @@ class TappableVerseBlock extends StatefulWidget {
 }
 
 class _TappableVerseBlockState extends State<TappableVerseBlock> {
-  int _hoveredVerse = 0;
-
   static String _ar(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
@@ -283,17 +281,14 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
 
   List<InlineSpan> _buildSpans(Color inkColor, bool isDark) {
     final out = <InlineSpan>[];
-    final numFs = (widget.fs * 0.72).clamp(10.0, 16.0);
 
     for (final v in widget.group.verses) {
       final active =
           (widget.isPlayingPage &&
               v.surah == widget.playSurah &&
               v.verse == widget.playVerse) ||
-          (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse) ||
-          _hoveredVerse == v.verse;
+          (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse);
 
-      // Always use verseEndSymbol: false — verse number is rendered separately below
       final text = QuranUtils.getCleanVerse(
         v.surah,
         v.verse,
@@ -321,40 +316,17 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
         ),
       );
 
-      // ONE verse number badge — the only source of the verse symbol
       out.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: GestureDetector(
-            onTap: () => widget.onTapVerse(v.surah, v.verse),
-            onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
-            onTapDown: (_) => setState(() => _hoveredVerse = v.verse),
-            onTapUp: (_) => setState(() => _hoveredVerse = 0),
-            onTapCancel: () => setState(() => _hoveredVerse = 0),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-              decoration: BoxDecoration(
-                color:
-                    active
-                        ? (isDark
-                            ? Colors.white.withValues(alpha: 0.12)
-                            : AppColors.hl.withValues(alpha: 0.10))
-                        : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _ar(v.verse),
-                style: AppQuranFonts.hafsStyle.copyWith(
-                  fontSize: numFs * widget.fontScale,
-                  color:
-                      active
-                          ? (isDark ? Colors.white : AppColors.hl)
-                          : AppColors.gold,
-                  fontWeight: FontWeight.bold,
-                  height: 1.85,
-                ),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: AyahNumberBadge(
+              label: _ar(v.verse),
+              active: active,
+              isDark: isDark,
+              onTap: () => widget.onTapVerse(v.surah, v.verse),
+              onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
             ),
           ),
         ),

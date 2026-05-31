@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../constants/app_colors.dart';
 
 class BottomBar extends StatelessWidget {
@@ -34,212 +35,360 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : AppColors.dark;
+    final bgTop = isDark ? const Color(0xFF141414) : const Color(0xFFF5EFE4);
+    final bgBottom = isDark ? const Color(0xFF0F0F10) : const Color(0xFFF0E7D6);
+    final textColor = isDark ? const Color(0xFFF8F6F0) : AppColors.dark;
+    final muted = textColor.withValues(alpha: 0.62);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.92 : 0.86);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : AppColors.pageBg,
-        border: Border(
-          top: BorderSide(
-            color: AppColors.gold.withValues(alpha: isDark ? 0.2 : 0.35),
-            width: 1,
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
           ),
+          border: Border(
+            top: BorderSide(color: gold.withValues(alpha: 0.4), width: 0.8),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
-        children: [
-          PlayerBtn(
-            icon: playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-            active: playing,
-            onTap: onPlay,
-          ),
-          const SizedBox(width: 4),
-          PlayerBtn(icon: Icons.stop_rounded, active: false, onTap: onStop),
-          const SizedBox(width: 6),
-          const _BarDivider(),
-          const SizedBox(width: 6),
-          PlayerBtn(
-            icon: Icons.remove_rounded,
-            active: false,
-            onTap: onZoomOut,
-          ),
-          const SizedBox(width: 3),
-          GestureDetector(
-            onTap: onZoomReset,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-              decoration: BoxDecoration(
-                color:
-                    fontScale != 1.0
-                        ? AppColors.gold.withValues(alpha: 0.12)
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.grey.shade100),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color:
-                      fontScale != 1.0
-                          ? AppColors.gold
-                          : (isDark
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : Colors.grey.shade300),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                '${(fontScale * 100).round()}%',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      fontScale != 1.0
-                          ? AppColors.gold
-                          : (isDark
-                              ? Colors.white.withValues(alpha: 0.7)
-                              : Colors.grey.shade600),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 3),
-          PlayerBtn(icon: Icons.add_rounded, active: false, onTap: onZoomIn),
-          const SizedBox(width: 6),
-          const _BarDivider(),
-          const SizedBox(width: 6),
-          Tooltip(
-            message:
-                showTajwid
-                    ? 'Tajwid Aktif · Tekan lama untuk panduan'
-                    : 'Tajwid Mati · Tekan lama untuk panduan',
-            child: GestureDetector(
-              onLongPress: onTajwidLongPress,
-              child: PlayerBtn(
-                icon: Icons.color_lens_outlined,
-                active: showTajwid,
-                onTap: onToggleTajwid,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          const _BarDivider(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: GestureDetector(
-              onTap: onReciterTap,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          reciter,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(
-                        Icons.arrow_drop_down_rounded,
-                        size: 14,
-                        color: AppColors.gold,
-                      ),
-                    ],
-                  ),
-                  if (playing)
-                    Text(
-                      '$surahName · Ayat $playVerse',
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: AppColors.gold,
-                      ),
-                    )
-                  else if (showTajwid)
-                    Text(
-                      'Tajwid aktif · tekan lama untuk panduan',
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: AppColors.tajwidColors['qalqalah']!,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 430;
+                final controlWrap = Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _LuxuryButton(
+                      icon: playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      active: playing,
+                      filled: true,
+                      size: 48,
+                      onTap: onPlay,
+                    ),
+                    _LuxuryButton(
+                      icon: Icons.stop_rounded,
+                      active: false,
+                      size: 42,
+                      onTap: onStop,
+                    ),
+                    _LuxuryButton(
+                      icon: Icons.remove_rounded,
+                      active: false,
+                      size: 38,
+                      onTap: onZoomOut,
+                    ),
+                    _ZoomPill(
+                      percent: (fontScale * 100).round(),
+                      active: fontScale != 1.0,
+                      onTap: onZoomReset,
+                    ),
+                    _LuxuryButton(
+                      icon: Icons.add_rounded,
+                      active: false,
+                      size: 38,
+                      onTap: onZoomIn,
+                    ),
+                    GestureDetector(
+                      onTap: onToggleTajwid,
+                      onLongPress: onTajwidLongPress,
+                      child: _LuxuryButton(
+                        icon: Icons.palette_outlined,
+                        active: showTajwid,
+                        size: 42,
+                        onTap: onToggleTajwid,
                       ),
                     ),
-                ],
-              ),
+                  ],
+                );
+
+                final infoRow = compact
+                    ? Column(
+                        children: [
+                          _ReciterTile(
+                            reciter: reciter,
+                            surahName: surahName,
+                            playVerse: playVerse,
+                            showTajwid: showTajwid,
+                            textColor: textColor,
+                            muted: muted,
+                            onTap: onReciterTap,
+                          ),
+                          const SizedBox(height: 8),
+                          _PageTile(pageNum: pageNum, gold: gold, textColor: textColor),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: _ReciterTile(
+                              reciter: reciter,
+                              surahName: surahName,
+                              playVerse: playVerse,
+                              showTajwid: showTajwid,
+                              textColor: textColor,
+                              muted: muted,
+                              onTap: onReciterTap,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          _PageTile(pageNum: pageNum, gold: gold, textColor: textColor),
+                        ],
+                      );
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    controlWrap,
+                    const SizedBox(height: 10),
+                    infoRow,
+                  ],
+                );
+              },
             ),
-          ),
-          Text(
-            'Hal. $pageNum',
-            style: TextStyle(
-              fontSize: 10,
-              color: textColor.withValues(alpha: 0.45),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _BarDivider extends StatelessWidget {
-  const _BarDivider();
+class _PageTile extends StatelessWidget {
+  final int pageNum;
+  final Color gold;
+  final Color textColor;
+
+  const _PageTile({
+    required this.pageNum,
+    required this.gold,
+    required this.textColor,
+  });
+
   @override
-  Widget build(BuildContext context) => Container(
-    width: 1,
-    height: 24,
-    color: AppColors.gold.withValues(alpha: 0.25),
-  );
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: gold.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.8),
+      ),
+      child: Text(
+        'Hal. $pageNum',
+        style: TextStyle(
+          fontSize: 11,
+          color: textColor.withValues(alpha: 0.8),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }
 
-class PlayerBtn extends StatelessWidget {
-  final IconData icon;
-  final bool active;
-  final VoidCallback onTap;
-  const PlayerBtn({
-    super.key,
-    required this.icon,
-    required this.active,
+class _ReciterTile extends StatelessWidget {
+  final String reciter, surahName;
+  final int playVerse;
+  final bool showTajwid;
+  final Color textColor;
+  final Color muted;
+  final VoidCallback? onTap;
+
+  const _ReciterTile({
+    required this.reciter,
+    required this.surahName,
+    required this.playVerse,
+    required this.showTajwid,
+    required this.textColor,
+    required this.muted,
     required this.onTap,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = AppColors.gold;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: gold.withValues(alpha: 0.34),
+              width: 0.8,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      reciter,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: AppColors.gold,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$surahName · Ayat $playVerse',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9.2,
+                  color: gold,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (!showTajwid)
+                Text(
+                  'Audio qari aktif',
+                  style: TextStyle(fontSize: 8.5, color: muted),
+                )
+              else
+                Text(
+                  'Tajwid aktif · tekan lama untuk panduan',
+                  style: TextStyle(fontSize: 8.5, color: muted),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LuxuryButton extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final bool filled;
+  final double size;
+  final VoidCallback onTap;
+
+  const _LuxuryButton({
+    required this.icon,
+    required this.active,
+    required this.size,
+    required this.onTap,
+    this.filled = false,
+  });
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final defaultBg =
-        isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100;
-    final defaultBorder =
-        isDark ? Colors.white.withValues(alpha: 0.2) : Colors.grey.shade300;
-    final defaultIcon =
-        isDark ? Colors.white.withValues(alpha: 0.7) : Colors.grey.shade600;
+    final gold = AppColors.gold;
+    final bg = filled
+        ? (active ? gold : Colors.white.withValues(alpha: isDark ? 0.05 : 0.08))
+        : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: active ? AppColors.gold.withValues(alpha: 0.12) : defaultBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: active ? AppColors.gold : defaultBorder,
-            width: 1,
+    final border = active ? gold : gold.withValues(alpha: isDark ? 0.28 : 0.38);
+    final iconColor = filled && active
+        ? (isDark ? const Color(0xFF171717) : const Color(0xFF151515))
+        : (active ? gold : (isDark ? const Color(0xFFF8F6F0) : AppColors.dark));
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(size / 2),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(size / 2),
+            border: Border.all(color: border, width: 0.9),
+            boxShadow: [
+              if (active)
+                BoxShadow(
+                  color: gold.withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+            ],
           ),
+          child: Icon(icon, size: size * 0.48, color: iconColor),
         ),
-        child: Icon(
-          icon,
-          size: 17,
-          color: active ? AppColors.gold : defaultIcon,
+      ),
+    );
+  }
+}
+
+class _ZoomPill extends StatelessWidget {
+  final int percent;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _ZoomPill({
+    required this.percent,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gold = AppColors.gold;
+    final textColor = active
+        ? gold
+        : (isDark ? const Color(0xFFF8F6F0) : AppColors.dark);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: active
+                ? gold.withValues(alpha: 0.12)
+                : Colors.white.withValues(alpha: isDark ? 0.04 : 0.08),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: active ? gold : gold.withValues(alpha: isDark ? 0.28 : 0.38),
+              width: 0.8,
+            ),
+          ),
+          child: Text(
+            '$percent%',
+            style: TextStyle(
+              fontSize: 10,
+              color: textColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ),
     );

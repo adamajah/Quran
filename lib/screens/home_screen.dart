@@ -626,124 +626,133 @@ class _HomeScreenState extends State<HomeScreen>
 
         return Scaffold(
           key: _scaffoldKey,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        drawer: MushafDrawer(
-          curSurah: _curS,
-          curPageIdx: _pgIdx,
+          backgroundColor: const Color(0xFF090909),
+          drawer: MushafDrawer(
+            curSurah: _curS,
+            curPageIdx: _pgIdx,
             pages: _pages,
             bookmarks: _bookmarks,
             onSurah: _goSurah,
             onJuz: _goJuz,
             onPage: _goPage,
-          onPageJump: _jumpToPage,
-          onBookmark: _goBookmark,
-          onTranslate: () => unawaited(_showTranslationDialog()),
-        ),
+            onPageJump: _jumpToPage,
+            onBookmark: _goBookmark,
+            onTranslate: () => unawaited(_showTranslationDialog()),
+          ),
           appBar: _appBar(pg, textColor),
-          body: Column(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onScaleUpdate: (details) {
-                    if (details.pointerCount >= 2) {
-                      controller.updateArabicFontSize(
-                        (settings.arabicFontSize * details.scale).clamp(
-                          18.0,
-                          40.0,
-                        ),
-                      );
-                    }
-                  },
-                  child: _PageFlipWrapper(
-                    flipAngle: _flipAngle * math.pi,
-                    flipDir: _flipDir,
-                    child: PageView.builder(
-                      controller: _pageCtrl,
-                      reverse: true,
-                      itemCount: null,
-                      onPageChanged: (virtualIdx) {
-                        final idx = virtualIdx % _pages.length;
-                        if (!_isAutoAdvancing) _cancelPlaybackRequest();
-                        setState(() {
-                          _pgIdx = idx;
-                          _curS = _pages[idx].surah;
-                          _tappedSurah = 0;
-                          _tappedVerse = 0;
-
-                          if (!_isAutoAdvancing) {
-                            _playV = 0;
-                            _playing = false;
-                          }
-                        });
-                        _savePrefs();
-                        if (_translationVerses.isNotEmpty) _loadTranslation();
-                      },
-                      itemBuilder: (_, virtualIdx) {
-                        final idx = virtualIdx % _pages.length;
-                        return MushafPage(
-                          data: _pages[idx],
-                          playSurah: _curS,
-                          playVerse: _playV,
-                          tappedSurah: _tappedSurah,
-                          tappedVerse: _tappedVerse,
-                          isPlayingPage: idx == _pgIdx && _playV != 0,
-                          fontScale: fontScale,
-                          showTajwid: settings.showTajwid,
-                          bookmarkedVerses:
-                              _bookmarks
-                                  .where(
-                                  (b) => _pages[idx].verses.any(
-                                      (v) =>
-                                          v.surah == b.surah &&
-                                          v.verse == b.verse,
-                                    ),
-                                  )
-                                  .map((b) => '${b.surah}:${b.verse}')
-                                  .toSet(),
-                          onTapVerse: _tapVerse,
-                          onBookmarkVerse: _toggleBookmark,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF111214), Color(0xFF090909)],
+              ),
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onScaleUpdate: (details) {
+                      if (details.pointerCount >= 2) {
+                        controller.updateArabicFontSize(
+                          (settings.arabicFontSize * details.scale).clamp(
+                            18.0,
+                            40.0,
+                          ),
                         );
-                      },
+                      }
+                    },
+                    child: _PageFlipWrapper(
+                      flipAngle: _flipAngle * math.pi,
+                      flipDir: _flipDir,
+                      child: PageView.builder(
+                        controller: _pageCtrl,
+                        reverse: true,
+                        itemCount: null,
+                        onPageChanged: (virtualIdx) {
+                          final idx = virtualIdx % _pages.length;
+                          if (!_isAutoAdvancing) _cancelPlaybackRequest();
+                          setState(() {
+                            _pgIdx = idx;
+                            _curS = _pages[idx].surah;
+                            _tappedSurah = 0;
+                            _tappedVerse = 0;
+
+                            if (!_isAutoAdvancing) {
+                              _playV = 0;
+                              _playing = false;
+                            }
+                          });
+                          _savePrefs();
+                          if (_translationVerses.isNotEmpty) _loadTranslation();
+                        },
+                        itemBuilder: (_, virtualIdx) {
+                          final idx = virtualIdx % _pages.length;
+                          return MushafPage(
+                            data: _pages[idx],
+                            playSurah: _curS,
+                            playVerse: _playV,
+                            tappedSurah: _tappedSurah,
+                            tappedVerse: _tappedVerse,
+                            isPlayingPage: idx == _pgIdx && _playV != 0,
+                            fontScale: fontScale,
+                            showTajwid: settings.showTajwid,
+                            bookmarkedVerses:
+                                _bookmarks
+                                    .where(
+                                    (b) => _pages[idx].verses.any(
+                                        (v) =>
+                                            v.surah == b.surah &&
+                                            v.verse == b.verse,
+                                      ),
+                                    )
+                                    .map((b) => '${b.surah}:${b.verse}')
+                                    .toSet(),
+                            onTapVerse: _tapVerse,
+                            onBookmarkVerse: _toggleBookmark,
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-              if (_translationVerses.isNotEmpty)
-                TranslationPanel(
-                  verses: _translationVerses,
-                  languageName: _selectedLanguageName,
-                  height: _translationPanelHeight,
-                  minHeight: _minPanelH,
-                  maxHeight: _maxPanelH,
-                  onHeightChanged:
-                      (h) => setState(() => _translationPanelHeight = h),
-                  onClose: () => setState(() => _translationVerses = []),
+                if (_translationVerses.isNotEmpty)
+                  TranslationPanel(
+                    verses: _translationVerses,
+                    languageName: _selectedLanguageName,
+                    height: _translationPanelHeight,
+                    minHeight: _minPanelH,
+                    maxHeight: _maxPanelH,
+                    onHeightChanged:
+                        (h) => setState(() => _translationPanelHeight = h),
+                    onClose: () => setState(() => _translationVerses = []),
+                  ),
+                BottomBar(
+                  playing: _playing,
+                  reciter: _selectedReciter.name,
+                  pageNum: pg.pageNum,
+                  surahName: pg.surahName,
+                  playVerse: _playV,
+                  onPlay: _togglePlay,
+                  onStop: () => _stopPlayback(resetVerse: true),
+                  fontScale: fontScale,
+                  onZoomIn:
+                      () => controller.updateArabicFontSize(
+                        (settings.arabicFontSize + 2).clamp(18.0, 40.0),
+                      ),
+                  onZoomOut:
+                      () => controller.updateArabicFontSize(
+                        (settings.arabicFontSize - 2).clamp(18.0, 40.0),
+                      ),
+                  onZoomReset: () => controller.updateArabicFontSize(24.0),
+                  showTajwid: settings.showTajwid,
+                  onToggleTajwid:
+                      () => controller.toggleTajwid(!settings.showTajwid),
+                  onTajwidLongPress: _showTajwidLegend,
+                  onReciterTap: _showReciterDialog,
                 ),
-              BottomBar(
-                playing: _playing,
-                reciter: _selectedReciter.name,
-                pageNum: pg.pageNum,
-                surahName: pg.surahName,
-                playVerse: _playV,
-                onPlay: _togglePlay,
-                onStop: () => _stopPlayback(resetVerse: true),
-                fontScale: fontScale,
-                onZoomIn:
-                    () => controller.updateArabicFontSize(
-                      (settings.arabicFontSize + 2).clamp(18.0, 40.0),
-                    ),
-                onZoomOut:
-                    () => controller.updateArabicFontSize(
-                      (settings.arabicFontSize - 2).clamp(18.0, 40.0),
-                    ),
-                onZoomReset: () => controller.updateArabicFontSize(24.0),
-                showTajwid: settings.showTajwid,
-                onToggleTajwid:
-                    () => controller.toggleTajwid(!settings.showTajwid),
-                onTajwidLongPress: _showTajwidLegend,
-                onReciterTap: _showReciterDialog,
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -754,70 +763,93 @@ class _HomeScreenState extends State<HomeScreen>
     backgroundColor: Colors.transparent,
     elevation: 0,
     surfaceTintColor: Colors.transparent,
-    leading: IconButton(
-      icon: Icon(Icons.menu_rounded, color: textColor, size: 22),
-      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+    toolbarHeight: 74,
+    leadingWidth: 58,
+    leading: Padding(
+      padding: const EdgeInsets.only(left: 12),
+      child: Center(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.gold.withValues(alpha: 0.35),
+                  width: 0.8,
+                ),
+              ),
+              child: Icon(Icons.menu_rounded, color: textColor, size: 20),
+            ),
+          ),
+        ),
+      ),
     ),
+    titleSpacing: 0,
     title: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           pg.surahNameAr,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyle.quranSurahNameStyle(
             fontSize: 18,
             color: textColor,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           pg.surahName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 10,
-            color: textColor.withValues(alpha: 0.5),
-            letterSpacing: 0.5,
+            color: textColor.withValues(alpha: 0.52),
+            letterSpacing: 0.45,
           ),
         ),
       ],
     ),
     centerTitle: true,
     actions: [
-      if (_bookmarks.any(
-        (b) => _pages[_pgIdx].verses.any(
-          (v) => v.surah == b.surah && v.verse == b.verse,
-        ),
-      ))
-        const Padding(
-          padding: EdgeInsets.only(right: 4),
-          child: Icon(Icons.bookmark_rounded, color: AppColors.gold, size: 18),
-        ),
       Padding(
-        padding: const EdgeInsets.only(right: 14),
+        padding: const EdgeInsets.only(right: 12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.6)),
-            borderRadius: BorderRadius.circular(5),
             color: AppColors.gold.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AppColors.gold.withValues(alpha: 0.55),
+              width: 0.8,
+            ),
           ),
           child: Text(
             'Juz ${pg.juz}',
             style: AppTextStyle.quranPageInfoStyle(
               fontSize: 11,
               color: textColor,
-            ),
+            ).copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ),
     ],
     bottom: PreferredSize(
-      preferredSize: const Size.fromHeight(1.5),
+      preferredSize: const Size.fromHeight(1.2),
       child: Container(
-        height: 1.5,
+        height: 1.2,
+        margin: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
               AppColors.gold.withValues(alpha: 0),
-              AppColors.gold,
-              textColor.withValues(alpha: 0.8),
-              AppColors.gold,
+              AppColors.gold.withValues(alpha: 0.9),
               AppColors.gold.withValues(alpha: 0),
             ],
           ),

@@ -1,53 +1,83 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as q;
-import '../../constants/quran_fonts.dart';
+
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
+import '../../constants/quran_fonts.dart';
 import '../../models/verse_ref.dart';
+
+String _arabicDigits(int n) {
+  const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return n.toString().split('').map((c) => d[int.parse(c)]).join();
+}
+
+String _juzText(int n) => 'الجزء ${_arabicDigits(n)}';
 
 class PageHeader extends StatelessWidget {
   final PageData data;
   const PageHeader({super.key, required this.data});
 
-  String _juzTxt(int n) {
-    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return 'الجزء ${n.toString().split('').map((c) => d[int.parse(c)]).join()}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : AppColors.dark;
-    return Container(
-      color: isDark ? const Color(0xFF252525) : AppColors.hdrBg,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            data.surahNameAr,
-            style: AppTextStyle.quranPageInfoStyle(
-              fontSize: 12,
-              color: textColor,
+    final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
+    final bg = isDark ? const Color(0xFF161616) : const Color(0xFFF4EFE5);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.82);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(
+          bottom: BorderSide(color: gold.withValues(alpha: 0.55), width: 0.8),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                data.surahNameAr,
+                textAlign: TextAlign.left,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.quranPageInfoStyle(
+                  fontSize: 12,
+                  color: textColor,
+                ).copyWith(fontWeight: FontWeight.w700),
+              ),
             ),
-          ),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: AppColors.gold,
-              shape: BoxShape.circle,
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: gold,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: gold.withValues(alpha: 0.18),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            _juzTxt(data.juz),
-            style: AppTextStyle.quranPageInfoStyle(
-              fontSize: 12,
-              color: textColor,
+            Expanded(
+              child: Text(
+                _juzText(data.juz),
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.quranPageInfoStyle(
+                  fontSize: 12,
+                  color: textColor,
+                ).copyWith(fontWeight: FontWeight.w700),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -55,21 +85,39 @@ class PageHeader extends StatelessWidget {
 
 class Basmalah extends StatelessWidget {
   const Basmalah({super.key});
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bismillah = q.getVerse(1, 1, verseEndSymbol: false);
-    return Container(
-      margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
-      child: Text(
-        bismillah,
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.rtl,
-        style: AppQuranFonts.hafsStyle.copyWith(
-          fontSize: 17,
-          color: isDark ? Colors.white : AppColors.dark,
-          height: 1.35,
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.8);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.7),
+        ),
+        child: Column(
+          children: [
+            _ThinOrnamentLine(color: gold),
+            const SizedBox(height: 6),
+            Text(
+              bismillah,
+              textAlign: TextAlign.center,
+              textDirection: TextDirection.rtl,
+              style: AppQuranFonts.hafsStyle.copyWith(
+                fontSize: 18,
+                color: isDark ? const Color(0xFFF8F6F0) : AppColors.dark,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 6),
+            _ThinOrnamentLine(color: gold),
+          ],
         ),
       ),
     );
@@ -84,43 +132,51 @@ class SurahBanner extends StatelessWidget {
     required this.surahIndex,
     required this.surahNameAr,
   });
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : AppColors.dark;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(8, 2, 8, 2),
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF232323) : const Color(0xFFF5EFE2),
-        border: Border(
-          top: BorderSide(
-            color: AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.24),
-          ),
-          bottom: BorderSide(
-            color: AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.24),
-          ),
+    final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
+    final bg = isDark ? const Color(0xFF181818) : const Color(0xFFF2EBDD);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.72 : 0.82);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: gold.withValues(alpha: 0.4), width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'سُورَةُ $surahNameAr',
-            textAlign: TextAlign.center,
-            style: AppTextStyle.quranSurahNameStyle(
-              fontSize: 17,
-              color: textColor,
+        child: Column(
+          children: [
+            Text(
+              'سُورَةُ $surahNameAr',
+              textAlign: TextAlign.center,
+              style: AppTextStyle.quranSurahNameStyle(
+                fontSize: 17,
+                color: textColor,
+              ),
             ),
-          ),
-          Text(
-            '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
-            style: TextStyle(
-              fontSize: 8.5,
-              color: textColor.withValues(alpha: 0.45),
-              letterSpacing: 0.8,
+            const SizedBox(height: 2),
+            Text(
+              '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
+              style: TextStyle(
+                fontSize: 8.5,
+                color: textColor.withValues(alpha: 0.5),
+                letterSpacing: 0.8,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -129,52 +185,47 @@ class SurahBanner extends StatelessWidget {
 class MushafRule extends StatelessWidget {
   final bool thick;
   const MushafRule({super.key, this.thick = false});
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: thick ? 1.6 : 1.0,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      color: AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.6),
-    );
-  }
-}
-
-class PageNum extends StatelessWidget {
-  final int n;
-  const PageNum({super.key, required this.n});
-  static String _ar(int n) {
-    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => d[int.parse(c)]).join();
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : AppColors.dark;
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.75 : 0.88);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: thick ? 10 : 14, vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.circle,
-            size: 4,
-            color: AppColors.gold.withValues(alpha: 0.5),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            _ar(n),
-            style: AppTextStyle.quranPageInfoStyle(
-              fontSize: 13,
-              color: textColor,
+          Expanded(
+            child: Container(
+              height: thick ? 1.2 : 0.8,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    gold.withValues(alpha: 0),
+                    gold,
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.circle,
-            size: 4,
-            color: AppColors.gold.withValues(alpha: 0.5),
+          Container(
+            width: thick ? 7 : 5,
+            height: thick ? 7 : 5,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(color: gold, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Container(
+              height: thick ? 1.2 : 0.8,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    gold,
+                    gold.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -182,253 +233,168 @@ class PageNum extends StatelessWidget {
   }
 }
 
-class FramePainter extends CustomPainter {
+class PageNum extends StatelessWidget {
+  final int n;
+  const PageNum({super.key, required this.n});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.75 : 0.85);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: Row(
+        children: [
+          Expanded(child: Container(height: 0.8, color: gold.withValues(alpha: 0.35))),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.8),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(color: gold, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _arabicDigits(n),
+                  style: AppTextStyle.quranPageInfoStyle(
+                    fontSize: 13,
+                    color: textColor,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(color: gold, shape: BoxShape.circle),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Container(height: 0.8, color: gold.withValues(alpha: 0.35))),
+        ],
+      ),
+    );
+  }
+}
+
+class AyahNumberBadge extends StatelessWidget {
+  final String label;
+  final bool active;
   final bool isDark;
-  const FramePainter({required this.isDark});
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  const AyahNumberBadge({
+    super.key,
+    required this.label,
+    required this.active,
+    required this.isDark,
+    this.onTap,
+    this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = AppColors.gold;
+    final size = 28.0;
+
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CustomPaint(
+              size: Size.square(size),
+              painter: AyahNumberPainter(
+                isDark: isDark,
+                active: active,
+                gold: gold,
+              ),
+            ),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: AppQuranFonts.hafsStyle.copyWith(
+                fontSize: 10.5,
+                color: active
+                    ? (isDark ? const Color(0xFFF8F6F0) : AppColors.dark)
+                    : (isDark ? const Color(0xFFF8F6F0) : AppColors.dark),
+                fontWeight: FontWeight.bold,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MushafPagePainter extends CustomPainter {
+  final bool isDark;
+  const MushafPagePainter({required this.isDark});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final darkColor = isDark ? Colors.white : AppColors.dark;
-    final frameBg = isDark ? const Color(0xFF151515) : AppColors.frameBg;
+    final rect = Offset.zero & size;
+    final bgTop = isDark ? const Color(0xFF121212) : const Color(0xFF2C2720);
+    final bgBottom = isDark ? const Color(0xFF0D0D0D) : const Color(0xFF171412);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.45);
 
     canvas.drawRect(
-      Rect.fromLTWH(0, 0, w, h),
+      rect,
       Paint()
         ..shader = LinearGradient(
-          colors: [frameBg, frameBg.withValues(alpha: 0.9), frameBg],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(Rect.fromLTWH(0, 0, w, h)),
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [bgTop, bgBottom],
+        ).createShader(rect),
     );
-    _pattern(canvas, w, h, darkColor);
-    _r(canvas, 0, 0, w, h, darkColor, 3.5);
-    _r(canvas, 3.5, 3.5, w - 7, h - 7, AppColors.gold, 1.8);
-    _r(canvas, 6, 6, w - 12, h - 12, darkColor.withValues(alpha: 0.35), 0.8);
-    _r(
-      canvas,
-      8.5,
-      8.5,
-      w - 17,
-      h - 17,
-      AppColors.gold.withValues(alpha: 0.55),
-      0.7,
-    );
-    _strip(canvas, w, h, darkColor);
-    for (final c in [
-      [3.5, 3.5, 0.0],
-      [w - 3.5, 3.5, math.pi / 2],
-      [3.5, h - 3.5, -math.pi / 2],
-      [w - 3.5, h - 3.5, math.pi],
-    ]) {
-      canvas.save();
-      canvas.translate(c[0], c[1]);
-      canvas.rotate(c[2]);
-      _corner(canvas, darkColor);
-      canvas.restore();
-    }
-    _pend(canvas, w / 2, 3.5, true, darkColor);
-    _pend(canvas, w / 2, h - 3.5, false, darkColor);
-    _side(canvas, 3.5, h / 2, false, darkColor);
-    _side(canvas, w - 3.5, h / 2, true, darkColor);
-  }
 
-  void _pattern(Canvas canvas, double w, double h, Color darkColor) {
-    final p =
-        Paint()
-          ..color = darkColor.withValues(alpha: 0.04)
-          ..style = PaintingStyle.fill;
-    const step = 20.0;
-    for (double x = 0; x < w; x += step) {
-      for (double y = 0; y < h; y += step) {
-        final path =
-            Path()
-              ..moveTo(x + step / 2, y)
-              ..lineTo(x + step, y + step / 2)
-              ..lineTo(x + step / 2, y + step)
-              ..lineTo(x, y + step / 2)
-              ..close();
-        canvas.drawPath(path, p);
+    final glow = Paint()..style = PaintingStyle.fill;
+    glow.shader = RadialGradient(
+      colors: [
+        AppColors.gold.withValues(alpha: isDark ? 0.09 : 0.08),
+        Colors.transparent,
+      ],
+    ).createShader(Rect.fromCircle(center: Offset(size.width * .5, size.height * .12), radius: size.shortestSide * .85));
+    canvas.drawRect(rect, glow);
+
+    final speck = Paint()..color = Colors.white.withValues(alpha: isDark ? 0.015 : 0.03);
+    for (double x = 0; x < size.width; x += 22) {
+      for (double y = 0; y < size.height; y += 22) {
+        canvas.drawCircle(Offset(x + 4, y + 5), 0.6, speck);
       }
     }
-    final sp =
-        Paint()
-          ..color = AppColors.gold.withValues(alpha: 0.10)
-          ..style = PaintingStyle.fill;
-    for (final pos in [
-      [w * .22, h * .13],
-      [w * .78, h * .13],
-      [w * .22, h * .87],
-      [w * .78, h * .87],
-    ]) {
-      _star8(canvas, pos[0], pos[1], 13, sp);
-    }
-  }
 
-  void _star8(Canvas canvas, double cx, double cy, double r, Paint p) {
-    final path = Path();
-    for (int i = 0; i < 8; i++) {
-      final oa = i * math.pi / 4 - math.pi / 8;
-      final ia = oa + math.pi / 8;
-      final ox = cx + r * math.cos(oa);
-      final oy = cy + r * math.sin(oa);
-      final ix = cx + (r * .42) * math.cos(ia);
-      final iy = cy + (r * .42) * math.sin(ia);
-      if (i == 0) {
-        path.moveTo(ox, oy);
-      } else {
-        path.lineTo(ox, oy);
-      }
-      path.lineTo(ix, iy);
-    }
-    path.close();
-    canvas.drawPath(path, p);
-  }
-
-  void _r(
-    Canvas c,
-    double x,
-    double y,
-    double w,
-    double h,
-    Color col,
-    double sw,
-  ) => c.drawRect(
-    Rect.fromLTWH(x, y, w, h),
-    Paint()
-      ..color = col
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = sw,
-  );
-
-  void _strip(Canvas canvas, double w, double h, Color darkColor) {
-    final f =
-        Paint()
-          ..color = AppColors.gold.withValues(alpha: 0.28)
-          ..style = PaintingStyle.fill;
-    final s =
-        Paint()
-          ..color = darkColor.withValues(alpha: 0.45)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.6;
-    const step = 12.0;
-    const sz = 5.5;
-    void d(double cx, double cy) {
-      final p =
-          Path()
-            ..moveTo(cx, cy - sz / 2)
-            ..lineTo(cx + sz / 2, cy)
-            ..lineTo(cx, cy + sz / 2)
-            ..lineTo(cx - sz / 2, cy)
-            ..close();
-      canvas.drawPath(p, f);
-      canvas.drawPath(p, s);
-    }
-
-    for (double x = step; x < w - step; x += step) {
-      d(x, 5.5 + sz / 2);
-      d(x, h - 5.5 - sz / 2);
-    }
-    for (double y = step; y < h - step; y += step) {
-      d(5.5 + sz / 2, y);
-      d(w - 5.5 - sz / 2, y);
-    }
-  }
-
-  void _corner(Canvas canvas, Color darkColor) {
-    const r1 = 18.0, r2 = 11.0, r3 = 6.0, r4 = 3.0;
-    canvas.drawCircle(
-      const Offset(r1, r1),
-      r1,
-      Paint()..color = AppColors.gold,
-    );
-    canvas.drawCircle(
-      const Offset(r1, r1),
-      r1,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect.deflate(2.2), const Radius.circular(22)),
       Paint()
-        ..color = darkColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
+        ..strokeWidth = 1.0
+        ..color = gold.withValues(alpha: 0.75),
     );
-    canvas.drawCircle(
-      const Offset(r1, r1),
-      r2,
-      Paint()..color = darkColor.withValues(alpha: 0.45),
-    );
-    canvas.drawCircle(
-      const Offset(r1, r1),
-      r3,
-      Paint()..color = AppColors.gold,
-    );
-    canvas.drawCircle(const Offset(r1, r1), r4, Paint()..color = darkColor);
-    final lp =
-        Paint()
-          ..color = AppColors.gold.withValues(alpha: 0.7)
-          ..strokeWidth = 0.9
-          ..style = PaintingStyle.stroke;
-    for (int i = 0; i < 8; i++) {
-      final a = i * math.pi / 4;
-      canvas.drawLine(
-        Offset(r1 + math.cos(a) * r4, r1 + math.sin(a) * r4),
-        Offset(r1 + math.cos(a) * r1, r1 + math.sin(a) * r1),
-        lp,
-      );
-    }
-  }
-
-  void _pend(Canvas canvas, double cx, double y, bool top, Color darkColor) {
-    final sy = top ? 1.0 : -1.0;
-    final p =
-        Path()
-          ..moveTo(cx - 22, y)
-          ..lineTo(cx - 13, y + sy * 13)
-          ..arcToPoint(
-            Offset(cx + 13, y + sy * 13),
-            radius: const Radius.circular(13),
-            clockwise: !top,
-          )
-          ..lineTo(cx + 22, y)
-          ..close();
-    canvas.drawPath(p, Paint()..color = AppColors.gold);
-    canvas.drawPath(
-      p,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect.deflate(5.2), const Radius.circular(19)),
       Paint()
-        ..color = darkColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-    canvas.drawCircle(
-      Offset(cx, y + sy * 8),
-      4.5,
-      Paint()..color = darkColor.withValues(alpha: 0.55),
-    );
-    canvas.drawCircle(
-      Offset(cx, y + sy * 8),
-      2.2,
-      Paint()..color = AppColors.gold,
-    );
-  }
-
-  void _side(Canvas canvas, double x, double cy, bool right, Color darkColor) {
-    const sz = 16.0;
-    final ox = right ? x - sz : x + sz;
-    final p =
-        Path()
-          ..moveTo(x, cy - sz)
-          ..lineTo(ox, cy - sz * .38)
-          ..lineTo(ox + (right ? -sz * .28 : sz * .28), cy)
-          ..lineTo(ox, cy + sz * .38)
-          ..lineTo(x, cy + sz)
-          ..lineTo(right ? x - sz * .38 : x + sz * .38, cy)
-          ..close();
-    canvas.drawPath(p, Paint()..color = AppColors.gold);
-    canvas.drawPath(
-      p,
-      Paint()
-        ..color = darkColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
+        ..strokeWidth = 0.6
+        ..color = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.18),
     );
   }
 
@@ -436,86 +402,184 @@ class FramePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class LightOrnamentPainter extends CustomPainter {
+class OrnamentPainter extends CustomPainter {
   final bool isDark;
-  const LightOrnamentPainter({required this.isDark});
+  const OrnamentPainter({required this.isDark});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final bg = isDark ? const Color(0xFF171717) : const Color(0xFFF7F2E8);
-    final accent = AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.5);
-    final ink = isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.dark.withValues(alpha: 0.45);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.42 : 0.55);
+    final dim = isDark ? Colors.white.withValues(alpha: 0.28) : AppColors.dark.withValues(alpha: 0.25);
+    final inset = 12.0;
 
-    canvas.drawRect(Offset.zero & size, Paint()..color = bg);
+    // top and bottom thin divider
+    canvas.drawLine(
+      Offset(inset, inset),
+      Offset(size.width - inset, inset),
+      Paint()
+        ..color = gold
+        ..strokeWidth = 0.7,
+    );
+    canvas.drawLine(
+      Offset(inset, size.height - inset),
+      Offset(size.width - inset, size.height - inset),
+      Paint()
+        ..color = gold
+        ..strokeWidth = 0.7,
+    );
 
-    // thin top/bottom lines
-    canvas.drawLine(Offset(10, 10), Offset(w - 10, 10), Paint()..color = accent..strokeWidth = 0.8);
-    canvas.drawLine(Offset(10, h - 10), Offset(w - 10, h - 10), Paint()..color = accent..strokeWidth = 0.8);
-
-    // corner diamonds
-    final diamondFill = Paint()..color = accent.withValues(alpha: 0.18);
-    final diamondStroke = Paint()
-      ..color = accent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    for (final offset in [
-      const Offset(14, 14),
-      Offset(w - 14, 14),
-      Offset(14, h - 14),
-      Offset(w - 14, h - 14),
+    // corner ornaments
+    for (final entry in [
+      _OrnamentCorner(const Offset(14, 14), 0),
+      _OrnamentCorner(Offset(size.width - 14, 14), math.pi / 2),
+      _OrnamentCorner(Offset(14, size.height - 14), -math.pi / 2),
+      _OrnamentCorner(Offset(size.width - 14, size.height - 14), math.pi),
     ]) {
-      _diamond(canvas, offset.dx, offset.dy, 6, diamondFill, diamondStroke);
+      canvas.save();
+      canvas.translate(entry.offset.dx, entry.offset.dy);
+      canvas.rotate(entry.rotation);
+      _drawCorner(canvas, gold, dim);
+      canvas.restore();
     }
 
-    // center accent
-    canvas.drawCircle(
-      Offset(w / 2, 10),
-      2.2,
-      Paint()..color = accent,
-    );
-    canvas.drawCircle(
-      Offset(w / 2, h - 10),
-      2.2,
-      Paint()..color = accent,
-    );
-
-    // subtle side guide marks
-    canvas.drawLine(
-      Offset(8, h / 2),
-      Offset(18, h / 2),
-      Paint()
-        ..color = ink
-        ..strokeWidth = 0.6,
-    );
-    canvas.drawLine(
-      Offset(w - 18, h / 2),
-      Offset(w - 8, h / 2),
-      Paint()
-        ..color = ink
-        ..strokeWidth = 0.6,
-    );
+    // center markers
+    canvas.drawCircle(Offset(size.width / 2, inset), 2.1, Paint()..color = gold);
+    canvas.drawCircle(Offset(size.width / 2, size.height - inset), 2.1, Paint()..color = gold);
+    canvas.drawCircle(Offset(inset, size.height / 2), 1.6, Paint()..color = gold);
+    canvas.drawCircle(Offset(size.width - inset, size.height / 2), 1.6, Paint()..color = gold);
   }
 
-  void _diamond(
-    Canvas canvas,
-    double cx,
-    double cy,
-    double r,
-    Paint fill,
-    Paint stroke,
-  ) {
+  void _drawCorner(Canvas canvas, Color gold, Color dim) {
+    final fill = Paint()..color = gold.withValues(alpha: 0.15);
+    final line = Paint()
+      ..color = gold
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
     final path = Path()
-      ..moveTo(cx, cy - r)
-      ..lineTo(cx + r, cy)
-      ..lineTo(cx, cy + r)
-      ..lineTo(cx - r, cy)
+      ..moveTo(0, 0)
+      ..quadraticBezierTo(10, 0, 14, 10)
+      ..quadraticBezierTo(16, 16, 24, 24)
+      ..quadraticBezierTo(18, 18, 14, 12)
+      ..quadraticBezierTo(8, 8, 0, 0)
       ..close();
+
     canvas.drawPath(path, fill);
-    canvas.drawPath(path, stroke);
+    canvas.drawPath(path, line);
+
+    canvas.drawCircle(const Offset(7, 7), 2.0, Paint()..color = gold);
+    canvas.drawCircle(const Offset(7, 7), 0.9, Paint()..color = dim);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class AyahNumberPainter extends CustomPainter {
+  final bool isDark;
+  final bool active;
+  final Color gold;
+
+  const AyahNumberPainter({
+    required this.isDark,
+    required this.active,
+    required this.gold,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final outer = gold.withValues(alpha: active ? 0.95 : 0.75);
+    final inner = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF6EEDB);
+    final fill = active
+        ? gold.withValues(alpha: 0.20)
+        : inner;
+
+    canvas.drawCircle(center, size.shortestSide * 0.5, Paint()..color = outer);
+    canvas.drawCircle(
+      center,
+      size.shortestSide * 0.39,
+      Paint()..color = fill,
+    );
+    canvas.drawCircle(
+      center,
+      size.shortestSide * 0.39,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = isDark ? Colors.white.withValues(alpha: 0.20) : Colors.black.withValues(alpha: 0.12),
+    );
+
+    final star = Paint()
+      ..color = gold.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    for (int i = 0; i < 8; i++) {
+      final a = i * math.pi / 4;
+      final innerR = size.shortestSide * 0.17;
+      final outerR = size.shortestSide * 0.28;
+      canvas.drawLine(
+        center + Offset(math.cos(a) * innerR, math.sin(a) * innerR),
+        center + Offset(math.cos(a) * outerR, math.sin(a) * outerR),
+        star,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class FramePainter extends MushafPagePainter {
+  const FramePainter({required super.isDark});
+}
+
+class LightOrnamentPainter extends OrnamentPainter {
+  const LightOrnamentPainter({required super.isDark});
+}
+
+class _ThinOrnamentLine extends StatelessWidget {
+  final Color color;
+  const _ThinOrnamentLine({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 0.7,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withValues(alpha: 0), color],
+              ),
+            ),
+          ),
+        ),
+        Container(
+          width: 5,
+          height: 5,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        Expanded(
+          child: Container(
+            height: 0.7,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color, color.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OrnamentCorner {
+  final Offset offset;
+  final double rotation;
+  const _OrnamentCorner(this.offset, this.rotation);
 }

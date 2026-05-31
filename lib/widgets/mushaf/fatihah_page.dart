@@ -124,18 +124,18 @@ class _FatihahPageState extends State<FatihahPage> {
       onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color:
               active
                   ? (isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : AppColors.hl.withValues(alpha: 0.06))
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.hl.withValues(alpha: 0.05))
                   : isBookmarked
-                  ? AppColors.gold.withValues(alpha: 0.08)
+                  ? AppColors.gold.withValues(alpha: 0.06)
                   : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(10),
           border:
               isBookmarked
                   ? Border.all(
@@ -143,6 +143,14 @@ class _FatihahPageState extends State<FatihahPage> {
                     width: 0.8,
                   )
                   : null,
+          boxShadow: [
+            if (active)
+              BoxShadow(
+                color: AppColors.gold.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -162,22 +170,24 @@ class _FatihahPageState extends State<FatihahPage> {
                   children: [
                     ..._buildTajwidSpans(
                       text,
-                      23 * widget.fontScale,
-                      2.2,
+                      24 * widget.fontScale,
+                      2.0,
                       active,
                       widget.showTajwid,
                       inkColor,
                     ),
-                    TextSpan(
-                      text: ' ${_ar(v.verse)}',
-                      style: AppQuranFonts.hafsStyle.copyWith(
-                        fontSize: 15 * widget.fontScale,
-                        color:
-                            active
-                                ? (isDark ? Colors.white : AppColors.hl)
-                                : AppColors.gold,
-                        fontWeight: FontWeight.bold,
-                        height: 2.2,
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: AyahNumberBadge(
+                          label: _ar(v.verse),
+                          active: active,
+                          isDark: isDark,
+                          onTap: () => widget.onTapVerse(v.surah, v.verse),
+                          onLongPress:
+                              () => widget.onBookmarkVerse(v.surah, v.verse),
+                        ),
                       ),
                     ),
                   ],
