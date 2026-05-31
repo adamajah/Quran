@@ -1,7 +1,76 @@
+import 'dart:collection';
+
 import 'package:quran/quran.dart' as quran;
 
 import '../models/verse_ref.dart';
 
+class QuranPageCatalog extends ListBase<PageData> {
+  static const int totalPages = 604;
+  final Map<int, PageData> _cache = {};
+
+  @override
+  int get length => totalPages;
+
+  @override
+  set length(int newLength) {
+    throw UnsupportedError('QuranPageCatalog has a fixed length');
+  }
+
+  @override
+  PageData operator [](int index) {
+    if (index < 0 || index >= totalPages) {
+      throw RangeError.index(index, this);
+    }
+    return _cache.putIfAbsent(index, () => _buildPage(index + 1));
+  }
+
+  @override
+  void operator []=(int index, PageData value) {
+    throw UnsupportedError('QuranPageCatalog is read-only');
+  }
+
+  PageData _buildPage(int pageNum) {
+    final verses = <VerseRef>[];
+    for (int s = 1; s <= quran.totalSurahCount; s++) {
+      final verseCount = quran.getVerseCount(s);
+      for (int v = 1; v <= verseCount; v++) {
+        if (quran.getPageNumber(s, v) == pageNum) {
+          verses.add(VerseRef(s, v));
+        }
+      }
+    }
+
+    final domSurah = verses.first.surah;
+    final groups = <SurahGroup>[];
+    int i = 0;
+    while (i < verses.length) {
+      final cur = verses[i].surah;
+      final grpVerses = <VerseRef>[];
+      while (i < verses.length && verses[i].surah == cur) {
+        grpVerses.add(verses[i]);
+        i++;
+      }
+      groups.add(
+        SurahGroup(
+          surah: cur,
+          surahNameAr: quran.getSurahNameArabic(cur),
+          isFirstInMushaf: grpVerses.first.verse == 1,
+          verses: grpVerses,
+        ),
+      );
+    }
+
+    return PageData(
+      pageNum: pageNum,
+      juz: quran.getJuzNumber(domSurah, verses.first.verse),
+      surah: domSurah,
+      surahName: quran.getSurahName(domSurah),
+      surahNameAr: quran.getSurahNameArabic(domSurah),
+      verses: verses,
+      groups: groups,
+    );
+  }
+}
 class QuranPageIndex {
   static Map<int, List<VerseRef>>? _pageVerseMap;
   static final Map<String, List<Map<String, dynamic>>> _translationCache = {};

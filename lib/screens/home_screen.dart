@@ -18,7 +18,6 @@ import '../screens/translation_dialog.dart';
 import '../models/reciter.dart';
 import '../screens/reciter_dialog.dart';
 import '../utils/audio_utils.dart';
-import '../utils/mushaf_builder.dart';
 import '../widgets/common/bottom_bar.dart';
 import '../widgets/common/mushaf_drawer.dart';
 import '../widgets/mushaf/mushaf_page.dart';
@@ -69,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen>
   static const double _minPanelH = 56.0;
   static const double _maxPanelH = 420.0;
 
-  late final List<PageData> _pages;
+  late final QuranPageCatalog _pages;
 
   // ── Page flip animation
   bool _isAutoAdvancing = false;
@@ -79,8 +78,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _pages = buildMushafPages();
-    _pageCtrl = PageController(initialPage: _pages.length * 500);
+    _pages = QuranPageCatalog();
+    _pageCtrl = PageController(initialPage: QuranPageCatalog.totalPages * 500);
     _flipCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -149,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen>
 
           if (_pageCtrl.hasClients) {
             final currentVirtual =
-                _pageCtrl.page?.round() ?? (_pages.length * 500);
+                _pageCtrl.page?.round() ?? (QuranPageCatalog.totalPages * 500);
             _pageCtrl
                 .animateToPage(
                   currentVirtual + 1,
@@ -177,13 +176,7 @@ class _HomeScreenState extends State<HomeScreen>
     final bookmarks = await BookmarkService.getBookmarks();
 
     if (!mounted) return;
-    int idx = 0;
-    for (int i = 0; i < _pages.length; i++) {
-      if (_pages[i].verses.any((v) => v.surah == lastSurah && v.verse == 1)) {
-        idx = i;
-        break;
-      }
-    }
+    final idx = q.getPageNumber(lastSurah, 1) - 1;
     setState(() {
       _curS = lastSurah;
       _pgIdx = idx;
@@ -192,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen>
     _restoreSelectedReciter(lastSurah);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pageCtrl.hasClients) {
-        _pageCtrl.jumpToPage(_pages.length * 500 + idx);
+        _pageCtrl.jumpToPage(QuranPageCatalog.totalPages * 500 + idx);
       }
     });
   }
@@ -334,15 +327,12 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showPlayingAyahPage(int surah, int ayah) {
-    final pageIdx = _pages.indexWhere(
-      (page) => page.verses.any(
-        (verse) => verse.surah == surah && verse.verse == ayah,
-      ),
-    );
-    if (pageIdx == -1 || pageIdx == _pgIdx || !_pageCtrl.hasClients) return;
+    final pageIdx = q.getPageNumber(surah, ayah) - 1;
+    if (pageIdx == _pgIdx || !_pageCtrl.hasClients) return;
 
     setState(() => _pgIdx = pageIdx);
-    final currentVirtual = _pageCtrl.page?.round() ?? (_pages.length * 500);
+    final currentVirtual =
+        _pageCtrl.page?.round() ?? (QuranPageCatalog.totalPages * 500);
     final currentReal = currentVirtual % _pages.length;
     _isAutoAdvancing = true;
     _pageCtrl
@@ -486,14 +476,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _jumpToSurah(int s) {
-    int idx = 0;
-    for (int i = 0; i < _pages.length; i++) {
-      if (_pages[i].verses.any((v) => v.surah == s && v.verse == 1)) {
-        idx = i;
-        break;
-      }
-    }
-    _apply(idx);
+    _apply(q.getPageNumber(s, 1) - 1);
   }
 
   void _goSurah(int s) {
@@ -502,16 +485,16 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _jumpToJuz(int juz) {
-    int idx = 0;
-    for (int i = 0; i < _pages.length; i++) {
-      if (_pages[i].verses.any(
-        (v) => q.getJuzNumber(v.surah, v.verse) == juz,
-      )) {
-        idx = i;
-        break;
+    for (int s = 1; s <= q.totalSurahCount; s++) {
+      final cnt = q.getVerseCount(s);
+      for (int v = 1; v <= cnt; v++) {
+        if (q.getJuzNumber(s, v) == juz) {
+          _apply(q.getPageNumber(s, v) - 1);
+          return;
+        }
       }
     }
-    _apply(idx);
+    _apply(0);
   }
 
   void _goJuz(int juz) {
@@ -547,7 +530,8 @@ class _HomeScreenState extends State<HomeScreen>
       _tappedVerse = 0;
       _playing = false;
     });
-    final currentVirtual = _pageCtrl.page?.round() ?? (_pages.length * 500);
+    final currentVirtual =
+        _pageCtrl.page?.round() ?? (QuranPageCatalog.totalPages * 500);
     final currentReal = currentVirtual % _pages.length;
     final diff = pageIdx - currentReal;
     _pageCtrl.jumpToPage(currentVirtual + diff);
@@ -627,9 +611,9 @@ class _HomeScreenState extends State<HomeScreen>
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          drawer: MushafDrawer(
-            curSurah: _curS,
-            curPageIdx: _pgIdx,
+        drawer: MushafDrawer(
+          curSurah: _curS,
+          curPageIdx: _pgIdx,
             pages: _pages,
             bookmarks: _bookmarks,
             onSurah: _goSurah,
@@ -657,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _PageFlipWrapper(
                     flipAngle: _flipAngle * math.pi,
                     flipDir: _flipDir,
-                    child: PageView.builder(
+                  child: PageView.builder(
                       controller: _pageCtrl,
                       reverse: true,
                       itemCount: null,
@@ -692,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen>
                           bookmarkedVerses:
                               _bookmarks
                                   .where(
-                                    (b) => _pages[idx].verses.any(
+                                  (b) => _pages[idx].verses.any(
                                       (v) =>
                                           v.surah == b.surah &&
                                           v.verse == b.verse,
