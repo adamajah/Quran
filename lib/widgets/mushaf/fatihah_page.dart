@@ -122,75 +122,49 @@ class _FatihahPageState extends State<FatihahPage> {
     return GestureDetector(
       onTap: () => widget.onTapVerse(v.surah, v.verse),
       onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color:
-              active
-                  ? (isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.hl.withValues(alpha: 0.05))
-                  : isBookmarked
-                  ? AppColors.gold.withValues(alpha: 0.06)
-                  : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border:
-              isBookmarked
-                  ? Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.3),
-                    width: 0.8,
-                  )
-                  : null,
-          boxShadow: [
-            if (active)
-              BoxShadow(
-                color: AppColors.gold.withValues(alpha: 0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-          ],
+          color: active
+              ? (isDark
+                  ? Colors.white.withValues(alpha: 0.045)
+                  : AppColors.hl.withValues(alpha: 0.035))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             if (isBookmarked)
               Padding(
-                padding: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.only(right: 6),
                 child: Icon(
                   Icons.bookmark_rounded,
                   size: 10,
-                  color: AppColors.gold,
+                  color: AppColors.gold.withValues(alpha: 0.9),
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AyahNumberBadge(
+                label: _ar(v.verse),
+                active: active,
+                isDark: isDark,
+                onTap: () => widget.onTapVerse(v.surah, v.verse),
+                onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
+              ),
+            ),
             Expanded(
               child: Text.rich(
                 TextSpan(
-                  children: [
-                    ..._buildTajwidSpans(
-                      text,
-                      24 * widget.fontScale,
-                      2.0,
-                      active,
-                      widget.showTajwid,
-                      inkColor,
-                    ),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: AyahNumberBadge(
-                          label: _ar(v.verse),
-                          active: active,
-                          isDark: isDark,
-                          onTap: () => widget.onTapVerse(v.surah, v.verse),
-                          onLongPress:
-                              () => widget.onBookmarkVerse(v.surah, v.verse),
-                        ),
-                      ),
-                    ),
-                  ],
+                  children: _buildTajwidSpans(
+                    text,
+                    25 * widget.fontScale,
+                    2.1,
+                    active,
+                    widget.showTajwid,
+                    inkColor,
+                  ),
                 ),
                 textAlign: TextAlign.center,
                 textDirection: TextDirection.rtl,

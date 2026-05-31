@@ -452,7 +452,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
     final inkColor = isDark ? Colors.white : AppColors.ink;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
 
       child: Text.rich(
         TextSpan(children: _buildSpans(inkColor, isDark)),
