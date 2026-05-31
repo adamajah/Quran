@@ -64,7 +64,6 @@ flutter:
   assets:
     - assets/
     - assets/icon/
-    - assets/fatihah/
 
   fonts:
     - family: hafs
