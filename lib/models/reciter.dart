@@ -51,13 +51,6 @@ const List<Reciter> availableReciters = [
     surahAudioId: 'ar.alafasy',
     surahAudioBitrate: 128,
   ),
-  Reciter(name: 'Abu Bakr Al-Shatri', id: 'ar.shaatree', bitrate: 128),
-  Reciter(
-    name: 'Abdurrahmaan As-Sudais',
-    id: 'ar.abdurrahmaansudais',
-    bitrate: 192,
-  ),
-  Reciter(name: 'Maher Al-Muaiqly', id: 'ar.mahermuaiqly', bitrate: 128),
   Reciter(
     name: 'AbdulBaset AbdulSamad',
     id: 'ar.abdulsamad',
@@ -80,6 +73,21 @@ const List<Reciter> availableReciters = [
     surahAudioBitrate: 128,
   ),
 ];
+
+const Set<String> popularReciterNameKeys = {
+  'misharyrashidalafasy',
+  'abdulbasetabdulsamad',
+  'haniarrifai',
+  'muhammadayyoub',
+};
+
+String normalizeReciterName(String name) {
+  return name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+}
+
+bool isPopularReciterName(String name) {
+  return popularReciterNameKeys.contains(normalizeReciterName(name));
+}
 
 List<Reciter> get offlineReciters => availableReciters
     .where((reciter) => reciter.supportsSurahAudioDownload)

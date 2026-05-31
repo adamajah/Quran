@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/settings_model.dart';
+import '../models/reciter.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/common/premium_card.dart';
 import 'package:flutter/cupertino.dart';
@@ -81,7 +82,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildSettingTile(
                         Icons.person_pin_rounded,
                         'Qari Default',
-                        'Mishary Rashid', // Static for now, can be linked to a model
+                        () {
+                          final current = availableReciters.where(
+                            (reciter) => reciter.id == settings.defaultReciterId,
+                          );
+                          return current.isNotEmpty
+                              ? current.first.name
+                              : 'Mishary Rashid Alafasy';
+                        }(),
                         () => _showQariPicker(context, controller),
                       ),
                     ]),
@@ -539,16 +547,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showQariPicker(BuildContext context, SettingsController controller) {
-    final qaris = [
-      {'id': 'ar.alafasy', 'name': 'Mishary Rashid Alafasy'},
-      {'id': 'ar.abdulbasitmujawwad', 'name': 'Abdul Basit (Mujawwad)'},
-      {'id': 'ar.sudais', 'name': 'Abdurrahman As-Sudais'},
-      {'id': 'ar.mahermuaiqly', 'name': 'Maher Al Muaiqly'},
-      {'id': 'ar.husary', 'name': 'Mahmoud Khalil Al-Husary'},
-      {'id': 'ar.minshawi', 'name': 'Mohamed Siddiq El-Minshawi'},
-      {'id': 'ar.shatiri', 'name': 'Abu Bakr Al-Shatri'},
-      {'id': 'ar.hudaifi', 'name': 'Ali Al-Huthaify'},
-    ];
+    final qaris = availableReciters;
 
     showModalBottomSheet(
       context: context,
@@ -569,7 +568,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           horizontal: 16,
                           vertical: 8,
                         ),
-                        child: TextField(
+                    child: TextField(
                           decoration: InputDecoration(
                             hintText: 'Cari nama qari...',
                             prefixIcon: const Icon(
@@ -599,9 +598,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 height: 1,
                               ),
                           itemBuilder: (context, i) {
-                            final q = qaris[i];
+                            final reciter = qaris[i];
                             final active =
-                                controller.settings.defaultReciterId == q['id'];
+                                controller.settings.defaultReciterId ==
+                                reciter.id;
                             return ListTile(
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -612,7 +612,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   alpha: active ? 1 : 0.1,
                                 ),
                                 child: Text(
-                                  q['name']![0],
+                                  reciter.name[0],
                                   style: TextStyle(
                                     color:
                                         active ? Colors.white : AppColors.gold,
@@ -620,7 +620,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               ),
                               title: Text(
-                                q['name']!,
+                                reciter.name,
                                 style: TextStyle(
                                   fontWeight:
                                       active
@@ -636,7 +636,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       )
                                       : null,
                               onTap: () {
-                                controller.updateDefaultReciter(q['id']!);
+                                controller.updateDefaultReciter(reciter.id);
                                 Navigator.pop(context);
                               },
                             );

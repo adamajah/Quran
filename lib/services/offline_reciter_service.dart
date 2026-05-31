@@ -44,6 +44,7 @@ class OfflineReciterService {
     final catalog = _cachedReciters ??= _fetchReciters();
     try {
       final reciters = (await catalog)
+          .where((reciter) => isPopularReciterName(reciter.name))
           .where((reciter) => reciter.supportsSurahDownload(surah))
           .toList(growable: false);
       if (reciters.isNotEmpty) return reciters;
@@ -52,6 +53,7 @@ class OfflineReciterService {
     }
 
     return offlineReciters
+        .where((reciter) => isPopularReciterName(reciter.name))
         .where((reciter) => reciter.supportsSurahDownload(surah))
         .toList(growable: false);
   }
@@ -168,6 +170,7 @@ class OfflineReciterService {
       final name = reciter['name'] as String?;
       final collections = reciter['moshaf'] as List<dynamic>? ?? const [];
       if (name == null || name.isEmpty) continue;
+      if (!isPopularReciterName(name)) continue;
 
       for (final rawCollection in collections) {
         final collection = rawCollection as Map<String, dynamic>;

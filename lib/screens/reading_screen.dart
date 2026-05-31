@@ -348,7 +348,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
 
               _BottomBar(
                 isPlaying: _isPlaying,
-                reciter: "Mishary Rashid",
+                reciter: "Mishary Rashid Alafasy",
                 pageNumber: _currentPage,
                 gold: _gold,
                 textColor: textColor,
