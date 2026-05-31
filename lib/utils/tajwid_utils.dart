@@ -5,7 +5,7 @@ class TajwidUtils {
   static const _sunLetters = 'تثدذرزسشصضطظلن';
   static const _idghamLetters = 'يرملون';
   static const _ikhfaLetters = 'تثجدذزسشصضطظفقك';
-  static const _maddSigns = 'ٰٓۦۧ';
+  static const _maddSigns = 'آٰٓۦۧ';
   static const _ignorableChars = {
     'َ',
     'ِ',
