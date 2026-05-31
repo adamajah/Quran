@@ -297,15 +297,16 @@ class OrnamentSide extends StatelessWidget {
   const OrnamentSide({super.key, required this.mirror});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Transform.scale(
       scaleX: mirror ? -1 : 1,
-      child: Container(
-        height: 24,
-        alignment: Alignment.center,
-        child: Container(
-          height: 1,
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          color: AppColors.gold.withValues(alpha: 0.35),
+      child: SizedBox(
+        height: 28,
+        child: CustomPaint(
+          painter: OrnamentPainter(
+            gold: AppColors.gold,
+            dark: isDark ? Colors.white : AppColors.dark,
+          ),
         ),
       ),
     );
@@ -317,9 +318,49 @@ class OrnamentPainter extends CustomPainter {
   const OrnamentPainter({required this.gold, required this.dark});
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = gold.withValues(alpha: 0.1),
+    final w = size.width;
+    final h = size.height;
+    final y = h / 2;
+    final accent = gold.withValues(alpha: 0.7);
+    final ink = dark.withValues(alpha: 0.45);
+
+    canvas.drawLine(
+      Offset(2, y),
+      Offset(w - 2, y),
+      Paint()
+        ..color = accent.withValues(alpha: 0.55)
+        ..strokeWidth = 0.8,
+    );
+
+    for (final x in [w * 0.2, w * 0.38, w * 0.62, w * 0.8]) {
+      final path = Path()
+        ..moveTo(x, y - 4)
+        ..lineTo(x + 4, y)
+        ..lineTo(x, y + 4)
+        ..lineTo(x - 4, y)
+        ..close();
+      canvas.drawPath(
+        path,
+        Paint()..color = accent.withValues(alpha: 0.18),
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = accent
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.6,
+      );
+    }
+
+    canvas.drawCircle(
+      Offset(w / 2, y),
+      2.5,
+      Paint()..color = ink,
+    );
+    canvas.drawCircle(
+      Offset(w / 2, y),
+      1.2,
+      Paint()..color = accent,
     );
   }
 

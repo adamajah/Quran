@@ -3,6 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../models/verse_ref.dart';
 import './fatihah_page.dart';
 import './normal_page.dart';
+import './page_elements.dart';
 
 class MushafPage extends StatelessWidget {
   final PageData data;
@@ -35,44 +36,53 @@ class MushafPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
-          border: Border.all(
-            color: AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.22),
-            width: 0.5,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: LightOrnamentPainter(isDark: isDark),
+            ),
           ),
-        ),
-        child: RepaintBoundary(
-          child:
-              _isFatihah
-                  ? FatihahPage(
-                    data: data,
-                    playSurah: playSurah,
-                    playVerse: playVerse,
-                    tappedSurah: tappedSurah,
-                    tappedVerse: tappedVerse,
-                    isPlayingPage: isPlayingPage,
-                    fontScale: fontScale,
-                    showTajwid: showTajwid,
-                    bookmarkedVerses: bookmarkedVerses,
-                    onTapVerse: onTapVerse,
-                    onBookmarkVerse: onBookmarkVerse,
-                  )
-                  : NormalPage(
-                    data: data,
-                    playSurah: playSurah,
-                    playVerse: playVerse,
-                    tappedSurah: tappedSurah,
-                    tappedVerse: tappedVerse,
-                    isPlayingPage: isPlayingPage,
-                    fontScale: fontScale,
-                    showTajwid: showTajwid,
-                    bookmarkedVerses: bookmarkedVerses,
-                    onTapVerse: onTapVerse,
-                    onBookmarkVerse: onBookmarkVerse,
-                  ),
-        ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E1E) : AppColors.pageBg,
+              border: Border.all(
+                color: AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.22),
+                width: 0.5,
+              ),
+            ),
+            child: RepaintBoundary(
+              child:
+                  _isFatihah
+                      ? FatihahPage(
+                        data: data,
+                        playSurah: playSurah,
+                        playVerse: playVerse,
+                        tappedSurah: tappedSurah,
+                        tappedVerse: tappedVerse,
+                        isPlayingPage: isPlayingPage,
+                        fontScale: fontScale,
+                        showTajwid: showTajwid,
+                        bookmarkedVerses: bookmarkedVerses,
+                        onTapVerse: onTapVerse,
+                        onBookmarkVerse: onBookmarkVerse,
+                      )
+                      : NormalPage(
+                        data: data,
+                        playSurah: playSurah,
+                        playVerse: playVerse,
+                        tappedSurah: tappedSurah,
+                        tappedVerse: tappedVerse,
+                        isPlayingPage: isPlayingPage,
+                        fontScale: fontScale,
+                        showTajwid: showTajwid,
+                        bookmarkedVerses: bookmarkedVerses,
+                        onTapVerse: onTapVerse,
+                        onBookmarkVerse: onBookmarkVerse,
+                      ),
+            ),
+          ),
+        ],
       ),
     );
   }

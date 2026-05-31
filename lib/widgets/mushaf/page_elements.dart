@@ -435,3 +435,87 @@ class FramePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+class LightOrnamentPainter extends CustomPainter {
+  final bool isDark;
+  const LightOrnamentPainter({required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final bg = isDark ? const Color(0xFF171717) : const Color(0xFFF7F2E8);
+    final accent = AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.5);
+    final ink = isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.dark.withValues(alpha: 0.45);
+
+    canvas.drawRect(Offset.zero & size, Paint()..color = bg);
+
+    // thin top/bottom lines
+    canvas.drawLine(Offset(10, 10), Offset(w - 10, 10), Paint()..color = accent..strokeWidth = 0.8);
+    canvas.drawLine(Offset(10, h - 10), Offset(w - 10, h - 10), Paint()..color = accent..strokeWidth = 0.8);
+
+    // corner diamonds
+    final diamondFill = Paint()..color = accent.withValues(alpha: 0.18);
+    final diamondStroke = Paint()
+      ..color = accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+    for (final offset in [
+      const Offset(14, 14),
+      Offset(w - 14, 14),
+      Offset(14, h - 14),
+      Offset(w - 14, h - 14),
+    ]) {
+      _diamond(canvas, offset.dx, offset.dy, 6, diamondFill, diamondStroke);
+    }
+
+    // center accent
+    canvas.drawCircle(
+      Offset(w / 2, 10),
+      2.2,
+      Paint()..color = accent,
+    );
+    canvas.drawCircle(
+      Offset(w / 2, h - 10),
+      2.2,
+      Paint()..color = accent,
+    );
+
+    // subtle side guide marks
+    canvas.drawLine(
+      Offset(8, h / 2),
+      Offset(18, h / 2),
+      Paint()
+        ..color = ink
+        ..strokeWidth = 0.6,
+    );
+    canvas.drawLine(
+      Offset(w - 18, h / 2),
+      Offset(w - 8, h / 2),
+      Paint()
+        ..color = ink
+        ..strokeWidth = 0.6,
+    );
+  }
+
+  void _diamond(
+    Canvas canvas,
+    double cx,
+    double cy,
+    double r,
+    Paint fill,
+    Paint stroke,
+  ) {
+    final path = Path()
+      ..moveTo(cx, cy - r)
+      ..lineTo(cx + r, cy)
+      ..lineTo(cx, cy + r)
+      ..lineTo(cx - r, cy)
+      ..close();
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, stroke);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
