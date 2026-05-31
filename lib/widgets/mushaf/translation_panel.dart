@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
 
@@ -25,182 +26,205 @@ class TranslationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = AppColors.gold;
+    final surface = isDark ? const Color(0xFF121212) : const Color(0xFFFDFBF7);
+    final cardSurface = isDark ? const Color(0xFF1C1C1C) : Colors.white;
+    final borderColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.05);
+    final subtleText =
+        isDark
+            ? Colors.white.withValues(alpha: 0.62)
+            : AppColors.dark.withValues(alpha: 0.62);
 
-    // Use Container (not AnimatedContainer) for maximum drag performance
     return Container(
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color:
-            isDark
-                ? const Color(0xFF1E1E1E).withValues(alpha: 0.98)
-                : Colors.white,
+        color: surface.withValues(alpha: isDark ? 0.98 : 0.96),
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        border: Border(top: BorderSide(color: borderColor, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+            color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
           ),
         ],
-        border: Border(
-          top: BorderSide(
-            color:
-                isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.05),
-            width: 1,
-          ),
-        ),
       ),
       child: ClipRRect(
-        // Clip contents to prevent visual overflow during fast drags
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         child: Column(
           children: [
-            // Handle Penarik - Fixed height area
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onVerticalDragUpdate: (details) {
                 final newH = height - details.delta.dy;
                 onHeightChanged(newH.clamp(minHeight, maxHeight));
               },
-              child: Container(
-                width: double.infinity,
-                color: Colors.transparent, // Important for drag area
-                padding: EdgeInsets.symmetric(vertical: 6.h), // Even tighter
-                child: Center(
-                  child: Container(
-                    width: 36.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color:
-                          isDark
-                              ? Colors.white12
-                              : Colors.black.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(2.r),
+              child: Padding(
+                padding: EdgeInsets.only(top: 8.h, bottom: 6.h),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color:
+                            isDark
+                                ? Colors.white.withValues(alpha: 0.12)
+                                : Colors.black.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
-                  ),
+                    SizedBox(height: 8.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 9.w,
+                              vertical: 3.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: gold.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              languageName.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 8.sp,
+                                color: gold,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.05,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${verses.length} ayat',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: subtleText,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          GestureDetector(
+                            onTap: onClose,
+                            child: Container(
+                              padding: EdgeInsets.all(5.r),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    isDark
+                                        ? Colors.white.withValues(alpha: 0.05)
+                                        : Colors.black.withValues(alpha: 0.04),
+                              ),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 14.r,
+                                color: subtleText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-
-            // Header & Content - Wrapped in a layout that handles small heights
+            Divider(
+              height: 1,
+              thickness: 1,
+              color:
+                  isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.04),
+            ),
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Only show header if we have at least 40px of vertical space
-                  final bool showHeader = constraints.maxHeight > 40.h;
-
-                  return Column(
-                    children: [
-                      if (showHeader)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20.w,
-                            vertical: 2.h,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w,
-                                  vertical: 3.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: gold.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20.r),
-                                ),
-                                child: Text(
-                                  languageName.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 8.sp,
-                                    color: gold,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: onClose,
-                                child: Container(
-                                  padding: EdgeInsets.all(4.r),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color:
-                                        isDark
-                                            ? Colors.white.withValues(
-                                              alpha: 0.05,
-                                            )
-                                            : Colors.black.withValues(
-                                              alpha: 0.03,
-                                            ),
-                                  ),
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    size: 14.r,
-                                    color:
-                                        isDark
-                                            ? Colors.white24
-                                            : Colors.black26,
-                                  ),
-                                ),
-                              ),
-                            ],
+              child:
+                  verses.isEmpty
+                      ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.r),
+                          child: Text(
+                            'Terjemahan belum tersedia',
+                            style: TextStyle(
+                              color: subtleText,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-
-                      if (showHeader) SizedBox(height: 6.h),
-
-                      // Verses List
-                      Expanded(
-                        child: ListView.separated(
-                          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: verses.length,
-                          separatorBuilder:
-                              (_, _) => Divider(
-                                height: 20.h,
-                                color:
-                                    isDark
-                                        ? Colors.white.withValues(alpha: 0.03)
-                                        : Colors.black.withValues(alpha: 0.02),
-                              ),
-                          itemBuilder: (context, index) {
-                            final v = verses[index];
-                            return Row(
+                      )
+                      : ListView.separated(
+                        padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 16.h),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: verses.length,
+                        separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                        itemBuilder: (context, index) {
+                          final v = verses[index];
+                          return Container(
+                            padding: EdgeInsets.all(13.r),
+                            decoration: BoxDecoration(
+                              color: cardSurface,
+                              borderRadius: BorderRadius.circular(18.r),
+                              border: Border.all(color: borderColor),
+                            ),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  margin: EdgeInsets.only(top: 4.h),
-                                  child: Text(
-                                    "${v['verse']}",
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      color: gold.withValues(alpha: 0.4),
-                                      fontWeight: FontWeight.w900,
+                                  width: 30.w,
+                                  height: 30.w,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: gold.withValues(alpha: 0.94),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${v['verse']}',
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 18.w),
+                                SizedBox(width: 12.w),
                                 Expanded(
-                                  child: Text(
-                                    v['text'],
-                                    style: AppTextStyle.quranTranslationStyle(
-                                      isDark: isDark,
-                                      fontSize: 13.sp,
-                                    ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'QS ${v['surah']}:${v['verse']}',
+                                        style: TextStyle(
+                                          fontSize: 9.sp,
+                                          color: gold.withValues(alpha: 0.70),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      SizedBox(height: 5.h),
+                                      Text(
+                                        v['text'],
+                                        style: AppTextStyle.quranTranslationStyle(
+                                          isDark: isDark,
+                                          fontSize: 13.sp,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  );
-                },
-              ),
             ),
           ],
         ),
