@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -82,22 +84,27 @@ class _FatihahPageState extends State<FatihahPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        PageHeader(data: widget.data),
-        const MushafRule(thick: true),
-        const FatihahSurahBanner(),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Column(
-              children:
-                  widget.data.verses.map((v) => _buildVerseRow(v)).toList(),
+        Positioned.fill(child: CustomPaint(painter: FatihahFramePainter())),
+        Column(
+          children: [
+            PageHeader(data: widget.data),
+            const MushafRule(thick: true),
+            const FatihahSurahBanner(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Column(
+                  children:
+                      widget.data.verses.map((v) => _buildVerseRow(v)).toList(),
+                ),
+              ),
             ),
-          ),
+            const MushafRule(thick: true),
+            PageNum(n: widget.data.pageNum),
+          ],
         ),
-        const MushafRule(thick: true),
-        PageNum(n: widget.data.pageNum),
       ],
     );
   }
@@ -362,6 +369,230 @@ class OrnamentPainter extends CustomPainter {
       1.2,
       Paint()..color = accent,
     );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class FatihahFramePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final bg = const Color(0xFFF3E4C6);
+    final gold = const Color(0xFF9A6B34);
+    final blue = const Color(0xFF274E8A);
+    final red = const Color(0xFF8B2A2A);
+    final teal = const Color(0xFF2E7C72);
+
+    canvas.drawRect(Offset.zero & size, Paint()..color = bg);
+
+    // outer and inner borders
+    canvas.drawRect(
+      Rect.fromLTWH(6, 6, w - 12, h - 12),
+      Paint()
+        ..color = gold
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(11, 11, w - 22, h - 22),
+      Paint()
+        ..color = gold.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+
+    _drawTopBottomBand(canvas, w, gold, blue, teal, red);
+    _drawSideBand(canvas, h, gold, blue, red, teal, left: true);
+    _drawSideBand(canvas, h, gold, blue, red, teal, left: false);
+    _drawCorners(canvas, w, h, gold, blue, teal, red);
+    _drawCenterMedallion(canvas, w, gold, blue, red, teal);
+  }
+
+  void _drawTopBottomBand(
+    Canvas canvas,
+    double w,
+    Color gold,
+    Color blue,
+    Color teal,
+    Color red,
+  ) {
+    for (final y in [4.0, 52.0]) {
+      canvas.drawRect(
+        Rect.fromLTWH(18, y, w - 36, 18),
+        Paint()..color = blue.withValues(alpha: 0.95),
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(18, y + 18, w - 36, 6),
+        Paint()..color = gold.withValues(alpha: 0.4),
+      );
+
+      // woven loops
+      final loopPaint = Paint()
+        ..color = gold
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2;
+      for (double x = 24; x < w - 24; x += 28) {
+        final p = Path()
+          ..moveTo(x, y + 9)
+          ..quadraticBezierTo(x + 7, y - 2, x + 14, y + 9)
+          ..quadraticBezierTo(x + 21, y + 20, x + 28, y + 9);
+        canvas.drawPath(p, loopPaint);
+        canvas.drawCircle(
+          Offset(x + 14, y + 9),
+          2.2,
+          Paint()..color = [teal, red, blue][((x / 28).round()) % 3],
+        );
+      }
+      // center medallion
+      canvas.drawCircle(Offset(w / 2, y + 9), 14, Paint()..color = gold);
+      canvas.drawCircle(
+        Offset(w / 2, y + 9),
+        12,
+        Paint()..color = blue,
+      );
+      canvas.drawCircle(
+        Offset(w / 2, y + 9),
+        7,
+        Paint()..color = bgColor(y),
+      );
+      canvas.drawLine(
+        Offset(w / 2 - 10, y + 9),
+        Offset(w / 2 + 10, y + 9),
+        Paint()
+          ..color = red
+          ..strokeWidth = 1.0,
+      );
+      canvas.drawLine(
+        Offset(w / 2, y - 1),
+        Offset(w / 2, y + 19),
+        Paint()
+          ..color = teal
+          ..strokeWidth = 1.0,
+      );
+    }
+  }
+
+  void _drawSideBand(
+    Canvas canvas,
+    double h,
+    Color gold,
+    Color blue,
+    Color red,
+    Color teal, {
+    required bool left,
+  }) {
+    final x = left ? 4.0 : 18.0;
+    final w = 14.0;
+    final colors = [blue, red, teal, gold, blue, red, teal, gold];
+    for (int i = 0; i < colors.length; i++) {
+      canvas.drawRect(
+        Rect.fromLTWH(x, 74.0 + i * 52.0, w, 52.0),
+        Paint()..color = colors[i].withValues(alpha: 0.92),
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(x, 74.0 + i * 52.0, w, 52.0),
+        Paint()
+          ..color = gold.withValues(alpha: 0.65)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
+      final cy = 100.0 + i * 52.0;
+      final path = Path()
+        ..moveTo(left ? x + 2 : x + w - 2, cy - 16)
+        ..quadraticBezierTo(
+          left ? x + 12 : x + 2,
+          cy,
+          left ? x + 2 : x + w - 2,
+          cy + 16,
+        );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = gold.withValues(alpha: 0.9)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
+      );
+      canvas.drawCircle(
+        Offset(left ? x + 7 : x + 7, cy),
+        2.2,
+        Paint()..color = [teal, red, blue][i % 3],
+      );
+    }
+  }
+
+  void _drawCorners(
+    Canvas canvas,
+    double w,
+    double h,
+    Color gold,
+    Color blue,
+    Color teal,
+    Color red,
+  ) {
+    final corners = [
+      const Offset(16, 16),
+      Offset(w - 16, 16),
+      Offset(16, h - 16),
+      Offset(w - 16, h - 16),
+    ];
+    for (int i = 0; i < corners.length; i++) {
+      final o = corners[i];
+      canvas.drawCircle(o, 13, Paint()..color = gold);
+      canvas.drawCircle(o, 10, Paint()..color = blue);
+      canvas.drawCircle(o, 5, Paint()..color = Colors.white.withValues(alpha: 0.7));
+      final p = Path()
+        ..moveTo(o.dx - 12, o.dy)
+        ..quadraticBezierTo(o.dx, o.dy - 12, o.dx + 12, o.dy)
+        ..quadraticBezierTo(o.dx, o.dy + 12, o.dx - 12, o.dy);
+      canvas.drawPath(
+        p,
+        Paint()
+          ..color = [teal, red, blue][i % 3]
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
+      );
+    }
+  }
+
+  void _drawCenterMedallion(
+    Canvas canvas,
+    double w,
+    Color gold,
+    Color blue,
+    Color red,
+    Color teal,
+  ) {
+    final cx = w / 2;
+    final cy = 31.0;
+    canvas.drawCircle(Offset(cx, cy), 18, Paint()..color = gold);
+    canvas.drawCircle(Offset(cx, cy), 15, Paint()..color = blue);
+    canvas.drawCircle(
+      Offset(cx, cy),
+      8,
+      Paint()..color = Colors.white.withValues(alpha: 0.85),
+    );
+    final star = Path();
+    for (int i = 0; i < 8; i++) {
+      final a = i * math.pi / 4;
+      final r = i.isEven ? 7.0 : 3.2;
+      final x = cx + math.cos(a) * r;
+      final y = cy + math.sin(a) * r;
+      if (i == 0) {
+        star.moveTo(x, y);
+      } else {
+        star.lineTo(x, y);
+      }
+    }
+    star.close();
+    canvas.drawPath(star, Paint()..color = teal);
+    canvas.drawCircle(Offset(cx, cy), 2.4, Paint()..color = red);
+  }
+
+  Color bgColor(double y) {
+    return y < 40 ? const Color(0xFFF3E4C6) : const Color(0xFFF1E1BF);
   }
 
   @override
