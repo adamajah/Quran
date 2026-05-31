@@ -46,8 +46,12 @@ class _FatihahPageState extends State<FatihahPage> {
 
   Widget _buildTopLine(PageData data) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? const Color(0xFF4E3A28) : const Color(0xFF5A432D);
-    final accent = const Color(0xFF8C6A3E);
+    final theme = Theme.of(context);
+    final textColor =
+        isDark
+            ? Colors.white.withValues(alpha: 0.88)
+            : theme.textTheme.bodyLarge?.color ?? AppColors.dark;
+    final accent = AppColors.gold.withValues(alpha: isDark ? 0.88 : 0.75);
 
     String juzText(int n) {
       const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -137,6 +141,17 @@ class _FatihahPageState extends State<FatihahPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final overlayColor =
+        isDark
+            ? const Color(0xFF1A120B).withValues(alpha: 0.11)
+            : const Color(0xFFF8F0DE).withValues(alpha: 0.10);
+    final contentPadding = EdgeInsets.fromLTRB(
+      24,
+      isDark ? 25 : 24,
+      24,
+      isDark ? 22 : 23,
+    );
     return Stack(
       children: [
         Positioned.fill(
@@ -146,8 +161,15 @@ class _FatihahPageState extends State<FatihahPage> {
             filterQuality: FilterQuality.high,
           ),
         ),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: overlayColor,
+            ),
+          ),
+        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 26),
+          padding: contentPadding,
           child: Column(
             children: [
               const SizedBox(height: 2),
@@ -174,7 +196,7 @@ class _FatihahPageState extends State<FatihahPage> {
                   },
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 7),
               PageNum(n: widget.data.pageNum),
             ],
           ),
@@ -205,14 +227,14 @@ class _FatihahPageState extends State<FatihahPage> {
       onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.symmetric(vertical: 1.5),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+        margin: const EdgeInsets.symmetric(vertical: 1.2),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2.2),
         decoration: BoxDecoration(
           color:
               active
                   ? (isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : AppColors.hl.withValues(alpha: 0.06))
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : AppColors.hl.withValues(alpha: 0.05))
                   : isBookmarked
                   ? AppColors.gold.withValues(alpha: 0.08)
                   : Colors.transparent,
@@ -243,8 +265,8 @@ class _FatihahPageState extends State<FatihahPage> {
                   children: [
                     ..._buildTajwidSpans(
                       text,
-                      22 * widget.fontScale,
-                      2.0,
+                      21.25 * widget.fontScale,
+                      1.92,
                       active,
                       widget.showTajwid,
                       inkColor,
@@ -252,13 +274,13 @@ class _FatihahPageState extends State<FatihahPage> {
                     TextSpan(
                       text: ' ${_ar(v.verse)}',
                       style: AppQuranFonts.hafsStyle.copyWith(
-                        fontSize: 14.5 * widget.fontScale,
+                        fontSize: 13.8 * widget.fontScale,
                         color:
                             active
                                 ? (isDark ? Colors.white : AppColors.hl)
                                 : AppColors.gold,
                         fontWeight: FontWeight.bold,
-                        height: 2.0,
+                        height: 1.92,
                       ),
                     ),
                   ],
@@ -293,8 +315,8 @@ class _FatihahPageState extends State<FatihahPage> {
             backgroundColor:
                 active
                     ? (isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : AppColors.hl.withValues(alpha: 0.06))
+                        ? Colors.white.withValues(alpha: 0.09)
+                        : AppColors.hl.withValues(alpha: 0.045))
                     : null,
           ),
         ),
@@ -325,8 +347,8 @@ class _FatihahPageState extends State<FatihahPage> {
             backgroundColor:
                 active
                     ? (isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : AppColors.hl.withValues(alpha: 0.06))
+                        ? Colors.white.withValues(alpha: 0.09)
+                        : AppColors.hl.withValues(alpha: 0.045))
                     : null,
           ),
         ),
