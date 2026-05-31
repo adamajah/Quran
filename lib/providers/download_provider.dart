@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,11 +24,16 @@ class DownloadProvider with ChangeNotifier {
   String? _activeDownloadId;
 
   DownloadProvider(this._downloadService, this._storageService, this._prefs) {
+    unawaited(_init());
+  }
+
+  Future<void> _init() async {
     _loadSettings();
     _loadItems();
     _resetInterruptedDownloads();
-    _reconcileDownloadedItems();
+    await _reconcileDownloadedItems();
     _listenToBattery();
+    notifyListeners();
   }
 
   List<DownloadItem> get items => _items;

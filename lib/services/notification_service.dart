@@ -7,8 +7,16 @@ import 'package:flutter/material.dart';
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  static Future<void>? _initFuture;
+  static bool _initialized = false;
 
   static Future<void> init() async {
+    if (_initialized) return;
+    _initFuture ??= _doInit();
+    await _initFuture;
+  }
+
+  static Future<void> _doInit() async {
     tz.initializeTimeZones();
     final String timeZoneName = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timeZoneName));
@@ -39,9 +47,17 @@ class NotificationService {
         debugPrint("Request notification permission failed: $e");
       }
     }
+
+    _initialized = true;
+  }
+
+  static Future<void> _ensureInitialized() async {
+    if (_initialized) return;
+    await init();
   }
 
   static Future<void> scheduleReadingReminder(TimeOfDay time) async {
+    await _ensureInitialized();
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
       tz.local,
@@ -88,6 +104,7 @@ class NotificationService {
     required int progress,
     required int maxProgress,
   }) async {
+    await _ensureInitialized();
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'download_channel',
@@ -118,6 +135,7 @@ class NotificationService {
     required int id,
     required String title,
   }) async {
+    await _ensureInitialized();
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'download_channel',
@@ -143,6 +161,7 @@ class NotificationService {
     required String title,
     required String error,
   }) async {
+    await _ensureInitialized();
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'download_channel',
@@ -164,10 +183,12 @@ class NotificationService {
   }
 
   static Future<void> cancel(int id) async {
+    await _ensureInitialized();
     await _notifications.cancel(id: id);
   }
 
   static Future<void> cancelAll() async {
+    await _ensureInitialized();
     await _notifications.cancelAll();
   }
 }

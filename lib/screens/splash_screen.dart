@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_quran_app/constants/app_text_style.dart';
 import 'package:flutter_quran_app/screens/home_screen.dart';
-import 'package:flutter_quran_app/services/notification_service.dart';
 
 import '../constants/app_strings.dart';
 
@@ -49,9 +48,6 @@ class _SplashScreenState extends State<SplashScreen>
     /// STARTING THE ANIMATION
     _controller.forward();
 
-    /// INITIALIZE NOTIFICATIONS LATER (To avoid SQLITE_BUSY and Context Null issues)
-    _initNotifications();
-
     /// TIMER FOR SPLASH DURATION
     _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
@@ -61,14 +57,6 @@ class _SplashScreenState extends State<SplashScreen>
         context,
       ).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
     });
-  }
-
-  Future<void> _initNotifications() async {
-    try {
-      await NotificationService.init();
-    } catch (e) {
-      debugPrint("Delayed Notification init failed: $e");
-    }
   }
 
   @override

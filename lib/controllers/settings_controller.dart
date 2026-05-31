@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/settings_model.dart';
@@ -8,15 +10,7 @@ class SettingsController extends ChangeNotifier {
   final SettingsService _service;
   AppSettings _settings;
 
-  SettingsController(this._service) : _settings = _service.loadSettings() {
-    _initNotifications();
-  }
-
-  void _initNotifications() {
-    if (_settings.readReminder && _settings.reminderTime != null) {
-      NotificationService.scheduleReadingReminder(_settings.reminderTime!);
-    }
-  }
+  SettingsController(this._service) : _settings = _service.loadSettings();
 
   AppSettings get settings => _settings;
 
@@ -88,9 +82,11 @@ class SettingsController extends ChangeNotifier {
     _service.saveSettings(_settings);
 
     if (active && _settings.reminderTime != null) {
-      NotificationService.scheduleReadingReminder(_settings.reminderTime!);
+      unawaited(NotificationService.scheduleReadingReminder(
+        _settings.reminderTime!,
+      ));
     } else {
-      NotificationService.cancelAll();
+      unawaited(NotificationService.cancelAll());
     }
 
     _hapticFeedback();
@@ -102,7 +98,7 @@ class SettingsController extends ChangeNotifier {
     _service.saveSettings(_settings);
 
     if (_settings.readReminder) {
-      NotificationService.scheduleReadingReminder(time);
+      unawaited(NotificationService.scheduleReadingReminder(time));
     }
 
     _hapticFeedback();
