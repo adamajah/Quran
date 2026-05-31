@@ -170,10 +170,8 @@ class NormalBody extends StatelessWidget {
       builder: (ctx, bc) {
         double reservedH = 0.0;
 
-        for (final g in data.groups) {
-          if (g.isFirstInMushaf) {
-            reservedH += 42.0;
-          }
+        if (data.pageNum <= 2) {
+          reservedH += 42.0;
         }
 
         final availH = bc.maxHeight - reservedH;
@@ -187,12 +185,16 @@ class NormalBody extends StatelessWidget {
 
         final List<Widget> children = [];
 
+        if (data.pageNum <= 2) {
+          children.add(
+            SurahBanner(
+              surahIndex: data.surah,
+              surahNameAr: data.surahNameAr,
+            ),
+          );
+        }
+
         for (final g in data.groups) {
-          if (g.isFirstInMushaf) {
-            children.add(
-              SurahBanner(surahIndex: g.surah, surahNameAr: g.surahNameAr),
-            );
-          }
 
           children.add(
             TappableVerseBlock(

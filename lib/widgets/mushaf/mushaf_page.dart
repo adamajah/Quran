@@ -69,14 +69,14 @@ class MushafPage extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: const Color(0xFF242424),
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: AppColors.gold.withValues(alpha: 0.5),
                     width: 0.8,
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(16),
                   child:
                       _isFatihah
                           ? FatihahPage(

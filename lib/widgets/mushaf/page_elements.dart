@@ -32,7 +32,7 @@ class PageHeader extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: gold.withValues(alpha: 0.35), width: 0.7),
+          border: Border.all(color: gold.withValues(alpha: 0.38), width: 0.7),
         ),
         child: Column(
           children: [
@@ -143,43 +143,22 @@ class SurahBanner extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.72 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 5, 12, 1),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 14),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.8),
+          borderRadius: BorderRadius.circular(2),
+          border: Border.all(color: gold.withValues(alpha: 0.52), width: 0.8),
         ),
-        child: Column(
-          children: [
-            Text(
-              'سُورَةُ $surahNameAr',
-              textAlign: TextAlign.center,
-              style: AppTextStyle.quranSurahNameStyle(
-                fontSize: 14.5,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
-                const SizedBox(width: 8),
-                Text(
-                  '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
-                  style: TextStyle(
-                    fontSize: 8.4,
-                    color: gold,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
-              ],
-            ),
-          ],
+        child: Text(
+          'سُورَةُ $surahNameAr',
+          textAlign: TextAlign.center,
+          style: AppTextStyle.quranSurahNameStyle(
+            fontSize: 14.5,
+            color: textColor,
+          ),
         ),
       ),
     );

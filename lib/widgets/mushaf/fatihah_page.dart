@@ -90,10 +90,10 @@ class _FatihahPageState extends State<FatihahPage> {
           surahNameAr: widget.data.surahNameAr,
         ),
         const MushafRule(thick: true),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
             child: Column(
               children:
                   widget.data.verses.map((v) => _buildVerseRow(v)).toList(),
@@ -127,8 +127,8 @@ class _FatihahPageState extends State<FatihahPage> {
       onTap: () => widget.onTapVerse(v.surah, v.verse),
       onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        margin: const EdgeInsets.symmetric(vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
         decoration: BoxDecoration(
           color: active
               ? (isDark
@@ -149,7 +149,7 @@ class _FatihahPageState extends State<FatihahPage> {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 6),
               child: AyahNumberBadge(
                 label: _ar(v.verse),
                 active: active,
@@ -161,10 +161,10 @@ class _FatihahPageState extends State<FatihahPage> {
             Expanded(
               child: Text.rich(
                 TextSpan(
-                  children: _buildTajwidSpans(
+                children: _buildTajwidSpans(
                     text,
-                    25 * widget.fontScale,
-                    2.1,
+                    24 * widget.fontScale,
+                    2.0,
                     active,
                     widget.showTajwid,
                     inkColor,
