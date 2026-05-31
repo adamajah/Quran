@@ -34,29 +34,27 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgTop = isDark ? const Color(0xFF141414) : const Color(0xFFF5EFE4);
-    final bgBottom = isDark ? const Color(0xFF0F0F10) : const Color(0xFFF0E7D6);
-    final textColor = isDark ? const Color(0xFFF8F6F0) : AppColors.dark;
-    final muted = textColor.withValues(alpha: 0.62);
-    final gold = AppColors.gold.withValues(alpha: isDark ? 0.92 : 0.86);
+    final gold = AppColors.gold;
+    final bgTop = const Color(0xFFF7F1E5);
+    final bgBottom = const Color(0xFFE8DCC8);
+    final textColor = AppColors.dark;
+    final muted = textColor.withValues(alpha: 0.6);
 
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [bgTop, bgBottom],
           ),
-          border: Border(
-            top: BorderSide(color: gold.withValues(alpha: 0.4), width: 0.8),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          border: Border.all(color: gold.withValues(alpha: 0.35), width: 0.9),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+              color: Colors.black.withValues(alpha: 0.14),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -68,29 +66,30 @@ class BottomBar extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < 430;
-                final controlWrap = Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.spaceBetween,
+
+                final controls = Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _LuxuryButton(
                       icon: playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                       active: playing,
                       filled: true,
-                      size: 48,
+                      size: 44,
                       onTap: onPlay,
                     ),
                     _LuxuryButton(
                       icon: Icons.stop_rounded,
                       active: false,
-                      size: 42,
+                      size: 40,
                       onTap: onStop,
                     ),
                     _LuxuryButton(
                       icon: Icons.remove_rounded,
                       active: false,
-                      size: 38,
+                      size: 36,
                       onTap: onZoomOut,
                     ),
                     _ZoomPill(
@@ -101,7 +100,7 @@ class BottomBar extends StatelessWidget {
                     _LuxuryButton(
                       icon: Icons.add_rounded,
                       active: false,
-                      size: 38,
+                      size: 36,
                       onTap: onZoomIn,
                     ),
                     GestureDetector(
@@ -110,14 +109,14 @@ class BottomBar extends StatelessWidget {
                       child: _LuxuryButton(
                         icon: Icons.palette_outlined,
                         active: showTajwid,
-                        size: 42,
+                        size: 40,
                         onTap: onToggleTajwid,
                       ),
                     ),
                   ],
                 );
 
-                final infoRow = compact
+                final info = compact
                     ? Column(
                         children: [
                           _ReciterTile(
@@ -154,9 +153,9 @@ class BottomBar extends StatelessWidget {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    controlWrap,
-                    const SizedBox(height: 10),
-                    infoRow,
+                    controls,
+                    const SizedBox(height: 8),
+                    info,
                   ],
                 );
               },
@@ -182,17 +181,17 @@ class _PageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: gold.withValues(alpha: 0.08),
+        color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.8),
+        border: Border.all(color: gold.withValues(alpha: 0.42), width: 0.8),
       ),
       child: Text(
         'Hal. $pageNum',
         style: TextStyle(
-          fontSize: 11,
-          color: textColor.withValues(alpha: 0.8),
+          fontSize: 10.8,
+          color: textColor.withValues(alpha: 0.88),
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -225,16 +224,13 @@ class _ReciterTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: gold.withValues(alpha: 0.34),
-              width: 0.8,
-            ),
+            color: Colors.white.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: gold.withValues(alpha: 0.32), width: 0.8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +243,7 @@ class _ReciterTile extends StatelessWidget {
                       reciter,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 11.1,
                         fontWeight: FontWeight.w700,
                         color: textColor,
                       ),
@@ -263,24 +259,21 @@ class _ReciterTile extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '$surahName · Ayat $playVerse',
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 9.2,
-                  color: gold,
-                  fontWeight: FontWeight.w500,
-                ),
+              '$surahName · Ayat $playVerse',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 9.0,
+                color: gold,
+                fontWeight: FontWeight.w500,
               ),
-              if (!showTajwid)
-                Text(
-                  'Audio qari aktif',
-                  style: TextStyle(fontSize: 8.5, color: muted),
-                )
-              else
-                Text(
-                  'Tajwid aktif · tekan lama untuk panduan',
-                  style: TextStyle(fontSize: 8.5, color: muted),
-                ),
+            ),
+            const SizedBox(height: 2),
+              Text(
+                showTajwid
+                    ? 'Tajwid aktif · tekan lama untuk panduan'
+                    : 'Audio qari aktif',
+                style: TextStyle(fontSize: 8.5, color: muted),
+              ),
             ],
           ),
         ),
@@ -306,25 +299,19 @@ class _LuxuryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = AppColors.gold;
-    final bg = filled
-        ? (active ? gold : Colors.white.withValues(alpha: isDark ? 0.05 : 0.08))
-        : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white);
-
-    final border = active ? gold : gold.withValues(alpha: isDark ? 0.28 : 0.38);
-    final iconColor = filled && active
-        ? (isDark ? const Color(0xFF171717) : const Color(0xFF151515))
-        : (active ? gold : (isDark ? const Color(0xFFF8F6F0) : AppColors.dark));
+    final bg = filled ? (active ? gold : Colors.white) : Colors.white;
+    final border = active ? gold : gold.withValues(alpha: 0.42);
+    final iconColor = filled && active ? const Color(0xFF171717) : (active ? gold : AppColors.dark);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(size / 2),
-        child: Container(
-          width: size,
-          height: size,
+          child: Container(
+            width: size,
+            height: size,
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(size / 2),
@@ -332,9 +319,9 @@ class _LuxuryButton extends StatelessWidget {
             boxShadow: [
               if (active)
                 BoxShadow(
-                  color: gold.withValues(alpha: 0.18),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  color: gold.withValues(alpha: 0.12),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
             ],
           ),
@@ -358,11 +345,8 @@ class _ZoomPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = AppColors.gold;
-    final textColor = active
-        ? gold
-        : (isDark ? const Color(0xFFF8F6F0) : AppColors.dark);
+    final textColor = active ? gold : AppColors.dark;
 
     return Material(
       color: Colors.transparent,
@@ -370,21 +354,16 @@ class _ZoomPill extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: active
-                ? gold.withValues(alpha: 0.12)
-                : Colors.white.withValues(alpha: isDark ? 0.04 : 0.08),
+            color: active ? gold.withValues(alpha: 0.12) : Colors.white,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: active ? gold : gold.withValues(alpha: isDark ? 0.28 : 0.38),
-              width: 0.8,
-            ),
+            border: Border.all(color: gold.withValues(alpha: 0.42), width: 0.8),
           ),
           child: Text(
             '$percent%',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9.7,
               color: textColor,
               fontWeight: FontWeight.w700,
             ),

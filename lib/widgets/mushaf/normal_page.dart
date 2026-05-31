@@ -172,10 +172,8 @@ class NormalBody extends StatelessWidget {
 
         for (final g in data.groups) {
           if (g.isFirstInMushaf) {
-            reservedH += 54.0;
-
             if (g.surah != 9) {
-              reservedH += 42.0;
+              reservedH += 34.0;
             }
           }
         }
@@ -192,12 +190,6 @@ class NormalBody extends StatelessWidget {
         final List<Widget> children = [];
 
         for (final g in data.groups) {
-          if (g.isFirstInMushaf) {
-            children.add(
-              SurahBanner(surahIndex: g.surah, surahNameAr: g.surahNameAr),
-            );
-          }
-
           if (g.isFirstInMushaf && g.surah != 9) {
             children.add(const Basmalah());
           }

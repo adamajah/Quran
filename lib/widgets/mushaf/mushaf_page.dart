@@ -36,63 +36,80 @@ class MushafPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CustomPaint(
-            painter: MushafPagePainter(isDark: isDark),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0D0D0D) : const Color(0xFF17110D),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: AppColors.gold.withValues(alpha: 0.32),
+            width: 0.8,
           ),
-          IgnorePointer(
-            child: CustomPaint(
-              painter: OrnamentPainter(isDark: isDark),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.22),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1B1B1B) : AppColors.pageBg,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: AppColors.gold.withValues(alpha: isDark ? 0.22 : 0.28),
-                  width: 0.7,
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CustomPaint(
+              painter: MushafPagePainter(isDark: isDark),
+            ),
+            IgnorePointer(
+              child: CustomPaint(
+                painter: OrnamentPainter(isDark: isDark),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.pageBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: AppColors.gold.withValues(alpha: 0.62),
+                    width: 1.0,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child:
+                      _isFatihah
+                          ? FatihahPage(
+                            data: data,
+                            playSurah: playSurah,
+                            playVerse: playVerse,
+                            tappedSurah: tappedSurah,
+                            tappedVerse: tappedVerse,
+                            isPlayingPage: isPlayingPage,
+                            fontScale: fontScale,
+                            showTajwid: showTajwid,
+                            bookmarkedVerses: bookmarkedVerses,
+                            onTapVerse: onTapVerse,
+                            onBookmarkVerse: onBookmarkVerse,
+                          )
+                          : NormalPage(
+                            data: data,
+                            playSurah: playSurah,
+                            playVerse: playVerse,
+                            tappedSurah: tappedSurah,
+                            tappedVerse: tappedVerse,
+                            isPlayingPage: isPlayingPage,
+                            fontScale: fontScale,
+                            showTajwid: showTajwid,
+                            bookmarkedVerses: bookmarkedVerses,
+                            onTapVerse: onTapVerse,
+                            onBookmarkVerse: onBookmarkVerse,
+                          ),
                 ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child:
-                    _isFatihah
-                        ? FatihahPage(
-                          data: data,
-                          playSurah: playSurah,
-                          playVerse: playVerse,
-                          tappedSurah: tappedSurah,
-                          tappedVerse: tappedVerse,
-                          isPlayingPage: isPlayingPage,
-                          fontScale: fontScale,
-                          showTajwid: showTajwid,
-                          bookmarkedVerses: bookmarkedVerses,
-                          onTapVerse: onTapVerse,
-                          onBookmarkVerse: onBookmarkVerse,
-                        )
-                        : NormalPage(
-                          data: data,
-                          playSurah: playSurah,
-                          playVerse: playVerse,
-                          tappedSurah: tappedSurah,
-                          tappedVerse: tappedVerse,
-                          isPlayingPage: isPlayingPage,
-                          fontScale: fontScale,
-                          showTajwid: showTajwid,
-                          bookmarkedVerses: bookmarkedVerses,
-                          onTapVerse: onTapVerse,
-                          onBookmarkVerse: onBookmarkVerse,
-                        ),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

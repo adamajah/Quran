@@ -26,7 +26,7 @@ class PageHeader extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+      padding: const EdgeInsets.fromLTRB(12, 7, 12, 5),
       child: Column(
         children: [
           Row(
@@ -38,7 +38,7 @@ class PageHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyle.quranPageInfoStyle(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     color: textColor,
                   ).copyWith(fontWeight: FontWeight.w700),
                 ),
@@ -66,14 +66,14 @@ class PageHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyle.quranPageInfoStyle(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     color: textColor,
                   ).copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           _ThinOrnamentLine(color: gold),
         ],
       ),
@@ -91,22 +91,22 @@ class Basmalah extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.8);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+      padding: const EdgeInsets.fromLTRB(12, 5, 12, 1),
       child: Column(
         children: [
           _ThinOrnamentLine(color: gold),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Text(
             bismillah,
             textAlign: TextAlign.center,
             textDirection: TextDirection.rtl,
             style: AppQuranFonts.hafsStyle.copyWith(
-              fontSize: 19,
+              fontSize: 18.5,
               color: isDark ? const Color(0xFFF8F6F0) : AppColors.dark,
-              height: 1.55,
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           _ThinOrnamentLine(color: gold),
         ],
       ),
@@ -131,18 +131,18 @@ class SurahBanner extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.72 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
+      padding: const EdgeInsets.fromLTRB(12, 3, 12, 0),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 3.5, horizontal: 10),
         decoration: BoxDecoration(
           color: bg.withValues(alpha: isDark ? 0.72 : 0.9),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(11),
           border: Border.all(color: gold.withValues(alpha: 0.34), width: 0.7),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -152,15 +152,15 @@ class SurahBanner extends StatelessWidget {
               'سُورَةُ $surahNameAr',
               textAlign: TextAlign.center,
               style: AppTextStyle.quranSurahNameStyle(
-                fontSize: 15.5,
+              fontSize: 14.4,
                 color: textColor,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
+                Container(width: 15, height: 0.7, color: gold.withValues(alpha: 0.5)),
                 const SizedBox(width: 8),
                 Text(
                   '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
@@ -171,7 +171,7 @@ class SurahBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
+                Container(width: 15, height: 0.7, color: gold.withValues(alpha: 0.5)),
               ],
             ),
           ],
@@ -419,7 +419,7 @@ class OrnamentPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.42 : 0.55);
     final dim = isDark ? Colors.white.withValues(alpha: 0.28) : AppColors.dark.withValues(alpha: 0.25);
-    final inset = 12.0;
+    final inset = 9.0;
 
     // top and bottom thin divider
     canvas.drawLine(
@@ -439,10 +439,10 @@ class OrnamentPainter extends CustomPainter {
 
     // corner ornaments
     for (final entry in [
-      _OrnamentCorner(const Offset(14, 14), 0),
-      _OrnamentCorner(Offset(size.width - 14, 14), math.pi / 2),
-      _OrnamentCorner(Offset(14, size.height - 14), -math.pi / 2),
-      _OrnamentCorner(Offset(size.width - 14, size.height - 14), math.pi),
+      _OrnamentCorner(const Offset(11, 11), 0),
+      _OrnamentCorner(Offset(size.width - 11, 11), math.pi / 2),
+      _OrnamentCorner(Offset(11, size.height - 11), -math.pi / 2),
+      _OrnamentCorner(Offset(size.width - 11, size.height - 11), math.pi),
     ]) {
       canvas.save();
       canvas.translate(entry.offset.dx, entry.offset.dy);
@@ -452,17 +452,17 @@ class OrnamentPainter extends CustomPainter {
     }
 
     // center markers
-    canvas.drawCircle(Offset(size.width / 2, inset), 2.1, Paint()..color = gold);
-    canvas.drawCircle(Offset(size.width / 2, size.height - inset), 2.1, Paint()..color = gold);
-    canvas.drawCircle(Offset(inset, size.height / 2), 1.6, Paint()..color = gold);
-    canvas.drawCircle(Offset(size.width - inset, size.height / 2), 1.6, Paint()..color = gold);
+    canvas.drawCircle(Offset(size.width / 2, inset), 1.8, Paint()..color = gold);
+    canvas.drawCircle(Offset(size.width / 2, size.height - inset), 1.8, Paint()..color = gold);
+    canvas.drawCircle(Offset(inset, size.height / 2), 1.4, Paint()..color = gold);
+    canvas.drawCircle(Offset(size.width - inset, size.height / 2), 1.4, Paint()..color = gold);
 
     canvas.drawCircle(
       Offset(size.width / 2, size.height / 2),
-      2.4,
+      2.0,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8
+        ..strokeWidth = 0.65
         ..color = gold.withValues(alpha: 0.7),
     );
   }
@@ -476,17 +476,24 @@ class OrnamentPainter extends CustomPainter {
 
     final path = Path()
       ..moveTo(0, 0)
-      ..quadraticBezierTo(10, 0, 14, 10)
-      ..quadraticBezierTo(16, 16, 24, 24)
-      ..quadraticBezierTo(18, 18, 14, 12)
-      ..quadraticBezierTo(8, 8, 0, 0)
+      ..quadraticBezierTo(9, 0, 12, 9)
+      ..quadraticBezierTo(15, 15, 23, 23)
+      ..quadraticBezierTo(17, 17, 12, 11)
+      ..quadraticBezierTo(7, 7, 0, 0)
       ..close();
 
     canvas.drawPath(path, fill);
     canvas.drawPath(path, line);
 
-    canvas.drawCircle(const Offset(7, 7), 2.0, Paint()..color = gold);
-    canvas.drawCircle(const Offset(7, 7), 0.9, Paint()..color = dim);
+    canvas.drawCircle(const Offset(6.5, 6.5), 1.8, Paint()..color = gold);
+    canvas.drawCircle(const Offset(6.5, 6.5), 0.85, Paint()..color = dim);
+    canvas.drawLine(
+      const Offset(2, 9),
+      const Offset(9, 2),
+      Paint()
+        ..color = gold.withValues(alpha: 0.85)
+        ..strokeWidth = 0.7,
+    );
   }
 
   @override
