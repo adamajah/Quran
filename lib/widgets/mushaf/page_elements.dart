@@ -22,60 +22,72 @@ class PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
+    final textColor = const Color(0xFFF4EFE6);
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 7, 12, 5),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  data.surahNameAr,
-                  textAlign: TextAlign.left,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.quranPageInfoStyle(
-                    fontSize: 12.5,
-                    color: textColor,
-                  ).copyWith(fontWeight: FontWeight.w700),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 9),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: gold.withValues(alpha: 0.35), width: 0.7),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    data.surahNameAr,
+                    textAlign: TextAlign.left,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.quranPageInfoStyle(
+                      fontSize: 12.5,
+                      color: textColor,
+                    ).copyWith(fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: gold,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: gold.withValues(alpha: 0.18),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    ),
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: gold,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    _juzText(data.juz),
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.quranPageInfoStyle(
+                      fontSize: 12.5,
+                      color: textColor,
+                    ).copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 0.8,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    gold.withValues(alpha: 0),
+                    gold,
+                    gold.withValues(alpha: 0),
                   ],
                 ),
               ),
-              Expanded(
-                child: Text(
-                  _juzText(data.juz),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.quranPageInfoStyle(
-                    fontSize: 12.5,
-                    color: textColor,
-                  ).copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          _ThinOrnamentLine(color: gold),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -126,25 +138,18 @@ class SurahBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
-    final bg = isDark ? const Color(0xFF181818) : const Color(0xFFF2EBDD);
+    final textColor = const Color(0xFFF8F3EA);
+    final bg = const Color(0xFF2A2A2A);
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.72 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 3, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.5, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         decoration: BoxDecoration(
-          color: bg.withValues(alpha: isDark ? 0.72 : 0.9),
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(color: gold.withValues(alpha: 0.34), width: 0.7),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.8),
         ),
         child: Column(
           children: [
@@ -152,26 +157,26 @@ class SurahBanner extends StatelessWidget {
               'سُورَةُ $surahNameAr',
               textAlign: TextAlign.center,
               style: AppTextStyle.quranSurahNameStyle(
-              fontSize: 14.4,
+                fontSize: 14.5,
                 color: textColor,
               ),
             ),
-            const SizedBox(height: 1),
+            const SizedBox(height: 2),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(width: 15, height: 0.7, color: gold.withValues(alpha: 0.5)),
+                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
                 const SizedBox(width: 8),
                 Text(
                   '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
                   style: TextStyle(
-                    fontSize: 8.2,
+                    fontSize: 8.4,
                     color: gold,
                     letterSpacing: 0.8,
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(width: 15, height: 0.7, color: gold.withValues(alpha: 0.5)),
+                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
               ],
             ),
           ],
@@ -239,7 +244,7 @@ class PageNum extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
+    final textColor = const Color(0xFFF4EFE6);
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.75 : 0.85);
 
     return Padding(
@@ -251,7 +256,7 @@ class PageNum extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+              color: const Color(0xFF2A2A2A),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.8),
             ),

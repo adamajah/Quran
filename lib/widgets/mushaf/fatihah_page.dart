@@ -85,6 +85,10 @@ class _FatihahPageState extends State<FatihahPage> {
     return Column(
       children: [
         PageHeader(data: widget.data),
+        SurahBanner(
+          surahIndex: widget.data.surah,
+          surahNameAr: widget.data.surahNameAr,
+        ),
         const MushafRule(thick: true),
         const SizedBox(height: 6),
         Expanded(

@@ -68,11 +68,11 @@ class MushafPage extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.pageBg,
+                  color: const Color(0xFF242424),
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.62),
-                    width: 1.0,
+                    color: AppColors.gold.withValues(alpha: 0.5),
+                    width: 0.8,
                   ),
                 ),
                 child: ClipRRect(

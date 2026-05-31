@@ -35,10 +35,10 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gold = AppColors.gold;
-    final bgTop = const Color(0xFFF7F1E5);
-    final bgBottom = const Color(0xFFE8DCC8);
-    final textColor = AppColors.dark;
-    final muted = textColor.withValues(alpha: 0.6);
+    final bgTop = const Color(0xFF171717);
+    final bgBottom = const Color(0xFF101010);
+    final textColor = const Color(0xFFF7F3EC);
+    final muted = textColor.withValues(alpha: 0.62);
 
     return SafeArea(
       top: false,
@@ -51,10 +51,10 @@ class BottomBar extends StatelessWidget {
             colors: [bgTop, bgBottom],
           ),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-          border: Border.all(color: gold.withValues(alpha: 0.35), width: 0.9),
+          border: Border.all(color: gold.withValues(alpha: 0.36), width: 0.85),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.14),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -183,7 +183,7 @@ class _PageTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: gold.withValues(alpha: 0.42), width: 0.8),
       ),
@@ -191,7 +191,7 @@ class _PageTile extends StatelessWidget {
         'Hal. $pageNum',
         style: TextStyle(
           fontSize: 10.8,
-          color: textColor.withValues(alpha: 0.88),
+          color: textColor.withValues(alpha: 0.9),
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -228,7 +228,7 @@ class _ReciterTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.82),
+            color: Colors.white.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: gold.withValues(alpha: 0.32), width: 0.8),
           ),
@@ -262,7 +262,7 @@ class _ReciterTile extends StatelessWidget {
               '$surahName · Ayat $playVerse',
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 9.0,
+                  fontSize: 9.0,
                 color: gold,
                 fontWeight: FontWeight.w500,
               ),
@@ -300,9 +300,13 @@ class _LuxuryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gold = AppColors.gold;
-    final bg = filled ? (active ? gold : Colors.white) : Colors.white;
+    final bg = filled
+        ? (active ? gold : Colors.white.withValues(alpha: 0.05))
+        : Colors.white.withValues(alpha: 0.04);
     final border = active ? gold : gold.withValues(alpha: 0.42);
-    final iconColor = filled && active ? const Color(0xFF171717) : (active ? gold : AppColors.dark);
+    final iconColor = filled && active
+        ? const Color(0xFF171717)
+        : (active ? gold : const Color(0xFFF7F3EC));
 
     return Material(
       color: Colors.transparent,
@@ -346,7 +350,7 @@ class _ZoomPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gold = AppColors.gold;
-    final textColor = active ? gold : AppColors.dark;
+    final textColor = active ? gold : const Color(0xFFF7F3EC);
 
     return Material(
       color: Colors.transparent,
@@ -356,7 +360,7 @@ class _ZoomPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: active ? gold.withValues(alpha: 0.12) : Colors.white,
+            color: active ? gold.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: gold.withValues(alpha: 0.42), width: 0.8),
           ),
