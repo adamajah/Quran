@@ -59,6 +59,34 @@ const List<Reciter> availableReciters = [
     surahAudioBitrate: 128,
   ),
   Reciter(
+    name: 'Abdurrahman As-Sudais',
+    id: 'ar.abdurrahmaansudais',
+    bitrate: 128,
+    surahAudioId: 'ar.abdurrahmaansudais',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
+    name: 'Abu Bakr Ash-Shatri',
+    id: 'ar.shaatree',
+    bitrate: 128,
+    surahAudioId: 'ar.shaatree',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
+    name: 'Maher Al-Muaiqly',
+    id: 'ar.mahermuaiqly',
+    bitrate: 128,
+    surahAudioId: 'ar.mahermuaiqly',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
+    name: 'Mahmoud Khalil Al-Husary',
+    id: 'ar.husary',
+    bitrate: 128,
+    surahAudioId: 'ar.husary',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
     name: 'Hani Ar-Rifai',
     id: 'ar.hanirifai',
     bitrate: 192,
@@ -72,13 +100,41 @@ const List<Reciter> availableReciters = [
     surahAudioId: 'ar.muhammadayyub',
     surahAudioBitrate: 128,
   ),
+  Reciter(
+    name: 'Muhammad Jibreel',
+    id: 'ar.muhammadjibreel',
+    bitrate: 128,
+    surahAudioId: 'ar.muhammadjibreel',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
+    name: 'Ahmed Al-Ajamy',
+    id: 'ar.ahmedajamy',
+    bitrate: 128,
+    surahAudioId: 'ar.ahmedajamy',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
+    name: 'Ali Al-Hudhaify',
+    id: 'ar.hudhaify',
+    bitrate: 128,
+    surahAudioId: 'ar.hudhaify',
+    surahAudioBitrate: 128,
+  ),
 ];
 
 const Set<String> popularReciterNameKeys = {
   'misharyrashidalafasy',
   'abdulbasetabdulsamad',
+  'abdurrahmanassudais',
+  'abubakrashshatri',
+  'maheralmuaiqly',
+  'mahmoudkhalilalhusary',
   'haniarrifai',
   'muhammadayyoub',
+  'muhammadjibreel',
+  'ahmedalajamy',
+  'alialhudhaify',
 };
 
 String normalizeReciterName(String name) {

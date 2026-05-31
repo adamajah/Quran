@@ -15,13 +15,8 @@ class AyahTiming {
 }
 
 class OfflineReciterService {
-  static const _catalogUrl =
-      'https://www.mp3quran.net/api/v3/reciters?language=eng';
-  static const _timingReadsUrl =
-      'https://mp3quran.net/api/v3/ayat_timing/reads';
   static const _ayahTimingUrl = 'https://mp3quran.net/api/v3/ayat_timing';
 
-  static Future<List<Reciter>>? _cachedReciters;
   static final Map<String, Future<List<AyahTiming>>> _cachedAyahTimings = {};
 
   final Dio _dio;
@@ -41,34 +36,10 @@ class OfflineReciterService {
   }
 
   Future<List<Reciter>> getRecitersForSurah(int surah) async {
-    final catalog = _cachedReciters ??= _fetchReciters();
-    try {
-      final reciters = (await catalog)
-          .where((reciter) => isPopularReciterName(reciter.name))
-          .where((reciter) => reciter.supportsSurahDownload(surah))
-          .toList(growable: false);
-      if (reciters.isNotEmpty) return reciters;
-    } catch (_) {
-      if (identical(_cachedReciters, catalog)) _cachedReciters = null;
-    }
-
-    return offlineReciters
+    return availableReciters
         .where((reciter) => isPopularReciterName(reciter.name))
         .where((reciter) => reciter.supportsSurahDownload(surah))
         .toList(growable: false);
-  }
-
-  Future<List<Reciter>> _fetchReciters() async {
-    final response = await _dio.get<Map<String, dynamic>>(_catalogUrl);
-    try {
-      final timings = await _dio.get<List<dynamic>>(_timingReadsUrl);
-      return parseCatalog(
-        response.data ?? const {},
-        timingReadIds: parseTimingReadIds(timings.data ?? const []),
-      );
-    } catch (_) {
-      return parseCatalog(response.data ?? const {});
-    }
   }
 
   Future<Duration?> getAyahStartPosition(
