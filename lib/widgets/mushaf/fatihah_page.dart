@@ -86,7 +86,6 @@ class _FatihahPageState extends State<FatihahPage> {
       children: [
         PageHeader(data: widget.data),
         SurahBanner(
-          surahIndex: widget.data.surah,
           surahNameAr: widget.data.surahNameAr,
         ),
         const MushafRule(thick: true),
@@ -122,6 +121,51 @@ class _FatihahPageState extends State<FatihahPage> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inkColor = const Color(0xFFF7F2E8);
+
+    if (v.surah == 1 && v.verse == 1) {
+      return GestureDetector(
+        onTap: () => widget.onTapVerse(v.surah, v.verse),
+        onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(
+            color: active
+                ? (isDark
+                    ? Colors.white.withValues(alpha: 0.045)
+                    : AppColors.hl.withValues(alpha: 0.035))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              if (isBookmarked)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Icon(
+                    Icons.bookmark_rounded,
+                    size: 10,
+                    color: AppColors.gold.withValues(alpha: 0.9),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: AyahNumberBadge(
+                  label: _ar(v.verse),
+                  active: active,
+                  isDark: isDark,
+                  onTap: () => widget.onTapVerse(v.surah, v.verse),
+                  onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
+                ),
+              ),
+              Expanded(
+                child: Basmalah(color: inkColor),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return GestureDetector(
       onTap: () => widget.onTapVerse(v.surah, v.verse),

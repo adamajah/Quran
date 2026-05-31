@@ -187,7 +187,6 @@ class NormalBody extends StatelessWidget {
         if (data.pageNum <= 2) {
           children.add(
             SurahBanner(
-              surahIndex: data.surah,
               surahNameAr: data.surahNameAr,
             ),
           );

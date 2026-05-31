@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:quran/quran.dart' as q;
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
@@ -15,6 +15,11 @@ String _arabicDigits(int n) {
 
 String _juzText(int n) => 'الجزء ${_arabicDigits(n)}';
 
+const _quranLibraryPackage = 'quran_library';
+const _surahBannerDarkAsset = 'assets/svg/surahSvgBannerDark.svg';
+const _basmalahAsset = 'assets/svg/besmAllah2.svg';
+const _ayahNumberAsset = 'assets/svg/suraNum.svg';
+
 class PageHeader extends StatelessWidget {
   final PageData data;
   const PageHeader({super.key, required this.data});
@@ -26,139 +31,162 @@ class PageHeader extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 9),
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: gold.withValues(alpha: 0.38), width: 0.7),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    data.surahNameAr,
-                    textAlign: TextAlign.left,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.quranPageInfoStyle(
-                      fontSize: 12.5,
-                      color: textColor,
-                    ).copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: gold,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    _juzText(data.juz),
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.quranPageInfoStyle(
-                      fontSize: 12.5,
-                      color: textColor,
-                    ).copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 0.8,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    gold.withValues(alpha: 0),
-                    gold,
-                    gold.withValues(alpha: 0),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class Basmalah extends StatelessWidget {
-  const Basmalah({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bismillah = q.getVerse(1, 1, verseEndSymbol: false);
-    final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.8);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 5, 12, 1),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
       child: Column(
         children: [
-          _ThinOrnamentLine(color: gold),
-          const SizedBox(height: 5),
-          Text(
-            bismillah,
-            textAlign: TextAlign.center,
-            textDirection: TextDirection.rtl,
-            style: AppQuranFonts.hafsStyle.copyWith(
-              fontSize: 18.5,
-              color: isDark ? const Color(0xFFF8F6F0) : AppColors.dark,
-              height: 1.5,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  data.surahNameAr,
+                  textAlign: TextAlign.left,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.quranPageInfoStyle(
+                    fontSize: 13,
+                    color: textColor,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Container(
+                width: 9,
+                height: 9,
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: gold,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  _juzText(data.juz),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.quranPageInfoStyle(
+                    fontSize: 13,
+                    color: textColor,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          _ThinOrnamentLine(color: gold),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 0.85,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        gold.withValues(alpha: 0),
+                        gold,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 9),
+                decoration: BoxDecoration(
+                  color: gold,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  height: 0.85,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        gold,
+                        gold.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class SurahBanner extends StatelessWidget {
-  final int surahIndex;
-  final String surahNameAr;
-  const SurahBanner({
+class Basmalah extends StatelessWidget {
+  final Color? color;
+  final double width;
+  final double height;
+
+  const Basmalah({
     super.key,
-    required this.surahIndex,
-    required this.surahNameAr,
+    this.color,
+    this.width = 230,
+    this.height = 38,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tint = color ?? (isDark ? const Color(0xFFF5EFE3) : AppColors.dark);
+
+    return Center(
+      child: SvgPicture.asset(
+        _basmalahAsset,
+        package: _quranLibraryPackage,
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+        colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+      ),
+    );
+  }
+}
+
+class SurahBanner extends StatelessWidget {
+  final String surahNameAr;
+  const SurahBanner({
+    super.key,
+    required this.surahNameAr,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final textColor = const Color(0xFFF8F3EA);
-    final bg = const Color(0xFF2A2A2A);
-    final gold = AppColors.gold.withValues(alpha: isDark ? 0.72 : 0.82);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 5, 12, 1),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 14),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(2),
-          border: Border.all(color: gold.withValues(alpha: 0.52), width: 0.8),
-        ),
-        child: Text(
-          'سُورَةُ $surahNameAr',
-          textAlign: TextAlign.center,
-          style: AppTextStyle.quranSurahNameStyle(
-            fontSize: 14.5,
-            color: textColor,
-          ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 44,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            SvgPicture.asset(
+              _surahBannerDarkAsset,
+              package: _quranLibraryPackage,
+              fit: BoxFit.fill,
+            ),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Text(
+                  'سُورَةُ $surahNameAr',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.quranSurahNameStyle(
+                    fontSize: 15.2,
+                    color: textColor,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -301,19 +329,22 @@ class AyahNumberBadge extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            CustomPaint(
-              size: Size.square(size),
-              painter: AyahNumberPainter(
-                isDark: isDark,
-                active: active,
-                gold: gold,
+            SvgPicture.asset(
+              _ayahNumberAsset,
+              package: _quranLibraryPackage,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              colorFilter: ColorFilter.mode(
+                active ? gold.withValues(alpha: 0.96) : gold.withValues(alpha: 0.78),
+                BlendMode.srcIn,
               ),
             ),
             Text(
               label,
               textAlign: TextAlign.center,
               style: AppQuranFonts.hafsStyle.copyWith(
-                fontSize: 10.5,
+                fontSize: 10.2,
                 color: AppColors.dark,
                 fontWeight: FontWeight.bold,
                 height: 1.0,
@@ -333,9 +364,9 @@ class MushafPagePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final bgTop = isDark ? const Color(0xFF141414) : const Color(0xFF2B261F);
-    final bgBottom = isDark ? const Color(0xFF090909) : const Color(0xFF181511);
-    final gold = AppColors.gold.withValues(alpha: isDark ? 0.34 : 0.42);
+    final bgTop = isDark ? const Color(0xFF151515) : const Color(0xFF2B261F);
+    final bgBottom = isDark ? const Color(0xFF0E0E0E) : const Color(0xFF17130F);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.55 : 0.64);
 
     canvas.drawRect(
       rect,
@@ -347,45 +378,21 @@ class MushafPagePainter extends CustomPainter {
         ).createShader(rect),
     );
 
-    final vignette = Paint()..style = PaintingStyle.fill;
-    vignette.shader = RadialGradient(
-      colors: [
-        Colors.transparent,
-        Colors.black.withValues(alpha: isDark ? 0.28 : 0.22),
-      ],
-      stops: const [0.52, 1.0],
-    ).createShader(rect);
-    canvas.drawRect(rect, vignette);
-
-    final glow = Paint()..style = PaintingStyle.fill;
-    glow.shader = RadialGradient(
-      colors: [
-        AppColors.gold.withValues(alpha: isDark ? 0.08 : 0.06),
-        Colors.transparent,
-      ],
-    ).createShader(Rect.fromCircle(center: Offset(size.width * .5, size.height * .12), radius: size.shortestSide * .75));
-    canvas.drawRect(rect, glow);
-
-    final speck = Paint()..color = Colors.white.withValues(alpha: isDark ? 0.012 : 0.02);
-    for (double x = 0; x < size.width; x += 24) {
-      for (double y = 0; y < size.height; y += 24) {
-        canvas.drawCircle(Offset(x + 3, y + 6), 0.5, speck);
-      }
-    }
-
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.deflate(2.0), const Radius.circular(20)),
+      RRect.fromRectAndRadius(rect.deflate(1.4), const Radius.circular(22)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.9
-        ..color = gold.withValues(alpha: 0.8),
+        ..strokeWidth = 0.95
+        ..color = gold,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.deflate(5.0), const Radius.circular(18)),
+      RRect.fromRectAndRadius(rect.deflate(4.6), const Radius.circular(18)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.55
-        ..color = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.15),
+        ..strokeWidth = 0.6
+        ..color = isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.14),
     );
   }
 
@@ -544,45 +551,6 @@ class FramePainter extends MushafPagePainter {
 
 class LightOrnamentPainter extends OrnamentPainter {
   const LightOrnamentPainter({required super.isDark});
-}
-
-class _ThinOrnamentLine extends StatelessWidget {
-  final Color color;
-  const _ThinOrnamentLine({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 0.7,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color.withValues(alpha: 0), color],
-              ),
-            ),
-          ),
-        ),
-        Container(
-          width: 5,
-          height: 5,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        Expanded(
-          child: Container(
-            height: 0.7,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withValues(alpha: 0)],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class _OrnamentCorner {
