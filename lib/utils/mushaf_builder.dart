@@ -4,16 +4,10 @@
 
 import 'package:quran/quran.dart' as q;
 import '../models/verse_ref.dart';
+import 'quran_page_index.dart';
 
 List<PageData> buildMushafPages() {
-  final Map<int, List<VerseRef>> pageVerses = {};
-  for (int s = 1; s <= q.totalSurahCount; s++) {
-    final cnt = q.getVerseCount(s);
-    for (int v = 1; v <= cnt; v++) {
-      final pg = q.getPageNumber(s, v);
-      pageVerses.putIfAbsent(pg, () => []).add(VerseRef(s, v));
-    }
-  }
+  final pageVerses = QuranPageIndex.pageVerseMap;
   final pages = <PageData>[];
   final pageNums = pageVerses.keys.toList()..sort();
   for (final pgNum in pageNums) {

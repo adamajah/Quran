@@ -25,6 +25,7 @@ import '../widgets/mushaf/mushaf_page.dart';
 import '../widgets/mushaf/tajwid_guide.dart';
 import '../widgets/mushaf/translation_panel.dart';
 import '../controllers/settings_controller.dart';
+import '../utils/quran_page_index.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -430,17 +431,12 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _loadTranslation() {
-    final pg = _pages[_pgIdx];
-    final results = <Map<String, dynamic>>[];
-    for (final v in pg.verses) {
-      final text = q.getVerseTranslation(
-        v.surah,
-        v.verse,
-        translation: _selectedTranslation,
+    setState(() {
+      _translationVerses = QuranPageIndex.translationsForPage(
+        _pages[_pgIdx].pageNum,
+        _selectedTranslation,
       );
-      results.add({'surah': v.surah, 'verse': v.verse, 'text': text});
-    }
-    setState(() => _translationVerses = results);
+    });
   }
 
   void _showTranslationDialog() {

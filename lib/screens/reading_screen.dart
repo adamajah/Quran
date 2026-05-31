@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_text_style.dart';
 import '../services/audio_playback_coordinator.dart';
 import '../utils/quran_utils.dart';
+import '../utils/quran_page_index.dart';
 import '../screens/translation_dialog.dart';
 import '../controllers/settings_controller.dart';
 import '../models/settings_model.dart';
@@ -210,22 +211,11 @@ class _ReadingScreenState extends State<ReadingScreen> {
   }
 
   void _loadTranslation() {
-    final results = <Map<String, dynamic>>[];
-    for (int s = 1; s <= 114; s++) {
-      final verseCount = quran_pkg.getVerseCount(s);
-      for (int v = 1; v <= verseCount; v++) {
-        if (quran_pkg.getPageNumber(s, v) == _currentPage) {
-          final text = quran_pkg.getVerseTranslation(
-            s,
-            v,
-            translation: _selectedTranslation,
-          );
-          results.add({'surah': s, 'verse': v, 'text': text});
-        }
-      }
-    }
     setState(() {
-      _translationVerses = results;
+      _translationVerses = QuranPageIndex.translationsForPage(
+        _currentPage,
+        _selectedTranslation,
+      );
     });
   }
 
