@@ -170,29 +170,37 @@ class NormalBody extends StatelessWidget {
       builder: (ctx, bc) {
         double reservedH = 0.0;
 
-        if (data.pageNum <= 2) {
-          reservedH += 42.0;
+        for (final g in data.groups) {
+          if (g.isFirstInMushaf) {
+            reservedH += 54.0;
+
+            if (g.surah != 9) {
+              reservedH += 42.0;
+            }
+          }
         }
 
         final availH = bc.maxHeight - reservedH;
 
         final availW = bc.maxWidth - 28.0;
 
-        final inkColor = const Color(0xFFF7F2E8);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final inkColor = isDark ? Colors.white : AppColors.ink;
 
         final fs = _bestFs(data.pageNum, data.verses, availW, availH, inkColor);
 
         final List<Widget> children = [];
 
-        if (data.pageNum <= 2) {
-          children.add(
-            SurahBanner(
-              surahNameAr: data.surahNameAr,
-            ),
-          );
-        }
-
         for (final g in data.groups) {
+          if (g.isFirstInMushaf) {
+            children.add(
+              SurahBanner(surahIndex: g.surah, surahNameAr: g.surahNameAr),
+            );
+          }
+
+          if (g.isFirstInMushaf && g.surah != 9) {
+            children.add(const Basmalah());
+          }
 
           children.add(
             TappableVerseBlock(
@@ -266,6 +274,8 @@ class TappableVerseBlock extends StatefulWidget {
 }
 
 class _TappableVerseBlockState extends State<TappableVerseBlock> {
+  int _hoveredVerse = 0;
+
   static String _ar(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
@@ -273,14 +283,17 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
 
   List<InlineSpan> _buildSpans(Color inkColor, bool isDark) {
     final out = <InlineSpan>[];
+    final numFs = (widget.fs * 0.72).clamp(10.0, 16.0);
 
     for (final v in widget.group.verses) {
       final active =
           (widget.isPlayingPage &&
               v.surah == widget.playSurah &&
               v.verse == widget.playVerse) ||
-          (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse);
+          (widget.tappedSurah == v.surah && widget.tappedVerse == v.verse) ||
+          _hoveredVerse == v.verse;
 
+      // Always use verseEndSymbol: false — verse number is rendered separately below
       final text = QuranUtils.getCleanVerse(
         v.surah,
         v.verse,
@@ -308,17 +321,40 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
         ),
       );
 
+      // ONE verse number badge — the only source of the verse symbol
       out.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: AyahNumberBadge(
-              label: _ar(v.verse),
-              active: active,
-              isDark: isDark,
-              onTap: () => widget.onTapVerse(v.surah, v.verse),
-              onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
+          child: GestureDetector(
+            onTap: () => widget.onTapVerse(v.surah, v.verse),
+            onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
+            onTapDown: (_) => setState(() => _hoveredVerse = v.verse),
+            onTapUp: (_) => setState(() => _hoveredVerse = 0),
+            onTapCancel: () => setState(() => _hoveredVerse = 0),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+              decoration: BoxDecoration(
+                color:
+                    active
+                        ? (isDark
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : AppColors.hl.withValues(alpha: 0.10))
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                _ar(v.verse),
+                style: AppQuranFonts.hafsStyle.copyWith(
+                  fontSize: numFs * widget.fontScale,
+                  color:
+                      active
+                          ? (isDark ? Colors.white : AppColors.hl)
+                          : AppColors.gold,
+                  fontWeight: FontWeight.bold,
+                  height: 1.85,
+                ),
+              ),
             ),
           ),
         ),
@@ -444,7 +480,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
     final inkColor = isDark ? Colors.white : AppColors.ink;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
 
       child: Text.rich(
         TextSpan(children: _buildSpans(inkColor, isDark)),
