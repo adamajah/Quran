@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -40,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen>
   final _reciterService = OfflineReciterService();
   final _reciterAudioService = ReciterAudioService.instance;
   late PageController _pageCtrl;
-  late AnimationController _flipCtrl;
 
   // Playback
   bool _playing = false;
@@ -71,30 +69,13 @@ class _HomeScreenState extends State<HomeScreen>
   static const double _maxPanelH = 420.0;
 
   late final QuranPageCatalog _pages;
-
-  // ── Page flip animation
   bool _isAutoAdvancing = false;
-  double _flipAngle = 0.0;
-  final int _flipDir = 1;
 
   @override
   void initState() {
     super.initState();
     _pages = QuranPageCatalog();
     _pageCtrl = PageController(initialPage: QuranPageCatalog.totalPages * 500);
-    _flipCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 380),
-    );
-    _flipCtrl.addListener(() => setState(() => _flipAngle = _flipCtrl.value));
-    _flipCtrl.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
-        setState(() {
-          _flipAngle = 0;
-        });
-        _flipCtrl.reset();
-      }
-    });
     _loadPrefs();
   }
 
@@ -612,7 +593,6 @@ class _HomeScreenState extends State<HomeScreen>
     AudioPlaybackCoordinator.instance.release(_playbackOwner);
     _audio?.dispose();
     _pageCtrl.dispose();
-    _flipCtrl.dispose();
     super.dispose();
   }
 
@@ -656,13 +636,12 @@ class _HomeScreenState extends State<HomeScreen>
                       );
                     }
                   },
-                  child: _PageFlipWrapper(
-                    flipAngle: _flipAngle * math.pi,
-                    flipDir: _flipDir,
-                  child: PageView.builder(
+                  child: RepaintBoundary(
+                    child: PageView.builder(
                       controller: _pageCtrl,
                       reverse: true,
                       itemCount: null,
+                      allowImplicitScrolling: false,
                       onPageChanged: (virtualIdx) {
                         final idx = virtualIdx % _pages.length;
                         if (!_isAutoAdvancing) _cancelPlaybackRequest();
@@ -827,32 +806,4 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     ),
   );
-}
-
-class _PageFlipWrapper extends StatelessWidget {
-  final double flipAngle;
-  final int flipDir;
-  final Widget child;
-  const _PageFlipWrapper({
-    required this.flipAngle,
-    required this.flipDir,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([]),
-      builder: (context, _) {
-        return Transform(
-          transform:
-              Matrix4.identity()
-                ..setEntry(3, 2, 0.001)
-                ..rotateY(flipAngle * flipDir),
-          alignment: Alignment.center,
-          child: child,
-        );
-      },
-    );
-  }
 }
