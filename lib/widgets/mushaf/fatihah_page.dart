@@ -159,6 +159,20 @@ class _FatihahPageState extends State<FatihahPage> {
             'assets/fatihah/fatihah_frame.jpeg',
             fit: BoxFit.fill,
             filterQuality: FilterQuality.high,
+            errorBuilder: (context, error, stackTrace) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  color:
+                      isDark
+                          ? const Color(0xFF121212)
+                          : const Color(0xFFF8F0DE),
+                  border: Border.all(
+                    color: AppColors.gold.withValues(alpha: 0.22),
+                  ),
+                ),
+              );
+            },
           ),
         ),
         Positioned.fill(
