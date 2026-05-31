@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _audio = AudioPlayer();
+  AudioPlayer? _audio;
   final _playbackOwner = Object();
   final _reciterService = OfflineReciterService();
   late PageController _pageCtrl;
@@ -52,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen>
   int? _streamSurah;
   StreamSubscription<Duration>? _positionSubscription;
   int _playRequestId = 0;
+  StreamSubscription<PlayerState>? _audioStateSubscription;
 
   // Tap-to-play: which verse was tapped
   int _tappedSurah = 0;
@@ -94,80 +95,90 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
     _loadPrefs();
-    _positionSubscription = _audio.positionStream.listen(_syncStreamAyah);
-    _audio.playerStateStream.listen((s) {
-      if (s.processingState != ProcessingState.completed) return;
-      if (!mounted) return;
+  }
 
-      if (_selectedReciter.usesSurahAudioStream) {
+  Future<AudioPlayer> _ensureAudioPlayer() async {
+    if (_audio != null) return _audio!;
+
+    final player = AudioPlayer();
+    _audio = player;
+    _positionSubscription ??= player.positionStream.listen(_syncStreamAyah);
+    _audioStateSubscription = player.playerStateStream.listen(_onAudioState);
+    return player;
+  }
+
+  void _onAudioState(PlayerState s) {
+    if (s.processingState != ProcessingState.completed) return;
+    if (!mounted) return;
+
+    if (_selectedReciter.usesSurahAudioStream) {
+      setState(() {
+        _playing = false;
+        _playV = 0;
+        _tappedSurah = 0;
+        _tappedVerse = 0;
+      });
+      _clearStreamPlayback();
+      AudioPlaybackCoordinator.instance.release(_playbackOwner);
+      return;
+    }
+
+    final settings = context.read<SettingsController>().settings;
+    if (!settings.autoPlay) {
+      setState(() => _playing = false);
+      AudioPlaybackCoordinator.instance.release(_playbackOwner);
+      return;
+    }
+
+    if (_pgIdx >= _pages.length) return;
+
+    final pg = _pages[_pgIdx];
+    final currentVerseIdx = pg.verses.indexWhere(
+      (v) => v.surah == _curS && v.verse == _playV,
+    );
+
+    if (currentVerseIdx != -1 && currentVerseIdx < pg.verses.length - 1) {
+      final nextV = pg.verses[currentVerseIdx + 1];
+      setState(() {
+        _playV = nextV.verse;
+        _curS = nextV.surah;
+      });
+      _doPlay(nextV);
+    } else {
+      if (_pgIdx + 1 < _pages.length) {
+        final nextPgIdx = _pgIdx + 1;
+        final nextPg = _pages[nextPgIdx];
+        final nextV = nextPg.verses.first;
+
         setState(() {
-          _playing = false;
-          _playV = 0;
-          _tappedSurah = 0;
-          _tappedVerse = 0;
-        });
-        _clearStreamPlayback();
-        AudioPlaybackCoordinator.instance.release(_playbackOwner);
-        return;
-      }
-
-      final settings = context.read<SettingsController>().settings;
-      if (!settings.autoPlay) {
-        setState(() => _playing = false);
-        AudioPlaybackCoordinator.instance.release(_playbackOwner);
-        return;
-      }
-
-      if (_pgIdx >= _pages.length) return;
-
-      final pg = _pages[_pgIdx];
-      final currentVerseIdx = pg.verses.indexWhere(
-        (v) => v.surah == _curS && v.verse == _playV,
-      );
-
-      if (currentVerseIdx != -1 && currentVerseIdx < pg.verses.length - 1) {
-        final nextV = pg.verses[currentVerseIdx + 1];
-        setState(() {
+          _pgIdx = nextPgIdx;
           _playV = nextV.verse;
           _curS = nextV.surah;
         });
+
+        _isAutoAdvancing = true;
+
+        if (_pageCtrl.hasClients) {
+          final currentVirtual =
+              _pageCtrl.page?.round() ?? (QuranPageCatalog.totalPages * 500);
+          _pageCtrl
+              .animateToPage(
+                currentVirtual + 1,
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOut,
+              )
+              .then((_) => _isAutoAdvancing = false);
+        }
+
         _doPlay(nextV);
       } else {
-        if (_pgIdx + 1 < _pages.length) {
-          final nextPgIdx = _pgIdx + 1;
-          final nextPg = _pages[nextPgIdx];
-          final nextV = nextPg.verses.first;
-
-          setState(() {
-            _pgIdx = nextPgIdx;
-            _playV = nextV.verse;
-            _curS = nextV.surah;
-          });
-
-          _isAutoAdvancing = true;
-
-          if (_pageCtrl.hasClients) {
-            final currentVirtual =
-                _pageCtrl.page?.round() ?? (QuranPageCatalog.totalPages * 500);
-            _pageCtrl
-                .animateToPage(
-                  currentVirtual + 1,
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOut,
-                )
-                .then((_) => _isAutoAdvancing = false);
-          }
-
-          _doPlay(nextV);
-        } else {
-          setState(() {
-            _playing = false;
-            _playV = 0;
-          });
-          AudioPlaybackCoordinator.instance.release(_playbackOwner);
-        }
+        setState(() {
+          _playing = false;
+          _playV = 0;
+        });
+        AudioPlaybackCoordinator.instance.release(_playbackOwner);
       }
-    });
+    }
   }
 
   Future<void> _loadPrefs() async {
@@ -207,6 +218,7 @@ class _HomeScreenState extends State<HomeScreen>
     final requestId = ++_playRequestId;
     final settings = context.read<SettingsController>().settings;
     try {
+      final audio = await _ensureAudioPlayer();
       await AudioPlaybackCoordinator.instance.requestPlayback(
         _playbackOwner,
         _stopForPlaybackHandoff,
@@ -231,10 +243,10 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() => _selectedReciter = reciter);
       }
 
-      await _audio.setVolume(settings.defaultVolume);
-      await _audio.setSpeed(settings.playbackSpeed);
+      await audio.setVolume(settings.defaultVolume);
+      await audio.setSpeed(settings.playbackSpeed);
       if (reciter.usesSurahAudioStream) {
-        final duration = await _audio.setUrl(reciter.surahAudioUrl(r.surah));
+        final duration = await audio.setUrl(reciter.surahAudioUrl(r.surah));
         if (requestId != _playRequestId) return;
         final timings = await _reciterService.getAyahTimings(reciter, r.surah);
         if (requestId != _playRequestId) return;
@@ -245,11 +257,11 @@ class _HomeScreenState extends State<HomeScreen>
           final position =
               _startPositionForAyah(timings, r.verse) ??
               _estimateAyahPosition(duration, r.surah, r.verse);
-          if (position != null) await _audio.seek(position);
+          if (position != null) await audio.seek(position);
         }
       } else {
         _clearStreamPlayback();
-        await _audio.setUrl(
+        await audio.setUrl(
           AudioUtils.getVerseAudioUrl(
             r.surah,
             r.verse,
@@ -259,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen>
         );
         if (requestId != _playRequestId) return;
       }
-      unawaited(_audio.play());
+      unawaited(audio.play());
       if (mounted) {
         setState(() {
           _playing = true;
@@ -352,7 +364,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _stopForPlaybackHandoff() async {
     ++_playRequestId;
-    await _audio.stop();
+    final audio = _audio;
+    if (audio != null) await audio.stop();
     _clearStreamPlayback();
     if (!mounted) return;
     setState(() => _playing = false);
@@ -360,7 +373,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _stopPlayback({bool resetVerse = false}) async {
     ++_playRequestId;
-    await _audio.stop();
+    final audio = _audio;
+    if (audio != null) await audio.stop();
     AudioPlaybackCoordinator.instance.release(_playbackOwner);
     _clearStreamPlayback();
     if (!mounted) return;
@@ -378,24 +392,27 @@ class _HomeScreenState extends State<HomeScreen>
     ++_playRequestId;
     AudioPlaybackCoordinator.instance.release(_playbackOwner);
     _clearStreamPlayback();
-    unawaited(_audio.stop());
+    final audio = _audio;
+    if (audio != null) unawaited(audio.stop());
   }
 
   Future<void> _togglePlay() async {
     if (_playing) {
       ++_playRequestId;
       if (mounted) setState(() => _playing = false);
-      await _audio.pause();
+      final audio = _audio;
+      if (audio != null) await audio.pause();
       return;
     }
 
     if (mounted) setState(() => _playing = true);
-    if (_audio.processingState == ProcessingState.ready && _playV != 0) {
+    final audio = await _ensureAudioPlayer();
+    if (audio.processingState == ProcessingState.ready && _playV != 0) {
       await AudioPlaybackCoordinator.instance.requestPlayback(
         _playbackOwner,
         _stopForPlaybackHandoff,
       );
-      unawaited(_audio.play());
+      unawaited(audio.play());
       return;
     }
 
@@ -591,8 +608,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _positionSubscription?.cancel();
+    _audioStateSubscription?.cancel();
     AudioPlaybackCoordinator.instance.release(_playbackOwner);
-    _audio.dispose();
+    _audio?.dispose();
     _pageCtrl.dispose();
     _flipCtrl.dispose();
     super.dispose();

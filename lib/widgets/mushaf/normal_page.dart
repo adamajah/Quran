@@ -96,6 +96,8 @@ class NormalBody extends StatelessWidget {
     required this.onBookmarkVerse,
   });
 
+  static final Map<String, double> _fsCache = {};
+
   static String _ar(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
@@ -131,6 +133,7 @@ class NormalBody extends StatelessWidget {
   }
 
   static double _bestFs(
+    int pageNum,
     List<VerseRef> vv,
     double maxW,
     double maxH,
@@ -138,13 +141,27 @@ class NormalBody extends StatelessWidget {
   ) {
     if (maxH <= 20) return 7.0;
 
-    for (double fs = 22.0; fs >= 6.0; fs -= 0.2) {
-      if (_measureH(vv, fs, 1.85, maxW, inkColor) <= maxH) {
-        return fs;
+    final cacheKey =
+        '$pageNum|${maxW.toStringAsFixed(1)}|${maxH.toStringAsFixed(1)}|${inkColor.toARGB32()}';
+    final cached = _fsCache[cacheKey];
+    if (cached != null) return cached;
+
+    double lo = 6.0;
+    double hi = 22.0;
+    double best = lo;
+    for (int i = 0; i < 8; i++) {
+      final mid = (lo + hi) / 2.0;
+      if (_measureH(vv, mid, 1.85, maxW, inkColor) <= maxH) {
+        best = mid;
+        lo = mid;
+      } else {
+        hi = mid;
       }
     }
 
-    return 6.0;
+    final result = best.clamp(6.0, 22.0);
+    _fsCache[cacheKey] = result;
+    return result;
   }
 
   @override
@@ -170,7 +187,7 @@ class NormalBody extends StatelessWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final inkColor = isDark ? Colors.white : AppColors.ink;
 
-        final fs = _bestFs(data.verses, availW, availH, inkColor);
+        final fs = _bestFs(data.pageNum, data.verses, availW, availH, inkColor);
 
         final List<Widget> children = [];
 

@@ -52,7 +52,10 @@ class _MushafDrawerState extends State<MushafDrawer> {
     return map;
   }
 
-  static final Map<int, int> _juzFirstSurah = _buildJuzFirstSurah();
+  static Map<int, int>? _juzFirstSurahCache;
+
+  static Map<int, int> get _juzFirstSurah =>
+      _juzFirstSurahCache ??= _buildJuzFirstSurah();
 
   String _type(int s) {
     const m = [

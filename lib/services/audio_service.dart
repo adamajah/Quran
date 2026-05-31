@@ -1,31 +1,49 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'dart:async';
 
 import 'audio_playback_coordinator.dart';
 
 class AudioService {
-  final AudioPlayer _player = AudioPlayer();
+  AudioPlayer? _player;
   final _playbackOwner = Object();
+  final StreamController<PlayerState> _playerStateController =
+      StreamController<PlayerState>.broadcast();
+  StreamSubscription<PlayerState>? _playerStateSub;
   String? _currentPlayingPath;
 
-  Stream<PlayerState> get onPlayerStateChanged => _player.onPlayerStateChanged;
-  Stream<Duration> get onPositionChanged => _player.onPositionChanged;
-  Stream<Duration> get onDurationChanged => _player.onDurationChanged;
+  Stream<PlayerState> get onPlayerStateChanged =>
+      _playerStateController.stream;
+
+  Stream<Duration> get onPositionChanged =>
+      _player?.onPositionChanged ?? const Stream<Duration>.empty();
+
+  Stream<Duration> get onDurationChanged =>
+      _player?.onDurationChanged ?? const Stream<Duration>.empty();
+
+  Future<AudioPlayer> _ensurePlayer() async {
+    _player ??= AudioPlayer();
+    _playerStateSub ??= _player!.onPlayerStateChanged.listen(
+      _playerStateController.add,
+    );
+    return _player!;
+  }
 
   Future<void> playOffline(String path) async {
+    final player = await _ensurePlayer();
     await AudioPlaybackCoordinator.instance.requestPlayback(
       _playbackOwner,
       stop,
     );
-    if (_currentPlayingPath == path && _player.state == PlayerState.playing) {
-      await _player.pause();
+    if (_currentPlayingPath == path && player.state == PlayerState.playing) {
+      await player.pause();
     } else if (_currentPlayingPath == path &&
-        _player.state == PlayerState.paused) {
-      await _player.resume();
+        player.state == PlayerState.paused) {
+      await player.resume();
     } else {
-      await _player.stop();
+      await player.stop();
       _currentPlayingPath = path;
       try {
-        await _player.play(DeviceFileSource(path));
+        await player.play(DeviceFileSource(path));
       } catch (_) {
         _currentPlayingPath = null;
         rethrow;
@@ -34,17 +52,24 @@ class AudioService {
   }
 
   Future<void> pause() async {
-    await _player.pause();
+    final player = _player;
+    if (player == null) return;
+    await player.pause();
   }
 
   Future<void> stop() async {
-    await _player.stop();
+    final player = _player;
+    if (player != null) {
+      await player.stop();
+    }
     _currentPlayingPath = null;
     AudioPlaybackCoordinator.instance.release(_playbackOwner);
   }
 
   void dispose() {
     AudioPlaybackCoordinator.instance.release(_playbackOwner);
-    _player.dispose();
+    _playerStateSub?.cancel();
+    _playerStateController.close();
+    _player?.dispose();
   }
 }
