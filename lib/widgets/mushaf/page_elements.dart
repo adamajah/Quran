@@ -23,61 +23,59 @@ class PageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? const Color(0xFFF6F2E9) : AppColors.dark;
-    final bg = isDark ? const Color(0xFF161616) : const Color(0xFFF4EFE5);
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.82);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border(
-          bottom: BorderSide(color: gold.withValues(alpha: 0.55), width: 0.8),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                data.surahNameAr,
-                textAlign: TextAlign.left,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.quranPageInfoStyle(
-                  fontSize: 12,
-                  color: textColor,
-                ).copyWith(fontWeight: FontWeight.w700),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  data.surahNameAr,
+                  textAlign: TextAlign.left,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.quranPageInfoStyle(
+                    fontSize: 13,
+                    color: textColor,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
               ),
-            ),
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: gold,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: gold.withValues(alpha: 0.18),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
-                ],
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: gold,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: gold.withValues(alpha: 0.18),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: Text(
-                _juzText(data.juz),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.quranPageInfoStyle(
-                  fontSize: 12,
-                  color: textColor,
-                ).copyWith(fontWeight: FontWeight.w700),
+              Expanded(
+                child: Text(
+                  _juzText(data.juz),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.quranPageInfoStyle(
+                    fontSize: 13,
+                    color: textColor,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _ThinOrnamentLine(color: gold),
+        ],
       ),
     );
   }
@@ -93,32 +91,24 @@ class Basmalah extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.7 : 0.8);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: gold.withValues(alpha: 0.45), width: 0.7),
-        ),
-        child: Column(
-          children: [
-            _ThinOrnamentLine(color: gold),
-            const SizedBox(height: 6),
-            Text(
-              bismillah,
-              textAlign: TextAlign.center,
-              textDirection: TextDirection.rtl,
-              style: AppQuranFonts.hafsStyle.copyWith(
-                fontSize: 18,
-                color: isDark ? const Color(0xFFF8F6F0) : AppColors.dark,
-                height: 1.45,
-              ),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+      child: Column(
+        children: [
+          _ThinOrnamentLine(color: gold),
+          const SizedBox(height: 8),
+          Text(
+            bismillah,
+            textAlign: TextAlign.center,
+            textDirection: TextDirection.rtl,
+            style: AppQuranFonts.hafsStyle.copyWith(
+              fontSize: 19,
+              color: isDark ? const Color(0xFFF8F6F0) : AppColors.dark,
+              height: 1.55,
             ),
-            const SizedBox(height: 6),
-            _ThinOrnamentLine(color: gold),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          _ThinOrnamentLine(color: gold),
+        ],
       ),
     );
   }
@@ -141,18 +131,18 @@ class SurahBanner extends StatelessWidget {
     final gold = AppColors.gold.withValues(alpha: isDark ? 0.72 : 0.82);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: gold.withValues(alpha: 0.4), width: 0.8),
+          color: bg.withValues(alpha: isDark ? 0.72 : 0.9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: gold.withValues(alpha: 0.34), width: 0.7),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -162,18 +152,27 @@ class SurahBanner extends StatelessWidget {
               'سُورَةُ $surahNameAr',
               textAlign: TextAlign.center,
               style: AppTextStyle.quranSurahNameStyle(
-                fontSize: 17,
+                fontSize: 15.5,
                 color: textColor,
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
-              style: TextStyle(
-                fontSize: 8.5,
-                color: textColor.withValues(alpha: 0.5),
-                letterSpacing: 0.8,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
+                const SizedBox(width: 8),
+                Text(
+                  '${q.getSurahName(surahIndex)} · ${q.getVerseCount(surahIndex)} Ayat',
+                  style: TextStyle(
+                    fontSize: 8.2,
+                    color: gold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(width: 18, height: 0.7, color: gold.withValues(alpha: 0.5)),
+              ],
             ),
           ],
         ),
@@ -352,9 +351,9 @@ class MushafPagePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final bgTop = isDark ? const Color(0xFF121212) : const Color(0xFF2C2720);
-    final bgBottom = isDark ? const Color(0xFF0D0D0D) : const Color(0xFF171412);
-    final gold = AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.45);
+    final bgTop = isDark ? const Color(0xFF141414) : const Color(0xFF2B261F);
+    final bgBottom = isDark ? const Color(0xFF090909) : const Color(0xFF181511);
+    final gold = AppColors.gold.withValues(alpha: isDark ? 0.34 : 0.42);
 
     canvas.drawRect(
       rect,
@@ -366,35 +365,45 @@ class MushafPagePainter extends CustomPainter {
         ).createShader(rect),
     );
 
+    final vignette = Paint()..style = PaintingStyle.fill;
+    vignette.shader = RadialGradient(
+      colors: [
+        Colors.transparent,
+        Colors.black.withValues(alpha: isDark ? 0.28 : 0.22),
+      ],
+      stops: const [0.52, 1.0],
+    ).createShader(rect);
+    canvas.drawRect(rect, vignette);
+
     final glow = Paint()..style = PaintingStyle.fill;
     glow.shader = RadialGradient(
       colors: [
-        AppColors.gold.withValues(alpha: isDark ? 0.09 : 0.08),
+        AppColors.gold.withValues(alpha: isDark ? 0.08 : 0.06),
         Colors.transparent,
       ],
-    ).createShader(Rect.fromCircle(center: Offset(size.width * .5, size.height * .12), radius: size.shortestSide * .85));
+    ).createShader(Rect.fromCircle(center: Offset(size.width * .5, size.height * .12), radius: size.shortestSide * .75));
     canvas.drawRect(rect, glow);
 
-    final speck = Paint()..color = Colors.white.withValues(alpha: isDark ? 0.015 : 0.03);
-    for (double x = 0; x < size.width; x += 22) {
-      for (double y = 0; y < size.height; y += 22) {
-        canvas.drawCircle(Offset(x + 4, y + 5), 0.6, speck);
+    final speck = Paint()..color = Colors.white.withValues(alpha: isDark ? 0.012 : 0.02);
+    for (double x = 0; x < size.width; x += 24) {
+      for (double y = 0; y < size.height; y += 24) {
+        canvas.drawCircle(Offset(x + 3, y + 6), 0.5, speck);
       }
     }
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.deflate(2.2), const Radius.circular(22)),
+      RRect.fromRectAndRadius(rect.deflate(2.0), const Radius.circular(20)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0
-        ..color = gold.withValues(alpha: 0.75),
+        ..strokeWidth = 0.9
+        ..color = gold.withValues(alpha: 0.8),
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.deflate(5.2), const Radius.circular(19)),
+      RRect.fromRectAndRadius(rect.deflate(5.0), const Radius.circular(18)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.6
-        ..color = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.18),
+        ..strokeWidth = 0.55
+        ..color = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.15),
     );
   }
 
@@ -447,6 +456,15 @@ class OrnamentPainter extends CustomPainter {
     canvas.drawCircle(Offset(size.width / 2, size.height - inset), 2.1, Paint()..color = gold);
     canvas.drawCircle(Offset(inset, size.height / 2), 1.6, Paint()..color = gold);
     canvas.drawCircle(Offset(size.width - inset, size.height / 2), 1.6, Paint()..color = gold);
+
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      2.4,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = gold.withValues(alpha: 0.7),
+    );
   }
 
   void _drawCorner(Canvas canvas, Color gold, Color dim) {

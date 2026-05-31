@@ -810,8 +810,8 @@ class _HomeScreenState extends State<HomeScreen>
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 10,
-            color: textColor.withValues(alpha: 0.52),
-            letterSpacing: 0.45,
+            color: AppColors.gold.withValues(alpha: 0.82),
+            letterSpacing: 0.55,
           ),
         ),
       ],
