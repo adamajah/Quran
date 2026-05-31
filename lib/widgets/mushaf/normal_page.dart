@@ -446,7 +446,9 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
       final color =
           active
-              ? (isDark ? Colors.white : AppColors.hl)
+              ? (isDefaultColor
+                  ? (isDark ? Colors.white : AppColors.hl)
+                  : info.$1)
               : (isDefaultColor ? inkColor : info.$1);
 
       spans.add(

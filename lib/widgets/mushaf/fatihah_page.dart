@@ -226,7 +226,9 @@ class _FatihahPageState extends State<FatihahPage> {
       final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
       final color =
           active
-              ? (isDark ? Colors.white : AppColors.hl)
+              ? (isDefaultColor
+                  ? (isDark ? Colors.white : AppColors.hl)
+                  : info.$1)
               : (isDefaultColor ? inkColor : info.$1);
 
       spans.add(
