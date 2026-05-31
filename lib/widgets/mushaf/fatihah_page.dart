@@ -1,11 +1,10 @@
-import 'dart:math' as math;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../constants/quran_fonts.dart';
+
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
+import '../../constants/quran_fonts.dart';
 import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
 import '../../utils/tajwid_utils.dart';
@@ -70,9 +69,7 @@ class _FatihahPageState extends State<FatihahPage> {
             style: AppTextStyle.quranPageInfoStyle(
               fontSize: 12,
               color: textColor,
-            ).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
         ),
         Container(
@@ -92,9 +89,7 @@ class _FatihahPageState extends State<FatihahPage> {
             style: AppTextStyle.quranPageInfoStyle(
               fontSize: 12,
               color: textColor,
-            ).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -152,6 +147,7 @@ class _FatihahPageState extends State<FatihahPage> {
       24,
       isDark ? 22 : 23,
     );
+
     return Stack(
       children: [
         Positioned.fill(
@@ -177,9 +173,7 @@ class _FatihahPageState extends State<FatihahPage> {
         ),
         Positioned.fill(
           child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: overlayColor,
-            ),
+            decoration: BoxDecoration(color: overlayColor),
           ),
         ),
         Padding(
@@ -374,6 +368,7 @@ class _FatihahPageState extends State<FatihahPage> {
 
 class FatihahSurahBanner extends StatelessWidget {
   const FatihahSurahBanner({super.key});
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -413,6 +408,7 @@ class FatihahSurahBanner extends StatelessWidget {
 class OrnamentSide extends StatelessWidget {
   final bool mirror;
   const OrnamentSide({super.key, required this.mirror});
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -434,6 +430,7 @@ class OrnamentSide extends StatelessWidget {
 class OrnamentPainter extends CustomPainter {
   final Color gold, dark;
   const OrnamentPainter({required this.gold, required this.dark});
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
@@ -484,262 +481,4 @@ class OrnamentPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class FatihahFramePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final bg = const Color(0xFFF3E8D0);
-    final gold = const Color(0xFFB38A54);
-    final brown = const Color(0xFF7D5B36);
-    final green = const Color(0xFF7F9A5A);
-    final pink = const Color(0xFFC8A18A);
-    final rose = const Color(0xFFB77B74);
-
-    canvas.drawRect(Offset.zero & size, Paint()..color = bg);
-
-    // Outer frame
-    canvas.drawRect(
-      Rect.fromLTWH(7, 7, w - 14, h - 14),
-      Paint()
-        ..color = gold
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(12, 12, w - 24, h - 24),
-      Paint()
-        ..color = brown.withValues(alpha: 0.8)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
-    );
-
-    _drawFloralBorder(canvas, Rect.fromLTWH(16, 16, w - 32, h - 32), gold, brown, green, pink, rose);
-    _drawInnerArch(canvas, Rect.fromLTWH(30, 30, w - 60, h - 60), gold, brown);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-
-  void _drawFloralBorder(
-    Canvas canvas,
-    Rect rect,
-    Color gold,
-    Color brown,
-    Color green,
-    Color pink,
-    Color rose,
-  ) {
-    final left = rect.left;
-    final top = rect.top;
-    final right = rect.right;
-    final bottom = rect.bottom;
-
-    // top/bottom vine strips
-    _drawVineRow(canvas, left, top, rect.width, gold, brown, green, pink, rose, true);
-    _drawVineRow(canvas, left, bottom, rect.width, gold, brown, green, pink, rose, false);
-
-    // side floral columns
-    _drawVineColumn(canvas, left, top, rect.height, gold, brown, green, pink, rose, true);
-    _drawVineColumn(canvas, right, top, rect.height, gold, brown, green, pink, rose, false);
-
-    // corner blossoms
-    for (final o in [
-      Offset(left, top),
-      Offset(right, top),
-      Offset(left, bottom),
-      Offset(right, bottom),
-    ]) {
-      _drawCornerRosette(canvas, o, gold, brown, green, pink, rose);
-    }
-  }
-
-  void _drawVineRow(
-    Canvas canvas,
-    double x,
-    double y,
-    double width,
-    Color gold,
-    Color brown,
-    Color green,
-    Color pink,
-    Color rose,
-    bool topRow,
-  ) {
-    final stroke = Paint()
-      ..color = brown.withValues(alpha: 0.75)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-    final accent = Paint()
-      ..color = gold.withValues(alpha: 0.55)
-      ..strokeWidth = 0.8;
-    final colors = [green, pink, rose, brown];
-    for (double dx = 18; dx < width - 18; dx += 24) {
-      final cx = x + dx;
-      final cy = topRow ? y : y;
-      final wave = Path()
-        ..moveTo(cx - 10, cy)
-        ..quadraticBezierTo(cx - 4, cy - 6, cx, cy)
-        ..quadraticBezierTo(cx + 4, cy + 6, cx + 10, cy);
-      canvas.drawPath(wave, stroke);
-      canvas.drawCircle(Offset(cx - 3, cy + (topRow ? 2 : -2)), 2.4, Paint()..color = colors[(dx ~/ 24) % colors.length]);
-      _drawLeaf(canvas, Offset(cx + 5, cy + (topRow ? -2 : 2)), topRow ? -0.8 : 0.8, green);
-      _drawFlower(canvas, Offset(cx, cy), 2.8, colors[(dx ~/ 24) % colors.length], brown);
-      canvas.drawLine(
-        Offset(cx - 12, cy),
-        Offset(cx + 12, cy),
-        accent,
-      );
-    }
-  }
-
-  void _drawVineColumn(
-    Canvas canvas,
-    double x,
-    double y,
-    double height,
-    Color gold,
-    Color brown,
-    Color green,
-    Color pink,
-    Color rose,
-    bool leftSide,
-  ) {
-    final stroke = Paint()
-      ..color = brown.withValues(alpha: 0.75)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-    final colors = [green, pink, rose, gold];
-    for (double dy = 20; dy < height - 20; dy += 26) {
-      final cx = x;
-      final cy = y + dy;
-      final wave = Path()
-        ..moveTo(cx, cy - 10)
-        ..quadraticBezierTo(cx + (leftSide ? 6 : -6), cy - 4, cx, cy)
-        ..quadraticBezierTo(cx + (leftSide ? -6 : 6), cy + 4, cx, cy + 10);
-      canvas.drawPath(wave, stroke);
-      _drawLeaf(canvas, Offset(cx + (leftSide ? 4 : -4), cy - 4), leftSide ? 0.2 : math.pi - 0.2, green);
-      _drawFlower(canvas, Offset(cx, cy), 2.7, colors[(dy ~/ 26) % colors.length], brown);
-      canvas.drawCircle(Offset(cx, cy), 1.1, Paint()..color = gold.withValues(alpha: 0.7));
-    }
-  }
-
-  void _drawCornerRosette(
-    Canvas canvas,
-    Offset origin,
-    Color gold,
-    Color brown,
-    Color green,
-    Color pink,
-    Color rose,
-  ) {
-    final p = Paint()..style = PaintingStyle.stroke;
-    final fill = Paint()..style = PaintingStyle.fill;
-    final dx = origin.dx;
-    final dy = origin.dy;
-    final rosetteColors = [gold, pink, rose, green];
-    for (int i = 0; i < 4; i++) {
-      final offset = 8.0 + i * 2.5;
-      p
-        ..color = rosetteColors[i].withValues(alpha: 0.85)
-        ..strokeWidth = 0.8;
-      fill.color = rosetteColors[i].withValues(alpha: 0.12);
-      final leafPath = Path()
-        ..moveTo(dx + offset, dy)
-        ..quadraticBezierTo(dx + offset + 3, dy - 4, dx + offset + 6, dy)
-        ..quadraticBezierTo(dx + offset + 3, dy + 4, dx + offset, dy);
-      canvas.drawPath(leafPath, fill);
-      canvas.drawPath(leafPath, p);
-    }
-    canvas.drawCircle(Offset(dx, dy), 5.2, Paint()..color = gold);
-    canvas.drawCircle(Offset(dx, dy), 3.0, Paint()..color = brown);
-    canvas.drawCircle(Offset(dx, dy), 1.2, Paint()..color = Colors.white.withValues(alpha: 0.9));
-  }
-
-  void _drawFlower(
-    Canvas canvas,
-    Offset center,
-    double r,
-    Color petal,
-    Color stroke,
-  ) {
-    final petals = Paint()..color = petal.withValues(alpha: 0.18);
-    final outline = Paint()
-      ..color = stroke.withValues(alpha: 0.65)
-      ..strokeWidth = 0.6
-      ..style = PaintingStyle.stroke;
-    for (int i = 0; i < 5; i++) {
-      final a = i * math.pi * 2 / 5;
-      final px = center.dx + math.cos(a) * r;
-      final py = center.dy + math.sin(a) * r;
-      canvas.drawCircle(Offset(px, py), r * 0.55, petals);
-      canvas.drawCircle(Offset(px, py), r * 0.55, outline);
-    }
-    canvas.drawCircle(center, r * 0.42, Paint()..color = stroke.withValues(alpha: 0.75));
-  }
-
-  void _drawLeaf(
-    Canvas canvas,
-    Offset center,
-    double angle,
-    Color leafColor,
-  ) {
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
-    final path = Path()
-      ..moveTo(0, 0)
-      ..quadraticBezierTo(4, -2, 8, 0)
-      ..quadraticBezierTo(4, 2, 0, 0);
-    canvas.drawPath(path, Paint()..color = leafColor.withValues(alpha: 0.35));
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = leafColor.withValues(alpha: 0.8)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.6,
-    );
-    canvas.restore();
-  }
-
-  void _drawInnerArch(
-    Canvas canvas,
-    Rect rect,
-    Color gold,
-    Color brown,
-  ) {
-    final path = Path()
-      ..moveTo(rect.left, rect.top + rect.height * 0.15)
-      ..quadraticBezierTo(rect.left, rect.top, rect.left + rect.width * 0.14, rect.top)
-      ..lineTo(rect.right - rect.width * 0.14, rect.top)
-      ..quadraticBezierTo(rect.right, rect.top, rect.right, rect.top + rect.height * 0.15)
-      ..lineTo(rect.right, rect.bottom - rect.height * 0.15)
-      ..quadraticBezierTo(rect.right, rect.bottom, rect.right - rect.width * 0.14, rect.bottom)
-      ..lineTo(rect.left + rect.width * 0.14, rect.bottom)
-      ..quadraticBezierTo(rect.left, rect.bottom, rect.left, rect.bottom - rect.height * 0.15)
-      ..close();
-
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.12)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = gold.withValues(alpha: 0.95)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6,
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = brown.withValues(alpha: 0.7)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
-    );
-  }
 }
