@@ -268,12 +268,12 @@ class FatihahSurahBanner extends StatelessWidget {
         children: [
           const Expanded(child: OrnamentSide(mirror: false)),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF252525) : const Color(0xFFF0E8D8),
+              color: isDark ? const Color(0xFF252525) : const Color(0xFFF4EBDD),
               border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.6),
-                width: 0.8,
+                color: AppColors.gold.withValues(alpha: 0.35),
+                width: 0.6,
               ),
             ),
             child: Text(
@@ -297,13 +297,16 @@ class OrnamentSide extends StatelessWidget {
   const OrnamentSide({super.key, required this.mirror});
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final darkColor = isDark ? Colors.white : AppColors.dark;
     return Transform.scale(
       scaleX: mirror ? -1 : 1,
-      child: CustomPaint(
-        painter: OrnamentPainter(gold: AppColors.gold, dark: darkColor),
-        child: const SizedBox(height: 36),
+      child: Container(
+        height: 24,
+        alignment: Alignment.center,
+        child: Container(
+          height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          color: AppColors.gold.withValues(alpha: 0.35),
+        ),
       ),
     );
   }
@@ -314,43 +317,9 @@ class OrnamentPainter extends CustomPainter {
   const OrnamentPainter({required this.gold, required this.dark});
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final fillPaint =
-        Paint()
-          ..color = gold.withValues(alpha: 0.15)
-          ..style = PaintingStyle.fill;
-    final strokePaint =
-        Paint()
-          ..color = gold
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.8;
-    const sz = 8.0;
-    const step = 14.0;
-    for (double x = sz; x < w - sz / 2; x += step) {
-      final p =
-          Path()
-            ..moveTo(x, h / 2 - sz / 2)
-            ..lineTo(x + sz / 2, h / 2)
-            ..lineTo(x, h / 2 + sz / 2)
-            ..lineTo(x - sz / 2, h / 2)
-            ..close();
-      canvas.drawPath(p, fillPaint);
-      canvas.drawPath(p, strokePaint);
-    }
-    canvas.drawLine(
-      Offset(0, h * 0.25),
-      Offset(w, h * 0.25),
-      Paint()
-        ..color = gold.withValues(alpha: 0.5)
-        ..strokeWidth = 0.6,
-    );
-    canvas.drawLine(
-      Offset(0, h * 0.75),
-      Offset(w, h * 0.75),
-      Paint()
-        ..color = gold.withValues(alpha: 0.5)
-        ..strokeWidth = 0.6,
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = gold.withValues(alpha: 0.1),
     );
   }
 

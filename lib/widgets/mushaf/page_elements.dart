@@ -61,28 +61,15 @@ class Basmalah extends StatelessWidget {
     final bismillah = q.getVerse(1, 1, verseEndSymbol: false);
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-      decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: isDark ? 0.1 : 0.05),
-        border: Border(
-          top: BorderSide(
-            color: AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.55),
-            width: 0.8,
-          ),
-          bottom: BorderSide(
-            color: AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.55),
-            width: 0.8,
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
       child: Text(
         bismillah,
         textAlign: TextAlign.center,
         textDirection: TextDirection.rtl,
         style: AppQuranFonts.hafsStyle.copyWith(
-          fontSize: 18,
+          fontSize: 17,
           color: isDark ? Colors.white : AppColors.dark,
-          height: 1.6,
+          height: 1.35,
         ),
       ),
     );
@@ -103,18 +90,16 @@ class SurahBanner extends StatelessWidget {
     final textColor = isDark ? Colors.white : AppColors.dark;
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 2, 8, 2),
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.gold.withValues(alpha: isDark ? 0.05 : 0.03),
-            AppColors.gold.withValues(alpha: isDark ? 0.2 : 0.12),
-            AppColors.gold.withValues(alpha: isDark ? 0.05 : 0.03),
-          ],
-        ),
-        border: Border.all(
-          color: AppColors.gold.withValues(alpha: isDark ? 0.25 : 0.4),
-          width: 0.7,
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF5EFE2),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.24),
+          ),
+          bottom: BorderSide(
+            color: AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.24),
+          ),
         ),
       ),
       child: Column(
@@ -148,19 +133,9 @@ class MushafRule extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      height: thick ? 2.0 : 1.0,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.gold.withValues(alpha: 0.05),
-            AppColors.gold,
-            isDark ? Colors.white : AppColors.dark,
-            AppColors.gold,
-            AppColors.gold.withValues(alpha: 0.05),
-          ],
-        ),
-      ),
+      height: thick ? 1.6 : 1.0,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: AppColors.gold.withValues(alpha: isDark ? 0.35 : 0.6),
     );
   }
 }
