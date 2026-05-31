@@ -44,6 +44,59 @@ class _FatihahPageState extends State<FatihahPage> {
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
   }
 
+  Widget _buildTopLine(PageData data) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? const Color(0xFF4E3A28) : const Color(0xFF5A432D);
+    final accent = const Color(0xFF8C6A3E);
+
+    String juzText(int n) {
+      const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      return 'الجزء ${n.toString().split('').map((c) => d[int.parse(c)]).join()}';
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            data.surahNameAr,
+            textAlign: TextAlign.left,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.quranPageInfoStyle(
+              fontSize: 12,
+              color: textColor,
+            ).copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.75),
+            shape: BoxShape.circle,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            juzText(data.juz),
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.quranPageInfoStyle(
+              fontSize: 12,
+              color: textColor,
+            ).copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showTajwidHint(String name, String desc, Color color) {
     if (name.isEmpty) return;
     HapticFeedback.selectionClick();
@@ -86,25 +139,42 @@ class _FatihahPageState extends State<FatihahPage> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: CustomPaint(painter: FatihahFramePainter())),
+        Positioned.fill(
+          child: Image.asset(
+            'assets/fatihah/fatihah_frame.jpeg',
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 26),
           child: Column(
             children: [
-              PageHeader(data: widget.data),
               const SizedBox(height: 2),
-              const FatihahSurahBanner(),
-              const SizedBox(height: 4),
+              _buildTopLine(widget.data),
+              const SizedBox(height: 8),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  child: Column(
-                    children:
-                        widget.data.verses.map((v) => _buildVerseRow(v)).toList(),
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children:
+                              widget.data.verses
+                                  .map((v) => _buildVerseRow(v))
+                                  .toList(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               PageNum(n: widget.data.pageNum),
             ],
           ),
@@ -134,9 +204,9 @@ class _FatihahPageState extends State<FatihahPage> {
       onTap: () => widget.onTapVerse(v.surah, v.verse),
       onLongPress: () => widget.onBookmarkVerse(v.surah, v.verse),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.symmetric(vertical: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
         decoration: BoxDecoration(
           color:
               active
@@ -173,8 +243,8 @@ class _FatihahPageState extends State<FatihahPage> {
                   children: [
                     ..._buildTajwidSpans(
                       text,
-                      23 * widget.fontScale,
-                      2.2,
+                      22 * widget.fontScale,
+                      2.0,
                       active,
                       widget.showTajwid,
                       inkColor,
@@ -182,13 +252,13 @@ class _FatihahPageState extends State<FatihahPage> {
                     TextSpan(
                       text: ' ${_ar(v.verse)}',
                       style: AppQuranFonts.hafsStyle.copyWith(
-                        fontSize: 15 * widget.fontScale,
+                        fontSize: 14.5 * widget.fontScale,
                         color:
                             active
                                 ? (isDark ? Colors.white : AppColors.hl)
                                 : AppColors.gold,
                         fontWeight: FontWeight.bold,
-                        height: 2.2,
+                        height: 2.0,
                       ),
                     ),
                   ],
