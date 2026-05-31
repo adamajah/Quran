@@ -17,7 +17,6 @@ import '../models/verse_ref.dart';
 import '../screens/translation_dialog.dart';
 import '../models/reciter.dart';
 import '../screens/reciter_dialog.dart';
-import '../utils/audio_utils.dart';
 import '../widgets/common/bottom_bar.dart';
 import '../widgets/common/mushaf_drawer.dart';
 import '../widgets/mushaf/mushaf_page.dart';
@@ -261,14 +260,13 @@ class _HomeScreenState extends State<HomeScreen>
         }
       } else {
         _clearStreamPlayback();
-        await audio.setUrl(
-          AudioUtils.getVerseAudioUrl(
-            r.surah,
-            r.verse,
-            reciter.id,
-            reciter.bitrate,
-          ),
-        );
+        if (!reciter.supportsVerseAudio) {
+          AudioPlaybackCoordinator.instance.release(_playbackOwner);
+          if (mounted) setState(() => _playing = false);
+          _snack('Qari ini belum tersedia untuk audio ayat per ayat');
+          return;
+        }
+        await audio.setUrl(reciter.verseAudioUrl(r.surah, r.verse));
         if (requestId != _playRequestId) return;
       }
       unawaited(audio.play());

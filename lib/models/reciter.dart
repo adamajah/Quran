@@ -1,3 +1,5 @@
+import 'package:quran/quran.dart' as q;
+
 class Reciter {
   final String name;
   final String id;
@@ -26,9 +28,50 @@ class Reciter {
 
   bool get usesSurahAudioStream => surahAudioBaseUrl != null;
 
+  bool get supportsVerseAudio => verseReciter != null;
+
+  q.Reciter? get verseReciter {
+    switch (id) {
+      case 'ar.alafasy':
+        return q.Reciter.arAlafasy;
+      case 'ar.husary':
+        return q.Reciter.arHusary;
+      case 'ar.ahmedajamy':
+        return q.Reciter.arAhmedAjamy;
+      case 'ar.hudhaify':
+        return q.Reciter.arHudhaify;
+      case 'ar.mahermuaiqly':
+        return q.Reciter.arMaherMuaiqly;
+      case 'ar.muhammadayyoub':
+        return q.Reciter.arMuhammadAyyoub;
+      case 'ar.muhammadjibreel':
+        return q.Reciter.arMuhammadJibreel;
+      case 'ar.minshawi':
+        return q.Reciter.arMinshawi;
+      case 'ar.shaatree':
+        return q.Reciter.arShaatree;
+      default:
+        return null;
+    }
+  }
+
   bool supportsSurahDownload(int surah) =>
       supportsSurahAudioDownload &&
       (downloadableSurahs == null || downloadableSurahs!.contains(surah));
+
+  String verseAudioUrl(int surah, int verse) {
+    final reciter = verseReciter;
+    if (reciter == null) {
+      throw StateError('Reciter $name does not support verse-by-verse audio');
+    }
+
+    return q.getAudioURLByVerse(
+      surah,
+      verse,
+      reciter: reciter,
+      bitrate: bitrate,
+    );
+  }
 
   String surahAudioUrl(int surah) {
     final baseUrl = surahAudioBaseUrl;
@@ -49,20 +92,6 @@ const List<Reciter> availableReciters = [
     id: 'ar.alafasy',
     bitrate: 128,
     surahAudioId: 'ar.alafasy',
-    surahAudioBitrate: 128,
-  ),
-  Reciter(
-    name: 'AbdulBaset AbdulSamad',
-    id: 'ar.abdulsamad',
-    bitrate: 64,
-    surahAudioId: 'ar.abdulbasitmurattal',
-    surahAudioBitrate: 128,
-  ),
-  Reciter(
-    name: 'Abdurrahman As-Sudais',
-    id: 'ar.abdurrahmaansudais',
-    bitrate: 128,
-    surahAudioId: 'ar.abdurrahmaansudais',
     surahAudioBitrate: 128,
   ),
   Reciter(
@@ -87,17 +116,10 @@ const List<Reciter> availableReciters = [
     surahAudioBitrate: 128,
   ),
   Reciter(
-    name: 'Hani Ar-Rifai',
-    id: 'ar.hanirifai',
-    bitrate: 192,
-    surahAudioId: 'ar.haniarrifai',
-    surahAudioBitrate: 128,
-  ),
-  Reciter(
     name: 'Muhammad Ayyoub',
     id: 'ar.muhammadayyoub',
     bitrate: 128,
-    surahAudioId: 'ar.muhammadayyub',
+    surahAudioId: 'ar.muhammadayyoub',
     surahAudioBitrate: 128,
   ),
   Reciter(
@@ -119,6 +141,13 @@ const List<Reciter> availableReciters = [
     id: 'ar.hudhaify',
     bitrate: 128,
     surahAudioId: 'ar.hudhaify',
+    surahAudioBitrate: 128,
+  ),
+  Reciter(
+    name: 'Minshawi',
+    id: 'ar.minshawi',
+    bitrate: 128,
+    surahAudioId: 'ar.minshawi',
     surahAudioBitrate: 128,
   ),
 ];

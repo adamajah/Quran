@@ -292,17 +292,15 @@ class _HafalanScreenState extends State<HafalanScreen>
       if (requestId != _playRequestId) return;
 
       // Calculate global verse number for the URL
-      int globalVerse = 0;
-      for (int i = 1; i < _hafalanSurah; i++) {
-        globalVerse += q.getVerseCount(i);
+      if (!_selectedReciter.supportsVerseAudio) {
+        throw StateError(
+          'Reciter ${_selectedReciter.name} does not support verse audio',
+        );
       }
-      globalVerse += verse;
 
-      // Pattern: https://cdn.islamic.network/quran/audio/[bitrate]/[reciter_id]/[global_verse].mp3
-      final url =
-          'https://cdn.islamic.network/quran/audio/${_selectedReciter.bitrate}/${_selectedReciter.id}/$globalVerse.mp3';
-
-      await _audioPlayer.setUrl(url);
+      await _audioPlayer.setUrl(
+        _selectedReciter.verseAudioUrl(_hafalanSurah, verse),
+      );
       if (requestId != _playRequestId) return;
       unawaited(_audioPlayer.play());
     } catch (e) {

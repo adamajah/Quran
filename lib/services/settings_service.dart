@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/reciter.dart';
 import '../models/settings_model.dart';
 
 class SettingsService {
@@ -31,7 +34,9 @@ class SettingsService {
       defaultVolume: _prefs.getDouble(_keyVolume) ?? 1.0,
       autoPlay: _prefs.getBool(_keyAutoPlay) ?? false,
       playbackSpeed: _prefs.getDouble(_keyPlaybackSpeed) ?? 1.0,
-      defaultReciterId: _prefs.getString(_keyDefaultReciterId) ?? 'ar.alafasy',
+      defaultReciterId: _resolveDefaultReciterId(
+        _prefs.getString(_keyDefaultReciterId),
+      ),
       readReminder: _prefs.getBool(_keyReadReminder) ?? false,
       reminderTime: _parseTime(_prefs.getString(_keyReminderTime)),
       dailyMotivation: _prefs.getBool(_keyDailyMotivation) ?? true,
@@ -66,5 +71,16 @@ class SettingsService {
     }
     final parts = timeStr.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  String _resolveDefaultReciterId(String? storedId) {
+    final fallback = availableReciters.first.id;
+    if (storedId == null || storedId.isEmpty) return fallback;
+    if (availableReciters.any((reciter) => reciter.id == storedId)) {
+      return storedId;
+    }
+
+    unawaited(_prefs.setString(_keyDefaultReciterId, fallback));
+    return fallback;
   }
 }

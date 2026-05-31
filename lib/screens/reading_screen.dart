@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import '../constants/quran_fonts.dart';
+import '../models/reciter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_text_style.dart';
@@ -151,6 +152,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
   Future<void> _playVerse(int surah, int verse) async {
     final requestId = ++_playRequestId;
     final settings = context.read<SettingsController>().settings;
+    final reciter = _resolveReciter(settings.defaultReciterId);
     try {
       await AudioPlaybackCoordinator.instance.requestPlayback(
         _playbackOwner,
@@ -159,7 +161,12 @@ class _ReadingScreenState extends State<ReadingScreen> {
       if (requestId != _playRequestId) return;
       await _audioPlayer.setVolume(settings.defaultVolume);
       await _audioPlayer.setSpeed(settings.playbackSpeed);
-      await _audioPlayer.setUrl(quran_pkg.getAudioURLByVerse(surah, verse));
+      if (!reciter.supportsVerseAudio) {
+        throw StateError(
+          'Reciter ${reciter.name} does not support verse audio',
+        );
+      }
+      await _audioPlayer.setUrl(reciter.verseAudioUrl(surah, verse));
       if (requestId != _playRequestId) return;
       unawaited(_audioPlayer.play());
     } catch (e) {
@@ -210,6 +217,13 @@ class _ReadingScreenState extends State<ReadingScreen> {
     });
   }
 
+  Reciter _resolveReciter(String id) {
+    return availableReciters.firstWhere(
+      (reciter) => reciter.id == id,
+      orElse: () => availableReciters.first,
+    );
+  }
+
   void _loadTranslation() {
     setState(() {
       _translationVerses = QuranPageIndex.translationsForPage(
@@ -254,6 +268,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
     return Consumer<SettingsController>(
       builder: (context, controller, child) {
         final settings = controller.settings;
+        final reciter = _resolveReciter(settings.defaultReciterId);
         final surahNameAr = quran_pkg.getSurahNameArabic(_currentSurahIndex);
         final juzNum = quran_pkg.getJuzNumber(_currentSurahIndex, 1);
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -348,7 +363,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
 
               _BottomBar(
                 isPlaying: _isPlaying,
-                reciter: "Mishary Rashid Alafasy",
+                reciter: reciter.name,
                 pageNumber: _currentPage,
                 gold: _gold,
                 textColor: textColor,
