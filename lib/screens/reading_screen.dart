@@ -219,7 +219,11 @@ class _ReadingScreenState extends State<ReadingScreen> {
     });
   }
 
-  void _showTranslationDialog() {
+  Future<void> _showTranslationDialog() async {
+    if (_isPlaying) {
+      await _stopPlayback(resetVerse: false);
+    }
+    if (!mounted) return;
     showDialog(
       context: context,
       builder:
@@ -350,7 +354,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
                 textColor: textColor,
                 onPlay: _togglePlay,
                 onStop: () => _stopPlayback(resetVerse: true),
-                onTranslate: _showTranslationDialog,
+                onTranslate: () => unawaited(_showTranslationDialog()),
               ),
             ],
           ),

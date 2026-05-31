@@ -446,7 +446,11 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _showTranslationDialog() {
+  Future<void> _showTranslationDialog() async {
+    if (!mounted) return;
+    if (_playing) {
+      await _stopPlayback(resetVerse: false);
+    }
     if (!mounted) return;
     showDialog(
       context: context,
@@ -637,10 +641,10 @@ class _HomeScreenState extends State<HomeScreen>
             onSurah: _goSurah,
             onJuz: _goJuz,
             onPage: _goPage,
-            onPageJump: _jumpToPage,
-            onBookmark: _goBookmark,
-            onTranslate: _showTranslationDialog,
-          ),
+          onPageJump: _jumpToPage,
+          onBookmark: _goBookmark,
+          onTranslate: () => unawaited(_showTranslationDialog()),
+        ),
           appBar: _appBar(pg, textColor),
           body: Column(
             children: [
