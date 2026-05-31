@@ -121,7 +121,7 @@ class _FatihahPageState extends State<FatihahPage> {
     );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inkColor = isDark ? Colors.white : AppColors.ink;
+    final inkColor = const Color(0xFFF7F2E8);
 
     return GestureDetector(
       onTap: () => widget.onTapVerse(v.surah, v.verse),

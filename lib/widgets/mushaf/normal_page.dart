@@ -178,8 +178,7 @@ class NormalBody extends StatelessWidget {
 
         final availW = bc.maxWidth - 28.0;
 
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final inkColor = isDark ? Colors.white : AppColors.ink;
+        final inkColor = const Color(0xFFF7F2E8);
 
         final fs = _bestFs(data.pageNum, data.verses, availW, availH, inkColor);
 

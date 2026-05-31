@@ -314,9 +314,7 @@ class AyahNumberBadge extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppQuranFonts.hafsStyle.copyWith(
                 fontSize: 10.5,
-                color: active
-                    ? (isDark ? const Color(0xFFF8F6F0) : AppColors.dark)
-                    : (isDark ? const Color(0xFFF8F6F0) : AppColors.dark),
+                color: AppColors.dark,
                 fontWeight: FontWeight.bold,
                 height: 1.0,
               ),
