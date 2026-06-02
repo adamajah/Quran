@@ -5,7 +5,22 @@ class TajwidUtils {
   static const _sunLetters = 'تثدذرزسشصضطظلن';
   static const _idghamLetters = 'يرملون';
   static const _ikhfaLetters = 'تثجدذزسشصضطظفقك';
-  static const _maddSigns = 'آٰٓۦۧ';
+  static const _maddSigns = 'آٰٓۥۦۧ';
+  static const _maddBlockingMarks = {
+    'َ',
+    'ِ',
+    'ُ',
+    'ً',
+    'ٍ',
+    'ٌ',
+    'ْ',
+    'ّ',
+    'ٔ',
+    'ٕ',
+  };
+  static final _attachedMarkPattern = RegExp(
+    r'[\u064B-\u065F\u0670\u06D6-\u06ED]',
+  );
   static const _ignorableChars = {
     'َ',
     'ِ',
@@ -32,6 +47,8 @@ class TajwidUtils {
     'ۢ',
     'ۣ',
     'ۤ',
+    'ۥ',
+    'ۦ',
     'ۧ',
     'ۨ',
     '۪',
@@ -53,6 +70,9 @@ class TajwidUtils {
 
   static bool _isIgnorable(String char) => _ignorableChars.contains(char);
 
+  static bool _isAttachedMark(String char) =>
+      _attachedMarkPattern.hasMatch(char);
+
   static bool _isTanwin(String char) =>
       char == 'ً' || char == 'ٍ' || char == 'ٌ';
 
@@ -69,7 +89,7 @@ class TajwidUtils {
     for (int i = index + 1; i < text.length; i++) {
       final ch = text[i];
       if (ch == mark) return true;
-      if (!_isIgnorable(ch)) return false;
+      if (!_isAttachedMark(ch)) return false;
     }
     return false;
   }
@@ -78,7 +98,16 @@ class TajwidUtils {
     for (int i = index - 1; i >= 0; i--) {
       final ch = text[i];
       if (ch == vowel) return true;
-      if (!_isIgnorable(ch)) return false;
+      if (!_isAttachedMark(ch)) return false;
+    }
+    return false;
+  }
+
+  static bool _hasMaddBlockingMarkAhead(String text, int index) {
+    for (int i = index + 1; i < text.length; i++) {
+      final ch = text[i];
+      if (_maddBlockingMarks.contains(ch)) return true;
+      if (!_isAttachedMark(ch)) return false;
     }
     return false;
   }
@@ -105,7 +134,7 @@ class TajwidUtils {
       );
     }
 
-    // 2. Qalqalah: قطبجد (Sukun or end of word)
+    // 2. Qalqalah: قطبجد (Sukun or end of verse)
     const qalqalah = 'قطبجد';
     if (qalqalah.contains(char)) {
       if (_hasMarkAhead(text, index, 'ْ') || nextMeaningfulChar == null) {
@@ -118,7 +147,7 @@ class TajwidUtils {
     }
 
     // 3. Iqlab: Nun followed by Ba
-    if ((char == 'ن' || _isTanwin(char)) &&
+    if (((char == 'ن' && _hasMarkAhead(text, index, 'ْ')) || _isTanwin(char)) &&
         nextMeaningfulChar != null &&
         'ب'.contains(nextMeaningfulChar)) {
       return (
@@ -129,7 +158,7 @@ class TajwidUtils {
     }
 
     // 4. Idgham: Nun followed by يرملون
-    if ((char == 'ن' || _isTanwin(char)) &&
+    if (((char == 'ن' && _hasMarkAhead(text, index, 'ْ')) || _isTanwin(char)) &&
         nextMeaningfulChar != null &&
         _idghamLetters.contains(nextMeaningfulChar)) {
       return (
@@ -140,7 +169,7 @@ class TajwidUtils {
     }
 
     // 5. Ikhfa: Nun followed by 15 letters
-    if ((char == 'ن' || _isTanwin(char)) &&
+    if (((char == 'ن' && _hasMarkAhead(text, index, 'ْ')) || _isTanwin(char)) &&
         nextMeaningfulChar != null &&
         _ikhfaLetters.contains(nextMeaningfulChar)) {
       return (
@@ -152,10 +181,18 @@ class TajwidUtils {
 
     // 6. Madd: Mad signs or vowel prolongations
     if (_maddSigns.contains(char) ||
-        (char == 'ا' && _hasShortVowelBefore(text, index, 'َ')) ||
-        (char == 'و' && _hasShortVowelBefore(text, index, 'ُ')) ||
-        (char == 'ي' && _hasShortVowelBefore(text, index, 'ِ')) ||
-        (char == 'ى' && _hasShortVowelBefore(text, index, 'َ'))) {
+        (char == 'ا' &&
+            _hasShortVowelBefore(text, index, 'َ') &&
+            !_hasMaddBlockingMarkAhead(text, index)) ||
+        (char == 'و' &&
+            _hasShortVowelBefore(text, index, 'ُ') &&
+            !_hasMaddBlockingMarkAhead(text, index)) ||
+        (char == 'ي' &&
+            _hasShortVowelBefore(text, index, 'ِ') &&
+            !_hasMaddBlockingMarkAhead(text, index)) ||
+        (char == 'ى' &&
+            _hasShortVowelBefore(text, index, 'َ') &&
+            !_hasMaddBlockingMarkAhead(text, index))) {
       return (
         AppColors.tajwidColors['madd']!,
         'Mad',
@@ -173,17 +210,6 @@ class TajwidUtils {
         AppColors.tajwidColors['lamSyamsiyah']!,
         'Lam Syamsiyah',
         'Lam pada ال melebur ke huruf syamsiyah berikutnya.',
-      );
-    }
-
-    // 8. Lam Tafkhim: Allah name marks (approximation)
-    // Common marks used in Allah name for Tafkhim
-    if (char == 'ـ' || (char == 'ّ' && nextMeaningfulChar == 'ٰ')) {
-      // This often appears in the name of Allah
-      return (
-        AppColors.tajwidColors['tafkhim']!,
-        'Tafkhim',
-        'Penebalan bunyi pada lafadz Allah.',
       );
     }
 
