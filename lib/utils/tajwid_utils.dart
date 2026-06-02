@@ -6,6 +6,7 @@ class TajwidUtils {
   static const _idghamLetters = 'يرملون';
   static const _ikhfaLetters = 'تثجدذزسشصضطظفقك';
   static const _maddSigns = 'آٰٓۥۦۧ';
+  static const _maddahAbove = '\u0653';
   static const _muqattaahAlphabet = 'المصركهيعطسحقن';
   static const _muqattaahTokens = {
     'الم',
@@ -145,23 +146,34 @@ class TajwidUtils {
     int index,
   ) {
     int tokenEnd = 0;
-    while (tokenEnd < text.length &&
-        _muqattaahAlphabet.contains(text[tokenEnd])) {
+    final tokenBuffer = StringBuffer();
+    while (tokenEnd < text.length) {
+      final char = text[tokenEnd];
+      if (_muqattaahAlphabet.contains(char)) {
+        tokenBuffer.write(char);
+      } else if (char != _maddahAbove) {
+        break;
+      }
       tokenEnd++;
     }
 
-    final token = text.substring(0, tokenEnd);
+    final token = tokenBuffer.toString();
     final hasTokenBoundary =
         tokenEnd == text.length ||
         text[tokenEnd].trim().isEmpty ||
         text[tokenEnd] == '۝';
     if (!hasTokenBoundary ||
         !_muqattaahTokens.contains(token) ||
-        index >= token.length) {
+        index >= tokenEnd) {
       return null;
     }
 
-    final char = text[index];
+    final char =
+        text[index] == _maddahAbove
+            ? _prevMeaningfulChar(text, index - 1)
+            : text[index];
+    if (char == null) return null;
+
     final String description;
     if (_twoHarakatMuqattaahLetters.contains(char)) {
       description = "Huruf muqatta'ah $char dibaca panjang 2 harakat.";

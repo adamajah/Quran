@@ -37,37 +37,38 @@ void main() {
     });
 
     test('detects madd harfi across every muqattaah opening', () {
+      const maddahAbove = '\u0653';
       const openingVerses = <(int, int), String>{
-        (2, 1): 'الم',
-        (3, 1): 'الم',
-        (7, 1): 'المص',
-        (10, 1): 'الر',
-        (11, 1): 'الر',
-        (12, 1): 'الر',
-        (13, 1): 'المر',
-        (14, 1): 'الر',
-        (15, 1): 'الر',
-        (19, 1): 'كهيعص',
+        (2, 1): 'ال\u0653م\u0653',
+        (3, 1): 'ال\u0653م\u0653',
+        (7, 1): 'ال\u0653م\u0653ص\u0653',
+        (10, 1): 'ال\u0653ر',
+        (11, 1): 'ال\u0653ر',
+        (12, 1): 'ال\u0653ر',
+        (13, 1): 'ال\u0653م\u0653ر',
+        (14, 1): 'ال\u0653ر',
+        (15, 1): 'ال\u0653ر',
+        (19, 1): 'ك\u0653هيع\u0653ص\u0653',
         (20, 1): 'طه',
-        (26, 1): 'طسم',
-        (27, 1): 'طس',
-        (28, 1): 'طسم',
-        (29, 1): 'الم',
-        (30, 1): 'الم',
-        (31, 1): 'الم',
-        (32, 1): 'الم',
-        (36, 1): 'يس',
-        (38, 1): 'ص',
-        (40, 1): 'حم',
-        (41, 1): 'حم',
-        (42, 1): 'حم',
-        (42, 2): 'عسق',
-        (43, 1): 'حم',
-        (44, 1): 'حم',
-        (45, 1): 'حم',
-        (46, 1): 'حم',
-        (50, 1): 'ق',
-        (68, 1): 'ن',
+        (26, 1): 'طس\u0653م\u0653',
+        (27, 1): 'طس\u0653',
+        (28, 1): 'طس\u0653م\u0653',
+        (29, 1): 'ال\u0653م\u0653',
+        (30, 1): 'ال\u0653م\u0653',
+        (31, 1): 'ال\u0653م\u0653',
+        (32, 1): 'ال\u0653م\u0653',
+        (36, 1): 'يس\u0653',
+        (38, 1): 'ص\u0653',
+        (40, 1): 'حم\u0653',
+        (41, 1): 'حم\u0653',
+        (42, 1): 'حم\u0653',
+        (42, 2): 'ع\u0653س\u0653ق\u0653',
+        (43, 1): 'حم\u0653',
+        (44, 1): 'حم\u0653',
+        (45, 1): 'حم\u0653',
+        (46, 1): 'حم\u0653',
+        (50, 1): 'ق\u0653',
+        (68, 1): 'ن\u0653',
       };
       const expectedHarakat = <String, String?>{
         'ا': null,
@@ -93,11 +94,13 @@ void main() {
 
         for (int index = 0; index < opening.length; index++) {
           final char = opening[index];
-          final harakat = expectedHarakat[char];
+          final harakat = char == maddahAbove ? null : expectedHarakat[char];
           final info = TajwidUtils.getTajwidInfo(text, index);
           final reason = 'QS ${entry.key.$1}:${entry.key.$2}, huruf $char';
 
-          if (harakat == null) {
+          if (char == maddahAbove) {
+            expect(info.$2, 'Mad Harfi', reason: reason);
+          } else if (harakat == null) {
             expect(info.$2, isEmpty, reason: reason);
           } else {
             expect(info.$2, 'Mad Harfi', reason: reason);
@@ -105,6 +108,13 @@ void main() {
           }
         }
       }
+    });
+
+    test('adds maddah display marks through cleanText', () {
+      const bismillah = 'بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ';
+
+      expect(QuranUtils.cleanText('$bismillah الم'), 'الٓمٓ');
+      expect(QuranUtils.cleanText('يس'), 'يسٓ');
     });
 
     test('does not detect vowelled ya as madd', () {
