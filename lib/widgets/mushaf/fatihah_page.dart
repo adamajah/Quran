@@ -42,9 +42,15 @@ class FatihahPage extends StatefulWidget {
 }
 
 class _FatihahPageState extends State<FatihahPage> {
+  static const _lineGuideBreathingRoom = 0.48;
+  static const _textHeightBehavior = TextHeightBehavior(
+    leadingDistribution: TextLeadingDistribution.even,
+  );
+
   TextStyle get _quranStyle => AppQuranFonts.styleFor(widget.mushafFont);
   double get _lineHeight =>
-      AppQuranFonts.lineHeightFor(widget.mushafFont, spacious: true);
+      AppQuranFonts.lineHeightFor(widget.mushafFont, spacious: true) +
+      _lineGuideBreathingRoom;
   double get _textScale => AppQuranFonts.textScaleFor(widget.mushafFont);
 
   void _showTajwidHint(String name, String desc, Color color) {
@@ -202,6 +208,7 @@ class _FatihahPageState extends State<FatihahPage> {
                   ),
                   textAlign: TextAlign.center,
                   textDirection: TextDirection.rtl,
+                  textHeightBehavior: _textHeightBehavior,
                 ),
               ),
             ),

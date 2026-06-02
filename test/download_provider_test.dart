@@ -79,7 +79,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(downloadService.urls, [
-      'https://cdn.islamic.network/quran/audio-surah/128/ar.haniarrifai/1.mp3',
+      'https://cdn.islamic.network/quran/audio-surah/128/ar.hanirifai/1.mp3',
     ]);
   });
 

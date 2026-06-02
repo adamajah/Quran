@@ -219,8 +219,13 @@ class MushafDividerPainter extends CustomPainter {
 class MushafLineGuidePainter extends CustomPainter {
   final bool isDark;
   final double rowHeight;
+  final List<double>? linePositions;
 
-  const MushafLineGuidePainter({required this.isDark, required this.rowHeight});
+  const MushafLineGuidePainter({
+    required this.isDark,
+    required this.rowHeight,
+    this.linePositions,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -228,27 +233,41 @@ class MushafLineGuidePainter extends CustomPainter {
 
     final linePaint =
         Paint()
-          ..color = AppColors.goldLt.withValues(alpha: isDark ? 0.22 : 0.38)
-          ..strokeWidth = 0.55;
+          ..color = AppColors.goldLt.withValues(alpha: isDark ? 0.56 : 0.68)
+          ..strokeWidth = 0.90;
+    final softLinePaint =
+        Paint()
+          ..color = AppColors.gold.withValues(alpha: isDark ? 0.18 : 0.28)
+          ..strokeWidth = 0.45;
     final dotPaint =
         Paint()
-          ..color = AppColors.goldLt.withValues(alpha: isDark ? 0.52 : 0.68)
+          ..color = AppColors.goldLt.withValues(alpha: isDark ? 0.70 : 0.82)
           ..style = PaintingStyle.fill;
     final left = 5.0;
     final right = size.width - 5.0;
 
-    for (double y = rowHeight; y < size.height - 1; y += rowHeight) {
+    final positions =
+        linePositions ??
+        [for (double y = rowHeight; y < size.height - 1; y += rowHeight) y];
+    for (final y in positions) {
+      canvas.drawLine(
+        Offset(left + 7, y + 2),
+        Offset(right - 7, y + 2),
+        softLinePaint,
+      );
       canvas.drawLine(Offset(left, y), Offset(right, y), linePaint);
-      canvas.drawCircle(Offset(left, y), 1.15, dotPaint);
-      canvas.drawCircle(Offset(right, y), 1.15, dotPaint);
-      canvas.drawCircle(Offset(left + 4, y), 0.7, dotPaint);
-      canvas.drawCircle(Offset(right - 4, y), 0.7, dotPaint);
+      canvas.drawCircle(Offset(left, y), 1.35, dotPaint);
+      canvas.drawCircle(Offset(right, y), 1.35, dotPaint);
+      canvas.drawCircle(Offset(left + 4.5, y), 0.85, dotPaint);
+      canvas.drawCircle(Offset(right - 4.5, y), 0.85, dotPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant MushafLineGuidePainter oldDelegate) {
-    return oldDelegate.isDark != isDark || oldDelegate.rowHeight != rowHeight;
+    return oldDelegate.isDark != isDark ||
+        oldDelegate.rowHeight != rowHeight ||
+        oldDelegate.linePositions != linePositions;
   }
 }
 

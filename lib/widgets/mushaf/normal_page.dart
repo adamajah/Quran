@@ -80,6 +80,11 @@ class NormalPage extends StatelessWidget {
 }
 
 class NormalBody extends StatelessWidget {
+  static const _lineGuideBreathingRoom = 0.76;
+  static const _textHeightBehavior = TextHeightBehavior(
+    leadingDistribution: TextLeadingDistribution.even,
+  );
+
   final PageData data;
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
@@ -116,7 +121,7 @@ class NormalBody extends StatelessWidget {
     final scaledFs = fs * AppQuranFonts.textScaleFor(mushafFont);
     final s = AppQuranFonts.styleFor(mushafFont).copyWith(
       fontSize: scaledFs,
-      height: AppQuranFonts.lineHeightFor(mushafFont),
+      height: AppQuranFonts.lineHeightFor(mushafFont) + _lineGuideBreathingRoom,
       color: inkColor,
     );
     final spans =
@@ -135,6 +140,7 @@ class NormalBody extends StatelessWidget {
       text: TextSpan(children: spans),
       textDirection: TextDirection.rtl,
       textAlign: TextAlign.justify,
+      textHeightBehavior: _textHeightBehavior,
     )..layout(maxWidth: maxW);
     return tp.height;
   }
@@ -292,11 +298,19 @@ class TappableVerseBlock extends StatefulWidget {
 }
 
 class _TappableVerseBlockState extends State<TappableVerseBlock> {
+  static const _lineGuideBreathingRoom = 0.76;
+  static const _textHeightBehavior = TextHeightBehavior(
+    leadingDistribution: TextLeadingDistribution.even,
+  );
+
   int _hoveredVerse = 0;
 
   TextStyle get _quranStyle => AppQuranFonts.styleFor(widget.mushafFont);
-  double get _lineHeight => AppQuranFonts.lineHeightFor(widget.mushafFont);
+  double get _lineHeight =>
+      AppQuranFonts.lineHeightFor(widget.mushafFont) + _lineGuideBreathingRoom;
   double get _textScale => AppQuranFonts.textScaleFor(widget.mushafFont);
+  double get _ornamentCellDimension =>
+      (widget.fs * 0.94).clamp(12.0, 20.0) * widget.fontScale * 1.8;
 
   List<InlineSpan> _buildSpans(Color inkColor, bool isDark) {
     final out = <InlineSpan>[];
@@ -361,15 +375,20 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
                         : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: VerseNumberOrnament(
-                verse: v.verse,
-                mushafFont: widget.mushafFont,
-                fontSize: ornamentFontSize * widget.fontScale,
-                color:
-                    active
-                        ? (isDark ? Colors.white : AppColors.hl)
-                        : AppColors.gold,
-                height: _lineHeight,
+              child: SizedBox.square(
+                dimension: _ornamentCellDimension,
+                child: Center(
+                  child: VerseNumberOrnament(
+                    verse: v.verse,
+                    mushafFont: widget.mushafFont,
+                    fontSize: ornamentFontSize * widget.fontScale,
+                    color:
+                        active
+                            ? (isDark ? Colors.white : AppColors.hl)
+                            : AppColors.gold,
+                    height: _lineHeight,
+                  ),
+                ),
               ),
             ),
           ),
@@ -498,23 +517,54 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inkColor = isDark ? Colors.white : AppColors.ink;
     final rowHeight = widget.fs * widget.fontScale * _textScale * _lineHeight;
+    final textSpan = TextSpan(children: _buildSpans(inkColor, isDark));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
 
-      child: CustomPaint(
-        painter: MushafLineGuidePainter(isDark: isDark, rowHeight: rowHeight),
-        child: Text.rich(
-          TextSpan(children: _buildSpans(inkColor, isDark)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final textPainter = TextPainter(
+            text: textSpan,
+            textAlign: TextAlign.justify,
+            textDirection: TextDirection.rtl,
+            textHeightBehavior: _textHeightBehavior,
+          );
+          textPainter.setPlaceholderDimensions([
+            for (final _ in widget.group.verses)
+              PlaceholderDimensions(
+                size: Size(
+                  _ornamentCellDimension + 6,
+                  _ornamentCellDimension + 2,
+                ),
+                alignment: PlaceholderAlignment.middle,
+              ),
+          ]);
+          textPainter.layout(maxWidth: constraints.maxWidth);
+          final metrics = textPainter.computeLineMetrics();
+          final linePositions = <double>[
+            for (int i = 0; i < metrics.length - 1; i++)
+              ((metrics[i].baseline + metrics[i].descent) +
+                      (metrics[i + 1].baseline - metrics[i + 1].ascent)) /
+                  2,
+          ];
 
-          textAlign: TextAlign.justify,
-
-          textDirection: TextDirection.rtl,
-
-          overflow: TextOverflow.visible,
-
-          softWrap: true,
-        ),
+          return CustomPaint(
+            painter: MushafLineGuidePainter(
+              isDark: isDark,
+              rowHeight: rowHeight,
+              linePositions: linePositions,
+            ),
+            child: Text.rich(
+              textSpan,
+              textAlign: TextAlign.justify,
+              textDirection: TextDirection.rtl,
+              overflow: TextOverflow.visible,
+              softWrap: true,
+              textHeightBehavior: _textHeightBehavior,
+            ),
+          );
+        },
       ),
     );
   }
