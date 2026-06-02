@@ -27,18 +27,18 @@ class AppColors {
 
   // ── Tajwid Colors (Premium Professional Palette)
   static const Map<String, Color> tajwidColors = {
-    'ghunnah': Color(0xFF2E7D32), // Green
-    'idgham': Color(0xFF1976D2), // Blue
-    'ikhfa': Color(0xFFE65100), // Orange
-    'iqlab': Color(0xFF7B1FA2), // Purple
+    'ghunnah': Color(0xFF00C853), // Bright Green
+    'idgham': Color(0xFF005BFF), // Royal Blue
+    'ikhfa': Color(0xFFFF7A00), // Vivid Orange
+    'iqlab': Color(0xFFB000B5), // Violet
     'idzharHalqi': Color(0xFF00ACC1), // Cyan
-    'qalqalah': Color(0xFFC62828), // Red
-    'madWajibMuttasil': Color(0xFFD81B60), // Deep Pink
-    'madJaizMunfasil': Color(0xFF00897B), // Teal
-    'madHarfi': Color(0xFF6D4C41), // Dark Brown
-    'tafkhim': Color(0xFF455A64), // Slate
-    'lamSyamsiyah': Color(0xFF827717), // Olive
-    'lamQamariah': Color(0xFF3949AB), // Indigo
+    'qalqalah': Color(0xFFD50000), // Strong Red
+    'madWajibMuttasil': Color(0xFFFF5FA2), // Pink
+    'madJaizMunfasil': Color(0xFF00796B), // Dark Teal
+    'madHarfi': Color(0xFF8D3B1F), // Copper Brown
+    'tafkhim': Color(0xFF607D8B), // Slate
+    'lamSyamsiyah': Color(0xFFA3A500), // Olive Lime
+    'lamQamariah': Color(0xFF3D00C8), // Deep Indigo
     'default': ink,
   };
 }

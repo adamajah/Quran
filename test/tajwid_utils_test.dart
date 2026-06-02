@@ -69,14 +69,35 @@ void main() {
       );
     });
 
-    test('keeps every tajwid rule color distinct', () {
+    test('keeps every tajwid rule color visually distinct', () {
       final ruleColors =
           AppColors.tajwidColors.entries
               .where((entry) => entry.key != 'default')
-              .map((entry) => entry.value)
               .toList();
 
-      expect(ruleColors.toSet(), hasLength(ruleColors.length));
+      int rgbDistanceSquared(Color left, Color right) {
+        final leftArgb = left.toARGB32();
+        final rightArgb = right.toARGB32();
+        final redDistance =
+            ((leftArgb >> 16) & 0xFF) - ((rightArgb >> 16) & 0xFF);
+        final greenDistance =
+            ((leftArgb >> 8) & 0xFF) - ((rightArgb >> 8) & 0xFF);
+        final blueDistance = (leftArgb & 0xFF) - (rightArgb & 0xFF);
+        return redDistance * redDistance +
+            greenDistance * greenDistance +
+            blueDistance * blueDistance;
+      }
+
+      for (int i = 0; i < ruleColors.length; i++) {
+        for (int j = i + 1; j < ruleColors.length; j++) {
+          expect(
+            rgbDistanceSquared(ruleColors[i].value, ruleColors[j].value),
+            greaterThanOrEqualTo(80 * 80),
+            reason:
+                '${ruleColors[i].key} dan ${ruleColors[j].key} terlalu mirip.',
+          );
+        }
+      }
     });
 
     test('detects madd harfi across every muqattaah opening', () {
