@@ -32,11 +32,11 @@ class AppColors {
     'ikhfa': Color(0xFFE65100), // Orange
     'iqlab': Color(0xFF7B1FA2), // Purple
     'qalqalah': Color(0xFFC62828), // Red
-    'madWajibMuttasil': Color(0xFF1565C0), // Deep Blue
+    'madWajibMuttasil': Color(0xFFD81B60), // Deep Pink
     'madJaizMunfasil': Color(0xFF00897B), // Teal
-    'madHarfi': Color(0xFF6A1B9A), // Deep Purple
-    'tafkhim': Color(0xFF8D6E63), // Brown/Gold
-    'lamSyamsiyah': Color(0xFFB388FF), // Violet
+    'madHarfi': Color(0xFF6D4C41), // Dark Brown
+    'tafkhim': Color(0xFF455A64), // Slate
+    'lamSyamsiyah': Color(0xFF827717), // Olive
     'default': ink,
   };
 }

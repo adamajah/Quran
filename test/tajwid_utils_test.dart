@@ -69,6 +69,16 @@ void main() {
       );
     });
 
+    test('keeps every tajwid rule color distinct', () {
+      final ruleColors =
+          AppColors.tajwidColors.entries
+              .where((entry) => entry.key != 'default')
+              .map((entry) => entry.value)
+              .toList();
+
+      expect(ruleColors.toSet(), hasLength(ruleColors.length));
+    });
+
     test('detects madd harfi across every muqattaah opening', () {
       const maddahAbove = '\u0653';
       const openingVerses = <(int, int), String>{

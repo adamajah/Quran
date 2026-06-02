@@ -46,7 +46,7 @@ class TajwidLegend extends StatelessWidget {
     (
       'Mad Wajib Muttasil',
       'مَدّ وَاجِب مُتَّصِل',
-      Color(0xFF1565C0),
+      Color(0xFFD81B60),
       'Huruf mad bertemu hamzah dalam satu kata. Ditandai dengan maddah above Arab ٓ.',
       'جَآءَ',
     ),
@@ -60,21 +60,21 @@ class TajwidLegend extends StatelessWidget {
     (
       'Mad Harfi',
       'مَدّ حَرْفِي',
-      Color(0xFF6A1B9A),
+      Color(0xFF6D4C41),
       "Huruf muqatta'ah pembuka surat dibaca panjang sesuai jenisnya.",
       'الٓمٓ، يسٓ',
     ),
     (
       'Lam Syamsiyah',
       'لَامُ الشَّمْسِيَّة',
-      Color(0xFFB388FF),
+      Color(0xFF827717),
       'Lam pada ال melebur ke huruf syamsiyah berikutnya.',
       'الشَّمْس',
     ),
     (
       'Tafkhim',
       'تَفْخِيم',
-      Color(0xFF8D6E63),
+      Color(0xFF455A64),
       'Penebalan bunyi pada huruf tertentu, terutama lafadz Allah.',
       'اللَّهُ',
     ),

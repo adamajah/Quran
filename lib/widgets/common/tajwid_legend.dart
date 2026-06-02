@@ -1,7 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // TajwidLegend  –  bottom sheet panduan warna tajwid
 // (extracted from home_screen.dart)
-// PERUBAHAN: warna Lam Syamsiyah diubah dari Color(0xFF18FFFF) ke Color(0xFFB388FF)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
@@ -17,42 +16,42 @@ class TajwidLegend extends StatelessWidget {
     (
       'Ghunnah',
       'غُنَّة',
-      Color(0xFFFF6B00),
+      Color(0xFF2E7D32),
       'Dengung hidung selama 2 harakat, terjadi pada nun/mim bertasydid.',
       'إِنَّ، مَّن',
     ),
     (
       'Idgham',
       'إِدْغَام',
-      Color(0xFF00CFFF), // biru langit
+      Color(0xFF1976D2),
       'Nun mati atau tanwin lebur ke huruf berikutnya: ي ر م ل و ن.',
       'مِن رَّبِّ',
     ),
     (
       'Ikhfa',
       'إِخْفَاء',
-      Color(0xFFE040FB),
+      Color(0xFFE65100),
       'Nun mati/tanwin dibaca samar (antara jelas dan lebur) di depan 15 huruf.',
       'مِنْ ثَمَرٍ',
     ),
     (
       'Iqlab',
       'إِقْلَاب',
-      Color(0xFFFF1744),
+      Color(0xFF7B1FA2),
       'Nun mati/tanwin berubah menjadi mim samar di depan huruf ب.',
       'مِنْ بَعْدِ',
     ),
     (
       'Qalqalah',
       'قَلْقَلَة',
-      Color(0xFFFFD600),
+      Color(0xFFC62828),
       'Huruf ق ط ب ج د mati dibaca memantul (bergema) ringan.',
       'يَقْطَعُ',
     ),
     (
       'Mad Wajib Muttasil',
       'مَدّ وَاجِب مُتَّصِل',
-      Color(0xFF1565C0),
+      Color(0xFFD81B60),
       'Huruf mad bertemu hamzah dalam satu kata. Ditandai dengan maddah above Arab ٓ.',
       'جَآءَ',
     ),
@@ -66,16 +65,14 @@ class TajwidLegend extends StatelessWidget {
     (
       'Mad Harfi',
       'مَدّ حَرْفِي',
-      Color(0xFF6A1B9A),
+      Color(0xFF6D4C41),
       "Huruf muqatta'ah pembuka surat dibaca panjang sesuai jenisnya.",
       'الٓمٓ، يسٓ',
     ),
     (
       'Lam Syamsiyah',
       'لَامُ الشَّمْسِيَّة',
-      Color(
-        0xFFB388FF,
-      ), // DIUBAH: ungu/violet (sebelumnya #18FFFF cyan — terlalu mirip idgham)
+      Color(0xFF827717),
       'Lam pada alif-lam lebur ke huruf syamsiyah berikutnya (ت ث د ذ…).',
       'الشَّمْس',
     ),
