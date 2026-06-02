@@ -7,6 +7,7 @@ import '../../constants/app_text_style.dart';
 import '../../models/settings_model.dart';
 import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
+import '../../utils/quran_text_cluster_utils.dart';
 import '../../utils/tajwid_utils.dart';
 import './page_elements.dart';
 import './verse_number_ornament.dart';
@@ -232,9 +233,12 @@ class _FatihahPageState extends State<FatihahPage> {
       ];
     }
     final spans = <InlineSpan>[];
-    for (int i = 0; i < text.length; i++) {
-      final char = text[i];
-      final info = TajwidUtils.getTajwidInfo(text, i);
+    for (final cluster in QuranTextClusterUtils.split(text)) {
+      final info = TajwidUtils.getTajwidInfoForRange(
+        text,
+        cluster.start,
+        cluster.end,
+      );
       final isDefaultColor = info.$1 == AppColors.tajwidColors['default'];
       final color =
           active
@@ -245,7 +249,7 @@ class _FatihahPageState extends State<FatihahPage> {
 
       spans.add(
         TextSpan(
-          text: char,
+          text: cluster.text,
           recognizer:
               TapGestureRecognizer()
                 ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),

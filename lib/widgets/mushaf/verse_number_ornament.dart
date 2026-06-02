@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as q;
 
@@ -22,8 +24,44 @@ class VerseNumberOrnament extends StatelessWidget {
 
   static String textFor(int verse) => q.getVerseEndSymbol(verse);
 
+  static String arabicNumeralsFor(int verse) {
+    const numerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return verse
+        .toString()
+        .split('')
+        .map((digit) => numerals[int.parse(digit)])
+        .join();
+  }
+
+  static bool usesNativeGlyph(MushafFont font) {
+    return font != MushafFont.naskh;
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!usesNativeGlyph(mushafFont)) {
+      final size = fontSize * 1.45;
+      return SizedBox.square(
+        dimension: size,
+        child: CustomPaint(
+          painter: _NaskhVerseOrnamentPainter(color),
+          child: Center(
+            child: Text(
+              arabicNumeralsFor(verse),
+              textAlign: TextAlign.center,
+              textDirection: TextDirection.rtl,
+              style: AppQuranFonts.naskhStyle.copyWith(
+                fontSize: fontSize * 0.54,
+                color: color,
+                height: 1,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Text(
       textFor(verse),
       textAlign: TextAlign.center,
@@ -32,5 +70,54 @@ class VerseNumberOrnament extends StatelessWidget {
         mushafFont,
       ).copyWith(fontSize: fontSize, color: color, height: height),
     );
+  }
+}
+
+class _NaskhVerseOrnamentPainter extends CustomPainter {
+  final Color color;
+
+  const _NaskhVerseOrnamentPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.shortestSide * 0.35;
+    final stroke =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.15;
+    final accent =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, radius, stroke);
+    canvas.drawCircle(center, radius * 0.82, stroke..strokeWidth = 0.65);
+
+    for (final offset in [
+      Offset(0, -radius * 1.18),
+      Offset(radius * 1.18, 0),
+      Offset(0, radius * 1.18),
+      Offset(-radius * 1.18, 0),
+    ]) {
+      canvas.save();
+      canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
+      canvas.rotate(math.pi / 4);
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: radius * 0.30,
+          height: radius * 0.30,
+        ),
+        accent,
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_NaskhVerseOrnamentPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }

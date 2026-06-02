@@ -40,10 +40,10 @@ abstract final class AppQuranFonts {
     return switch ((font, spacious)) {
       (MushafFont.hafs, false) => 1.85,
       (MushafFont.naskh, false) => 1.72,
-      (MushafFont.lpmqIsepMisbah, false) => 1.68,
+      (MushafFont.lpmqIsepMisbah, false) => 1.82,
       (MushafFont.hafs, true) => 2.20,
       (MushafFont.naskh, true) => 2.00,
-      (MushafFont.lpmqIsepMisbah, true) => 1.94,
+      (MushafFont.lpmqIsepMisbah, true) => 2.08,
     };
   }
 
@@ -51,7 +51,7 @@ abstract final class AppQuranFonts {
     return switch (font) {
       MushafFont.hafs => 1.0,
       MushafFont.naskh => 0.92,
-      MushafFont.lpmqIsepMisbah => 0.88,
+      MushafFont.lpmqIsepMisbah => 0.96,
     };
   }
 }

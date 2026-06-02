@@ -37,6 +37,16 @@ void main() {
     test('uses the native end-of-ayah ornament with Arabic numerals', () {
       expect(VerseNumberOrnament.textFor(97), '\u06DD\u0669\u0667');
     });
+
+    test('uses a stable custom ornament for naskh only', () {
+      expect(VerseNumberOrnament.usesNativeGlyph(MushafFont.hafs), isTrue);
+      expect(VerseNumberOrnament.usesNativeGlyph(MushafFont.naskh), isFalse);
+      expect(
+        VerseNumberOrnament.usesNativeGlyph(MushafFont.lpmqIsepMisbah),
+        isTrue,
+      );
+      expect(VerseNumberOrnament.arabicNumeralsFor(97), '\u0669\u0667');
+    });
   });
 
   group('SettingsService mushaf font', () {

@@ -279,4 +279,19 @@ class TajwidUtils {
   static Color getTajwidColor(String text, int index) {
     return getTajwidInfo(text, index).$1;
   }
+
+  static (Color, String, String) getTajwidInfoForRange(
+    String text,
+    int start,
+    int end,
+  ) {
+    final firstInfo = getTajwidInfo(text, start);
+    if (firstInfo.$2.isNotEmpty) return firstInfo;
+
+    for (int index = start + 1; index < end; index++) {
+      final info = getTajwidInfo(text, index);
+      if (info.$2.isNotEmpty) return info;
+    }
+    return firstInfo;
+  }
 }
