@@ -400,6 +400,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final fonts = [
       {'name': 'Hafs Madinah', 'value': MushafFont.hafs},
       {'name': 'Naskh Arabic', 'value': MushafFont.naskh},
+      {'name': 'LPMQ Isep Misbah', 'value': MushafFont.lpmqIsepMisbah},
     ];
 
     showModalBottomSheet(

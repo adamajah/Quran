@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum MushafFont { hafs, naskh }
+enum MushafFont { hafs, naskh, lpmqIsepMisbah }
 
 enum AppTheme { light, dark, gold, sepia }
 
@@ -86,6 +86,8 @@ class AppSettings {
         return 'Hafs Madinah';
       case MushafFont.naskh:
         return 'Naskh Arabic';
+      case MushafFont.lpmqIsepMisbah:
+        return 'LPMQ Isep Misbah';
     }
   }
 

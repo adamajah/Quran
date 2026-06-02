@@ -73,6 +73,9 @@ flutter:
     - family: naskh
       fonts:
         - asset: assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
+    - family: lpmqIsepMisbah
+      fonts:
+        - asset: assets/fonts/LPMQ IsepMisbah.ttf
 
 dependency_overrides:
   connectivity_plus: 6.1.0

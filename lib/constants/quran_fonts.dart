@@ -14,10 +14,17 @@ abstract final class AppQuranFonts {
     fontFamily: 'naskh',
   );
 
+  static const lpmqIsepMisbahStyle = TextStyle(
+    color: Colors.black,
+    fontSize: 23.55,
+    fontFamily: 'lpmqIsepMisbah',
+  );
+
   static TextStyle styleFor(MushafFont font) {
     return switch (font) {
       MushafFont.hafs => hafsStyle,
       MushafFont.naskh => naskhStyle,
+      MushafFont.lpmqIsepMisbah => lpmqIsepMisbahStyle,
     };
   }
 }
