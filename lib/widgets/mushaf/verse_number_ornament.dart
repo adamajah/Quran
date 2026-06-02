@@ -33,9 +33,7 @@ class VerseNumberOrnament extends StatelessWidget {
         .join();
   }
 
-  static bool usesNativeGlyph(MushafFont font) {
-    return font == MushafFont.lpmqIsepMisbah;
-  }
+  static bool usesNativeGlyph(MushafFont _) => false;
 
   static String measurementTextFor(int verse, MushafFont font) {
     return usesNativeGlyph(font) ? textFor(verse) : arabicNumeralsFor(verse);
