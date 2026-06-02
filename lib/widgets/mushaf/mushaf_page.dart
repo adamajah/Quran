@@ -91,6 +91,11 @@ class MushafPage extends StatelessWidget {
                     ),
           ),
         ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(painter: FrameOverlayPainter(isDark: isDark)),
+          ),
+        ),
       ],
     );
   }

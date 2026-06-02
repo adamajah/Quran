@@ -162,41 +162,47 @@ class _FatihahPageState extends State<FatihahPage> {
                 ),
               ),
             Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    ..._buildTajwidSpans(
-                      text,
-                      23 * widget.fontScale * _textScale,
-                      _lineHeight,
-                      active,
-                      widget.showTajwid,
-                      inkColor,
-                    ),
-                    TextSpan(
-                      text: ' ',
-                      style: _quranStyle.copyWith(
-                        fontSize: 23 * widget.fontScale * _textScale,
-                        height: _lineHeight,
-                      ),
-                    ),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: VerseNumberOrnament(
-                        verse: v.verse,
-                        mushafFont: widget.mushafFont,
-                        fontSize: 18 * widget.fontScale,
-                        color:
-                            active
-                                ? (isDark ? Colors.white : AppColors.hl)
-                                : AppColors.gold,
-                        height: _lineHeight,
-                      ),
-                    ),
-                  ],
+              child: CustomPaint(
+                painter: MushafLineGuidePainter(
+                  isDark: isDark,
+                  rowHeight: 23 * widget.fontScale * _textScale * _lineHeight,
                 ),
-                textAlign: TextAlign.center,
-                textDirection: TextDirection.rtl,
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      ..._buildTajwidSpans(
+                        text,
+                        23 * widget.fontScale * _textScale,
+                        _lineHeight,
+                        active,
+                        widget.showTajwid,
+                        inkColor,
+                      ),
+                      TextSpan(
+                        text: ' ',
+                        style: _quranStyle.copyWith(
+                          fontSize: 23 * widget.fontScale * _textScale,
+                          height: _lineHeight,
+                        ),
+                      ),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: VerseNumberOrnament(
+                          verse: v.verse,
+                          mushafFont: widget.mushafFont,
+                          fontSize: 18 * widget.fontScale,
+                          color:
+                              active
+                                  ? (isDark ? Colors.white : AppColors.hl)
+                                  : AppColors.gold,
+                          height: _lineHeight,
+                        ),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                ),
               ),
             ),
           ],

@@ -497,20 +497,24 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inkColor = isDark ? Colors.white : AppColors.ink;
+    final rowHeight = widget.fs * widget.fontScale * _textScale * _lineHeight;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
 
-      child: Text.rich(
-        TextSpan(children: _buildSpans(inkColor, isDark)),
+      child: CustomPaint(
+        painter: MushafLineGuidePainter(isDark: isDark, rowHeight: rowHeight),
+        child: Text.rich(
+          TextSpan(children: _buildSpans(inkColor, isDark)),
 
-        textAlign: TextAlign.justify,
+          textAlign: TextAlign.justify,
 
-        textDirection: TextDirection.rtl,
+          textDirection: TextDirection.rtl,
 
-        overflow: TextOverflow.visible,
+          overflow: TextOverflow.visible,
 
-        softWrap: true,
+          softWrap: true,
+        ),
       ),
     );
   }
