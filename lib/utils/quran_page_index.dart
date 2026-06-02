@@ -71,9 +71,21 @@ class QuranPageCatalog extends ListBase<PageData> {
     );
   }
 }
+
 class QuranPageIndex {
   static Map<int, List<VerseRef>>? _pageVerseMap;
   static final Map<String, List<Map<String, dynamic>>> _translationCache = {};
+
+  static int resolveSurahForPage(List<VerseRef> verses, {int? preferredSurah}) {
+    if (verses.isEmpty) {
+      throw ArgumentError.value(verses, 'verses', 'Page must contain verses');
+    }
+    if (preferredSurah != null &&
+        verses.any((verse) => verse.surah == preferredSurah)) {
+      return preferredSurah;
+    }
+    return verses.first.surah;
+  }
 
   static Map<int, List<VerseRef>> get pageVerseMap {
     _ensureBuilt();

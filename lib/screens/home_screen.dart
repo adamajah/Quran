@@ -69,6 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   late final QuranPageCatalog _pages;
   bool _isAutoAdvancing = false;
+  int? _pendingPageSurah;
+  int? _pendingPageSurahIdx;
 
   @override
   void initState() {
@@ -138,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
 
         _isAutoAdvancing = true;
+        _setPendingPageSurah(nextPgIdx, nextV.surah);
 
         if (_pageCtrl.hasClients) {
           final currentVirtual =
@@ -174,6 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _pgIdx = idx;
       _bookmarks = bookmarks;
     });
+    _setPendingPageSurah(idx, lastSurah);
     _restoreSelectedReciter(lastSurah);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pageCtrl.hasClients) {
@@ -319,6 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (pageIdx == _pgIdx || !_pageCtrl.hasClients) return;
 
     setState(() => _pgIdx = pageIdx);
+    _setPendingPageSurah(pageIdx, surah);
     final currentVirtual =
         _pageCtrl.page?.round() ?? (QuranPageCatalog.totalPages * 500);
     final currentReal = currentVirtual % _pages.length;
@@ -473,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _jumpToSurah(int s) {
-    _apply(q.getPageNumber(s, 1) - 1);
+    _apply(q.getPageNumber(s, 1) - 1, preferredSurah: s);
   }
 
   void _goSurah(int s) {
@@ -486,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final cnt = q.getVerseCount(s);
       for (int v = 1; v <= cnt; v++) {
         if (q.getJuzNumber(s, v) == juz) {
-          _apply(q.getPageNumber(s, v) - 1);
+          _apply(q.getPageNumber(s, v) - 1, preferredSurah: s);
           return;
         }
       }
@@ -509,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _jumpToBookmark(BookmarkEntry bm) {
-    _apply(bm.pageIdx);
+    _apply(bm.pageIdx, preferredSurah: bm.surah);
   }
 
   void _goBookmark(BookmarkEntry bm) {
@@ -517,11 +522,27 @@ class _HomeScreenState extends State<HomeScreen> {
     if (Navigator.canPop(context)) Navigator.pop(context);
   }
 
-  void _apply(int pageIdx) {
+  int _resolvePageSurah(int pageIdx, {int? preferredSurah}) {
+    return QuranPageIndex.resolveSurahForPage(
+      _pages[pageIdx].verses,
+      preferredSurah: preferredSurah,
+    );
+  }
+
+  void _setPendingPageSurah(int pageIdx, int? preferredSurah) {
+    _pendingPageSurahIdx = pageIdx;
+    _pendingPageSurah = _resolvePageSurah(
+      pageIdx,
+      preferredSurah: preferredSurah,
+    );
+  }
+
+  void _apply(int pageIdx, {int? preferredSurah}) {
     _cancelPlaybackRequest();
+    _setPendingPageSurah(pageIdx, preferredSurah);
     setState(() {
       _pgIdx = pageIdx;
-      _curS = _pages[pageIdx].surah;
+      _curS = _pendingPageSurah!;
       _playV = 0;
       _tappedSurah = 0;
       _tappedVerse = 0;
@@ -643,10 +664,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       allowImplicitScrolling: false,
                       onPageChanged: (virtualIdx) {
                         final idx = virtualIdx % _pages.length;
+                        final preferredSurah =
+                            idx == _pendingPageSurahIdx
+                                ? _pendingPageSurah
+                                : null;
+                        final surah = _resolvePageSurah(
+                          idx,
+                          preferredSurah: preferredSurah,
+                        );
+                        _pendingPageSurah = null;
+                        _pendingPageSurahIdx = null;
                         if (!_isAutoAdvancing) _cancelPlaybackRequest();
                         setState(() {
                           _pgIdx = idx;
-                          _curS = _pages[idx].surah;
+                          _curS = surah;
                           _tappedSurah = 0;
                           _tappedVerse = 0;
 
