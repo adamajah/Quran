@@ -5,6 +5,7 @@ import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
 import '../../models/verse_ref.dart';
+import '../../utils/quran_utils.dart';
 
 class PageHeader extends StatelessWidget {
   final PageData data;
@@ -58,7 +59,7 @@ class Basmalah extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bismillah = q.getVerse(1, 1, verseEndSymbol: false);
+    final bismillah = QuranUtils.getCleanVerse(1, 1, verseEndSymbol: false);
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),

@@ -1,39 +1,72 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran/quran.dart' as q;
 
+import 'package:flutter_quran_app/constants/app_colors.dart';
 import 'package:flutter_quran_app/utils/quran_utils.dart';
+import 'package:flutter_quran_app/utils/tajwid_mad_helper.dart';
 import 'package:flutter_quran_app/utils/tajwid_utils.dart';
 
 void main() {
   group('TajwidUtils', () {
-    test('detects madd on dagger alif in Al-Fatihah', () {
+    test('does not classify dagger alif as wajib or jaiz', () {
       final verse = q.getVerse(1, 1, verseEndSymbol: false);
       final index = verse.indexOf('ٰ');
 
       expect(index, isNonNegative);
-      expect(TajwidUtils.getTajwidInfo(verse, index).$2, 'Mad');
+      expect(TajwidUtils.getTajwidInfo(verse, index).$2, isEmpty);
     });
 
-    test('detects madd on alif madda', () {
+    test('does not classify alif madda as wajib or jaiz without context', () {
       const text = 'آمَنُوا';
 
-      expect(TajwidUtils.getTajwidInfo(text, 0).$2, 'Mad');
+      expect(TajwidUtils.getTajwidInfo(text, 0).$2, isEmpty);
     });
 
-    test('detects natural madd on alif after fatha', () {
+    test('does not classify natural madd as wajib or jaiz', () {
       const text = 'قَالَ';
       final index = text.indexOf('ا');
 
       expect(index, isNonNegative);
-      expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Mad');
+      expect(TajwidUtils.getTajwidInfo(text, index).$2, isEmpty);
     });
 
-    test('detects madd on small waw sign', () {
+    test('does not classify small waw sign as wajib or jaiz', () {
       const text = 'هُۥ';
       final index = text.indexOf('ۥ');
 
       expect(index, isNonNegative);
-      expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Mad');
+      expect(TajwidUtils.getTajwidInfo(text, index).$2, isEmpty);
+    });
+
+    test('detects mad wajib muttasil from Arabic maddah above', () {
+      final text = TajwidMadHelper.applyMadWajibAndJaizSigns('جَاءَ');
+      final index = text.indexOf(TajwidMadHelper.maddahAbove);
+
+      expect(index, isNonNegative);
+      expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Mad Wajib Muttasil');
+    });
+
+    test('detects mad jaiz munfasil from Arabic maddah above', () {
+      final text = TajwidMadHelper.applyMadWajibAndJaizSigns(
+        'إِنَّا أَعْطَيْنَاكَ',
+      );
+      final index = text.indexOf(TajwidMadHelper.maddahAbove);
+
+      expect(index, isNonNegative);
+      expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Mad Jaiz Munfasil');
+    });
+
+    test('does not keep the old yellow madd color', () {
+      expect(AppColors.tajwidColors, isNot(contains('madd')));
+      expect(
+        AppColors.tajwidColors['madWajibMuttasil'],
+        isNot(const Color(0xFFFBC02D)),
+      );
+      expect(
+        AppColors.tajwidColors['madJaizMunfasil'],
+        isNot(const Color(0xFFFBC02D)),
+      );
     });
 
     test('detects madd harfi across every muqattaah opening', () {
@@ -115,6 +148,11 @@ void main() {
 
       expect(QuranUtils.cleanText('$bismillah الم'), 'الٓمٓ');
       expect(QuranUtils.cleanText('يس'), 'يسٓ');
+      expect(QuranUtils.prepareForDisplay('جَاءَ'), 'جَآءَ');
+      expect(
+        QuranUtils.prepareForDisplay('إِنَّا أَعْطَيْنَاكَ'),
+        'إِنَّآ أَعْطَيْنَاكَ',
+      );
     });
 
     test('does not detect vowelled ya as madd', () {

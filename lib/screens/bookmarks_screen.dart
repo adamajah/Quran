@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../models/verse_ref.dart';
+import '../utils/quran_utils.dart';
 import '../widgets/common/premium_card.dart';
 import '../services/bookmark_service.dart';
 import '../widgets/bookmarks/add_bookmark_sheet.dart';
@@ -645,10 +646,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       TextSpan(
                         children: [
                           TextSpan(
-                            text: q.getVerse(
-                              bm.surah,
-                              bm.verse,
-                              verseEndSymbol: false,
+                            text: QuranUtils.prepareForDisplay(
+                              q.getVerse(
+                                bm.surah,
+                                bm.verse,
+                                verseEndSymbol: false,
+                              ),
                             ),
                             style: AppQuranFonts.hafsStyle.copyWith(
                               fontSize: 24,
@@ -786,7 +789,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   void _shareAyat(BookmarkEntry bm) {
     final text =
-        '${q.getVerse(bm.surah, bm.verse, verseEndSymbol: true)}\n\n'
+        '${QuranUtils.prepareForDisplay(q.getVerse(bm.surah, bm.verse, verseEndSymbol: true))}\n\n'
         '${bm.translation ?? ""}\n\n'
         '(Q.S ${bm.surahName}: ${bm.verse})';
     SharePlus.instance.share(ShareParams(text: text));

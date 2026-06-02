@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import 'tajwid_mad_helper.dart';
 
 class TajwidUtils {
   static const _sunLetters = 'تثدذرزسشصضطظلن';
   static const _idghamLetters = 'يرملون';
   static const _ikhfaLetters = 'تثجدذزسشصضطظفقك';
-  static const _maddSigns = 'آٰٓۥۦۧ';
   static const _maddahAbove = '\u0653';
   static const _muqattaahAlphabet = 'المصركهيعطسحقن';
   static const _muqattaahTokens = {
@@ -26,18 +26,6 @@ class TajwidUtils {
   };
   static const _twoHarakatMuqattaahLetters = 'حيطهر';
   static const _sixHarakatMuqattaahLetters = 'نقصسلكم';
-  static const _maddBlockingMarks = {
-    'َ',
-    'ِ',
-    'ُ',
-    'ً',
-    'ٍ',
-    'ٌ',
-    'ْ',
-    'ّ',
-    'ٔ',
-    'ٕ',
-  };
   static final _attachedMarkPattern = RegExp(
     r'[\u064B-\u065F\u0670\u06D6-\u06ED]',
   );
@@ -114,24 +102,6 @@ class TajwidUtils {
     return false;
   }
 
-  static bool _hasShortVowelBefore(String text, int index, String vowel) {
-    for (int i = index - 1; i >= 0; i--) {
-      final ch = text[i];
-      if (ch == vowel) return true;
-      if (!_isAttachedMark(ch)) return false;
-    }
-    return false;
-  }
-
-  static bool _hasMaddBlockingMarkAhead(String text, int index) {
-    for (int i = index + 1; i < text.length; i++) {
-      final ch = text[i];
-      if (_maddBlockingMarks.contains(ch)) return true;
-      if (!_isAttachedMark(ch)) return false;
-    }
-    return false;
-  }
-
   static String? _prevMeaningfulChar(String text, int index) {
     for (int i = index; i >= 0; i--) {
       final ch = text[i];
@@ -187,7 +157,24 @@ class TajwidUtils {
       return null;
     }
 
-    return (AppColors.tajwidColors['madd']!, 'Mad Harfi', description);
+    return (AppColors.tajwidColors['madHarfi']!, 'Mad Harfi', description);
+  }
+
+  static (Color, String, String)? _getAppliedMadInfo(String text, int index) {
+    final rule = TajwidMadHelper.ruleForMaddahAt(text, index);
+    return switch (rule) {
+      TajwidMadRule.wajibMuttasil => (
+        AppColors.tajwidColors['madWajibMuttasil']!,
+        'Mad Wajib Muttasil',
+        'Huruf mad bertemu hamzah dalam satu kata.',
+      ),
+      TajwidMadRule.jaizMunfasil => (
+        AppColors.tajwidColors['madJaizMunfasil']!,
+        'Mad Jaiz Munfasil',
+        'Huruf mad di akhir kata bertemu hamzah pada awal kata berikutnya.',
+      ),
+      null => null,
+    };
   }
 
   static (Color, String, String) getTajwidInfo(String text, int index) {
@@ -196,6 +183,8 @@ class TajwidUtils {
     final muqattaahMaddInfo = _getMuqattaahMaddInfo(text, index);
 
     if (muqattaahMaddInfo != null) return muqattaahMaddInfo;
+    final appliedMadInfo = _getAppliedMadInfo(text, index);
+    if (appliedMadInfo != null) return appliedMadInfo;
 
     // 1. Ghunnah: Nun/Mim Tasydid
     if ((char == 'ن' || char == 'م') && _hasMarkAhead(text, index, 'ّ')) {
@@ -251,28 +240,7 @@ class TajwidUtils {
       );
     }
 
-    // 6. Madd: Mad signs or vowel prolongations
-    if (_maddSigns.contains(char) ||
-        (char == 'ا' &&
-            _hasShortVowelBefore(text, index, 'َ') &&
-            !_hasMaddBlockingMarkAhead(text, index)) ||
-        (char == 'و' &&
-            _hasShortVowelBefore(text, index, 'ُ') &&
-            !_hasMaddBlockingMarkAhead(text, index)) ||
-        (char == 'ي' &&
-            _hasShortVowelBefore(text, index, 'ِ') &&
-            !_hasMaddBlockingMarkAhead(text, index)) ||
-        (char == 'ى' &&
-            _hasShortVowelBefore(text, index, 'َ') &&
-            !_hasMaddBlockingMarkAhead(text, index))) {
-      return (
-        AppColors.tajwidColors['madd']!,
-        'Mad',
-        'Pemanjangan suara huruf mad.',
-      );
-    }
-
-    // 7. Lam Syamsiyah: alif-lam assimilates into the next sun letter
+    // 6. Lam Syamsiyah: alif-lam assimilates into the next sun letter
     if (char == 'ل' &&
         nextMeaningfulChar != null &&
         _sunLetters.contains(nextMeaningfulChar) &&

@@ -1,5 +1,7 @@
 import 'package:quran/quran.dart' as q;
 
+import 'tajwid_mad_helper.dart';
+
 class QuranUtils {
   static const _muqattaahDisplayForms = {
     'الم': 'ال\u0653م\u0653',
@@ -34,7 +36,7 @@ class QuranUtils {
         text = text.replaceFirst(bismillah, "").trim();
       }
     }
-    return _addMuqattaahDisplayMarks(text);
+    return prepareForDisplay(text);
   }
 
   /// Removes Bismillah prefix from a string if it exists.
@@ -44,12 +46,16 @@ class QuranUtils {
       // Check if it's ONLY Bismillah (could be Surah 1, Verse 1)
       // If it's longer than Bismillah, it's definitely a prefix.
       if (text.trim() != bismillah.trim()) {
-        return _addMuqattaahDisplayMarks(
-          text.replaceFirst(bismillah, "").trim(),
-        );
+        return prepareForDisplay(text.replaceFirst(bismillah, "").trim());
       }
     }
-    return _addMuqattaahDisplayMarks(text);
+    return prepareForDisplay(text);
+  }
+
+  static String prepareForDisplay(String text) {
+    return TajwidMadHelper.applyMadWajibAndJaizSigns(
+      _addMuqattaahDisplayMarks(text),
+    );
   }
 
   static String _addMuqattaahDisplayMarks(String text) {
