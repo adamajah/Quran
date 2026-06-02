@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import 'tajwid_idzhar_helper.dart';
+import 'tajwid_lam_helper.dart';
 import 'tajwid_mad_helper.dart';
 
 class TajwidUtils {
@@ -260,6 +261,15 @@ class TajwidUtils {
         AppColors.tajwidColors['lamSyamsiyah']!,
         'Lam Syamsiyah',
         'Lam pada ال melebur ke huruf syamsiyah berikutnya.',
+      );
+    }
+
+    // 8. Lam Qamariah: alif-lam remains clear before a moon letter
+    if (TajwidLamHelper.isLamQamariahAt(text, index)) {
+      return (
+        AppColors.tajwidColors['lamQamariah']!,
+        'Lam Qamariah',
+        'Dibaca jelas',
       );
     }
 

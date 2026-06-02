@@ -27,7 +27,7 @@ void main() {
     test('supports superscript alif without damaging Arabic marks', () {
       expect(
         TajwidMadHelper.applyMadWajibAndJaizSigns('هَٰؤُلَاءِ مُوسَىٰ إِذْ'),
-        'هَٰٓؤُلَاءِ مُوسَىٰٓ إِذْ',
+        'هَٰٓؤُلَآءِ مُوسَىٰٓ إِذْ',
       );
     });
 

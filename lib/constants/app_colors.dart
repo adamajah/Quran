@@ -38,6 +38,7 @@ class AppColors {
     'madHarfi': Color(0xFF6D4C41), // Dark Brown
     'tafkhim': Color(0xFF455A64), // Slate
     'lamSyamsiyah': Color(0xFF827717), // Olive
+    'lamQamariah': Color(0xFF3949AB), // Indigo
     'default': ink,
   };
 }

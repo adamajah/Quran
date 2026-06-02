@@ -79,6 +79,13 @@ class TajwidLegend extends StatelessWidget {
       'الشَّمْس',
     ),
     (
+      'Lam Qamariah',
+      'لَامُ الْقَمَرِيَّة',
+      Color(0xFF3949AB),
+      'Dibaca jelas',
+      'الْقَمَرُ',
+    ),
+    (
       'Tafkhim',
       'تَفْخِيم',
       Color(0xFF455A64),

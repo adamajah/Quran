@@ -221,6 +221,16 @@ void main() {
       expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Lam Syamsiyah');
     });
 
+    test('detects lam qamariah with clear-reading description', () {
+      const text = 'الْقَمَرُ';
+      final index = text.indexOf('\u0644');
+      final info = TajwidUtils.getTajwidInfo(text, index);
+
+      expect(index, isNonNegative);
+      expect(info.$2, 'Lam Qamariah');
+      expect(info.$3, 'Dibaca jelas');
+    });
+
     test('does not treat tatweel as tafkhim', () {
       final verse = q.getVerse(1, 1, verseEndSymbol: false);
       final index = verse.indexOf('ـ');

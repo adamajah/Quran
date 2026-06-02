@@ -83,6 +83,13 @@ class TajwidLegend extends StatelessWidget {
       'Lam pada alif-lam lebur ke huruf syamsiyah berikutnya (ت ث د ذ…).',
       'الشَّمْس',
     ),
+    (
+      'Lam Qamariah',
+      'لَامُ الْقَمَرِيَّة',
+      Color(0xFF3949AB),
+      'Dibaca jelas',
+      'الْقَمَرُ',
+    ),
   ];
 
   @override
