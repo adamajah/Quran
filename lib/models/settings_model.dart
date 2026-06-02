@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum MushafFont { hafs, uthmani, kfgqpc, amiri, indopak }
+enum MushafFont { hafs, naskh }
 
 enum AppTheme { light, dark, gold, sepia }
 
@@ -84,14 +84,8 @@ class AppSettings {
     switch (mushafFont) {
       case MushafFont.hafs:
         return 'Hafs Madinah';
-      case MushafFont.uthmani:
-        return 'Uthmani';
-      case MushafFont.kfgqpc:
-        return 'KFGQPC';
-      case MushafFont.amiri:
-        return 'Amiri Quran';
-      case MushafFont.indopak:
-        return 'IndoPak';
+      case MushafFont.naskh:
+        return 'Naskh Arabic';
     }
   }
 

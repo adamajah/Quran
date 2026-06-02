@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../constants/quran_fonts.dart';
 
 import '../../constants/app_colors.dart';
+import '../../models/settings_model.dart';
 import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
 import '../../utils/tajwid_utils.dart';
@@ -14,6 +15,7 @@ class NormalPage extends StatelessWidget {
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
   final double fontScale;
+  final MushafFont mushafFont;
   final Set<String> bookmarkedVerses;
   final void Function(int, int) onTapVerse, onBookmarkVerse;
 
@@ -26,6 +28,7 @@ class NormalPage extends StatelessWidget {
     required this.tappedVerse,
     required this.isPlayingPage,
     required this.fontScale,
+    required this.mushafFont,
     required this.showTajwid,
     required this.bookmarkedVerses,
     required this.onTapVerse,
@@ -54,6 +57,7 @@ class NormalPage extends StatelessWidget {
             isPlayingPage: isPlayingPage,
 
             fontScale: fontScale,
+            mushafFont: mushafFont,
 
             showTajwid: showTajwid,
 
@@ -78,6 +82,7 @@ class NormalBody extends StatelessWidget {
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
   final double fontScale;
+  final MushafFont mushafFont;
   final Set<String> bookmarkedVerses;
   final void Function(int, int) onTapVerse, onBookmarkVerse;
 
@@ -90,6 +95,7 @@ class NormalBody extends StatelessWidget {
     required this.tappedVerse,
     required this.isPlayingPage,
     required this.fontScale,
+    required this.mushafFont,
     required this.showTajwid,
     required this.bookmarkedVerses,
     required this.onTapVerse,
@@ -109,12 +115,11 @@ class NormalBody extends StatelessWidget {
     double lh,
     double maxW,
     Color inkColor,
+    MushafFont mushafFont,
   ) {
-    final s = AppQuranFonts.hafsStyle.copyWith(
-      fontSize: fs,
-      height: lh,
-      color: inkColor,
-    );
+    final s = AppQuranFonts.styleFor(
+      mushafFont,
+    ).copyWith(fontSize: fs, height: lh, color: inkColor);
     final spans =
         vv.map((v) {
           final t = QuranUtils.getCleanVerse(
@@ -138,11 +143,12 @@ class NormalBody extends StatelessWidget {
     double maxW,
     double maxH,
     Color inkColor,
+    MushafFont mushafFont,
   ) {
     if (maxH <= 20) return 7.0;
 
     final cacheKey =
-        '$pageNum|${maxW.toStringAsFixed(1)}|${maxH.toStringAsFixed(1)}|${inkColor.toARGB32()}';
+        '$pageNum|${maxW.toStringAsFixed(1)}|${maxH.toStringAsFixed(1)}|${inkColor.toARGB32()}|${mushafFont.name}';
     final cached = _fsCache[cacheKey];
     if (cached != null) return cached;
 
@@ -151,7 +157,7 @@ class NormalBody extends StatelessWidget {
     double best = lo;
     for (int i = 0; i < 8; i++) {
       final mid = (lo + hi) / 2.0;
-      if (_measureH(vv, mid, 1.85, maxW, inkColor) <= maxH) {
+      if (_measureH(vv, mid, 1.85, maxW, inkColor, mushafFont) <= maxH) {
         best = mid;
         lo = mid;
       } else {
@@ -187,7 +193,14 @@ class NormalBody extends StatelessWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final inkColor = isDark ? Colors.white : AppColors.ink;
 
-        final fs = _bestFs(data.pageNum, data.verses, availW, availH, inkColor);
+        final fs = _bestFs(
+          data.pageNum,
+          data.verses,
+          availW,
+          availH,
+          inkColor,
+          mushafFont,
+        );
 
         final List<Widget> children = [];
 
@@ -199,7 +212,7 @@ class NormalBody extends StatelessWidget {
           }
 
           if (g.isFirstInMushaf && g.surah != 9) {
-            children.add(const Basmalah());
+            children.add(Basmalah(mushafFont: mushafFont));
           }
 
           children.add(
@@ -209,6 +222,7 @@ class NormalBody extends StatelessWidget {
               fs: fs,
 
               fontScale: fontScale,
+              mushafFont: mushafFont,
 
               showTajwid: showTajwid,
               playSurah: playSurah,
@@ -248,6 +262,7 @@ class NormalBody extends StatelessWidget {
 class TappableVerseBlock extends StatefulWidget {
   final SurahGroup group;
   final double fs, fontScale;
+  final MushafFont mushafFont;
   final bool showTajwid, isPlayingPage;
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final Set<String> bookmarkedVerses;
@@ -258,6 +273,7 @@ class TappableVerseBlock extends StatefulWidget {
     required this.group,
     required this.fs,
     required this.fontScale,
+    required this.mushafFont,
     required this.showTajwid,
     required this.isPlayingPage,
     required this.playSurah,
@@ -275,6 +291,8 @@ class TappableVerseBlock extends StatefulWidget {
 
 class _TappableVerseBlockState extends State<TappableVerseBlock> {
   int _hoveredVerse = 0;
+
+  TextStyle get _quranStyle => AppQuranFonts.styleFor(widget.mushafFont);
 
   static String _ar(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -313,7 +331,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       out.add(
         TextSpan(
           text: ' ',
-          style: AppQuranFonts.hafsStyle.copyWith(
+          style: _quranStyle.copyWith(
             fontSize: widget.fs * widget.fontScale,
             height: 1.85,
             color: inkColor,
@@ -345,7 +363,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
               ),
               child: Text(
                 _ar(v.verse),
-                style: AppQuranFonts.hafsStyle.copyWith(
+                style: _quranStyle.copyWith(
                   fontSize: numFs * widget.fontScale,
                   color:
                       active
@@ -362,7 +380,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       out.add(
         TextSpan(
           text: ' ',
-          style: AppQuranFonts.hafsStyle.copyWith(
+          style: _quranStyle.copyWith(
             fontSize: widget.fs * widget.fontScale,
             height: 1.85,
             color: inkColor,
@@ -424,7 +442,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       return [
         TextSpan(
           text: text,
-          style: AppQuranFonts.hafsStyle.copyWith(
+          style: _quranStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
@@ -457,7 +475,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
           recognizer:
               TapGestureRecognizer()
                 ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
-          style: AppQuranFonts.hafsStyle.copyWith(
+          style: _quranStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: color,

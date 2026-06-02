@@ -7,7 +7,7 @@ import '../models/settings_model.dart';
 
 class SettingsService {
   static const String _keyArabicFontSize = 'arabic_font_size';
-  static const String _keyMushafFont = 'mushaf_font';
+  static const String _keyMushafFont = 'mushaf_font_v2';
   static const String _keyLineSpacing = 'line_spacing';
   static const String _keyShowVerseNumbers = 'show_verse_numbers';
   static const String _keyTheme = 'app_theme';
@@ -27,7 +27,7 @@ class SettingsService {
   AppSettings loadSettings() {
     return AppSettings(
       arabicFontSize: _prefs.getDouble(_keyArabicFontSize) ?? 22.0,
-      mushafFont: MushafFont.values[_prefs.getInt(_keyMushafFont) ?? 0],
+      mushafFont: _loadMushafFont(),
       lineSpacing: _prefs.getDouble(_keyLineSpacing) ?? 2.2,
       showVerseNumbers: _prefs.getBool(_keyShowVerseNumbers) ?? true,
       theme: AppTheme.values[_prefs.getInt(_keyTheme) ?? 0],
@@ -46,7 +46,7 @@ class SettingsService {
 
   Future<void> saveSettings(AppSettings settings) async {
     await _prefs.setDouble(_keyArabicFontSize, settings.arabicFontSize);
-    await _prefs.setInt(_keyMushafFont, settings.mushafFont.index);
+    await _prefs.setString(_keyMushafFont, settings.mushafFont.name);
     await _prefs.setDouble(_keyLineSpacing, settings.lineSpacing);
     await _prefs.setBool(_keyShowVerseNumbers, settings.showVerseNumbers);
     await _prefs.setInt(_keyTheme, settings.theme.index);
@@ -71,6 +71,14 @@ class SettingsService {
     }
     final parts = timeStr.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  MushafFont _loadMushafFont() {
+    final storedFont = _prefs.getString(_keyMushafFont);
+    return MushafFont.values.firstWhere(
+      (font) => font.name == storedFont,
+      orElse: () => MushafFont.hafs,
+    );
   }
 
   String _resolveDefaultReciterId(String? storedId) {

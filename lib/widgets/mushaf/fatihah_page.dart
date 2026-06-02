@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
+import '../../models/settings_model.dart';
 import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
 import '../../utils/tajwid_utils.dart';
@@ -14,6 +15,7 @@ class FatihahPage extends StatefulWidget {
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
   final double fontScale;
+  final MushafFont mushafFont;
   final Set<String> bookmarkedVerses;
   final void Function(int, int) onTapVerse, onBookmarkVerse;
 
@@ -26,6 +28,7 @@ class FatihahPage extends StatefulWidget {
     required this.tappedVerse,
     required this.isPlayingPage,
     required this.fontScale,
+    required this.mushafFont,
     required this.showTajwid,
     required this.bookmarkedVerses,
     required this.onTapVerse,
@@ -37,6 +40,8 @@ class FatihahPage extends StatefulWidget {
 }
 
 class _FatihahPageState extends State<FatihahPage> {
+  TextStyle get _quranStyle => AppQuranFonts.styleFor(widget.mushafFont);
+
   static String _ar(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return n.toString().split('').map((c) => d[int.parse(c)]).join();
@@ -170,7 +175,7 @@ class _FatihahPageState extends State<FatihahPage> {
                     ),
                     TextSpan(
                       text: ' ${_ar(v.verse)}',
-                      style: AppQuranFonts.hafsStyle.copyWith(
+                      style: _quranStyle.copyWith(
                         fontSize: 15 * widget.fontScale,
                         color:
                             active
@@ -205,7 +210,7 @@ class _FatihahPageState extends State<FatihahPage> {
       return [
         TextSpan(
           text: text,
-          style: AppQuranFonts.hafsStyle.copyWith(
+          style: _quranStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: active ? (isDark ? Colors.white : AppColors.hl) : inkColor,
@@ -237,7 +242,7 @@ class _FatihahPageState extends State<FatihahPage> {
           recognizer:
               TapGestureRecognizer()
                 ..onTap = () => _showTajwidHint(info.$2, info.$3, info.$1),
-          style: AppQuranFonts.hafsStyle.copyWith(
+          style: _quranStyle.copyWith(
             fontSize: fontSize,
             height: height,
             color: color,

@@ -84,7 +84,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'Qari Default',
                         () {
                           final current = availableReciters.where(
-                            (reciter) => reciter.id == settings.defaultReciterId,
+                            (reciter) =>
+                                reciter.id == settings.defaultReciterId,
                           );
                           return current.isNotEmpty
                               ? current.first.name
@@ -398,10 +399,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showFontPicker(BuildContext context, SettingsController controller) {
     final fonts = [
       {'name': 'Hafs Madinah', 'value': MushafFont.hafs},
-      {'name': 'Uthmani', 'value': MushafFont.uthmani},
-      {'name': 'KFGQPC', 'value': MushafFont.kfgqpc},
-      {'name': 'Amiri Quran', 'value': MushafFont.amiri},
-      {'name': 'IndoPak', 'value': MushafFont.indopak},
+      {'name': 'Naskh Arabic', 'value': MushafFont.naskh},
     ];
 
     showModalBottomSheet(
@@ -568,7 +566,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           horizontal: 16,
                           vertical: 8,
                         ),
-                    child: TextField(
+                        child: TextField(
                           decoration: InputDecoration(
                             hintText: 'Cari nama qari...',
                             prefixIcon: const Icon(

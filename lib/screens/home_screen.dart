@@ -699,6 +699,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           tappedVerse: _tappedVerse,
                           isPlayingPage: idx == _pgIdx && _playV != 0,
                           fontScale: fontScale,
+                          mushafFont: settings.mushafFont,
                           showTajwid: settings.showTajwid,
                           bookmarkedVerses:
                               _bookmarks

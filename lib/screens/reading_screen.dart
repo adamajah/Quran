@@ -486,11 +486,10 @@ class _HafsVerseArea extends StatelessWidget {
 
   List<InlineSpan> _buildSpans(double fs) {
     final spans = <InlineSpan>[];
-    final hafsStyle = AppQuranFonts.hafsStyle;
-    final verseStyle = hafsStyle.copyWith(
+    final quranStyle = AppQuranFonts.styleFor(settings.mushafFont);
+    final verseStyle = quranStyle.copyWith(
       fontSize: fs,
       height: settings.lineSpacing,
-      // In a real app, you'd switch the fontFamily based on settings.mushafFont
     );
     final cs = (fs * 1.1).clamp(16.0, 30.0);
 
@@ -530,7 +529,7 @@ class _HafsVerseArea extends StatelessWidget {
               child: Center(
                 child: Text(
                   _toArabic(verseIdx),
-                  style: AppQuranFonts.hafsStyle.copyWith(
+                  style: quranStyle.copyWith(
                     fontSize: (fs * 0.42).clamp(7.0, 13.0),
                     color: active ? _hl : darkBrown,
                     fontWeight: FontWeight.bold,
@@ -548,7 +547,7 @@ class _HafsVerseArea extends StatelessWidget {
   }
 
   double _measureHeight(double fs, double maxW) {
-    final hafsStyle = AppQuranFonts.hafsStyle;
+    final quranStyle = AppQuranFonts.styleFor(settings.mushafFont);
     final tp = TextPainter(
       text: TextSpan(
         children:
@@ -557,7 +556,7 @@ class _HafsVerseArea extends StatelessWidget {
                 .map(
                   (t) => TextSpan(
                     text: "${QuranUtils.cleanText(t)}  ",
-                    style: hafsStyle.copyWith(
+                    style: quranStyle.copyWith(
                       fontSize: fs,
                       height: settings.lineSpacing,
                     ),

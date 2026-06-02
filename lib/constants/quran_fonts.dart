@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/settings_model.dart';
 
 abstract final class AppQuranFonts {
   static const hafsStyle = TextStyle(
@@ -12,4 +13,11 @@ abstract final class AppQuranFonts {
     fontSize: 23.55,
     fontFamily: 'naskh',
   );
+
+  static TextStyle styleFor(MushafFont font) {
+    return switch (font) {
+      MushafFont.hafs => hafsStyle,
+      MushafFont.naskh => naskhStyle,
+    };
+  }
 }

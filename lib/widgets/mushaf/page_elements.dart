@@ -4,6 +4,7 @@ import 'package:quran/quran.dart' as q;
 import '../../constants/quran_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_style.dart';
+import '../../models/settings_model.dart';
 import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
 
@@ -55,7 +56,9 @@ class PageHeader extends StatelessWidget {
 }
 
 class Basmalah extends StatelessWidget {
-  const Basmalah({super.key});
+  final MushafFont mushafFont;
+
+  const Basmalah({super.key, required this.mushafFont});
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -80,7 +83,7 @@ class Basmalah extends StatelessWidget {
         bismillah,
         textAlign: TextAlign.center,
         textDirection: TextDirection.rtl,
-        style: AppQuranFonts.hafsStyle.copyWith(
+        style: AppQuranFonts.styleFor(mushafFont).copyWith(
           fontSize: 18,
           color: isDark ? Colors.white : AppColors.dark,
           height: 1.6,

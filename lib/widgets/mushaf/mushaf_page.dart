@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
+import '../../models/settings_model.dart';
 import '../../models/verse_ref.dart';
 import './fatihah_page.dart';
 import './normal_page.dart';
@@ -10,6 +11,7 @@ class MushafPage extends StatelessWidget {
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final bool isPlayingPage, showTajwid;
   final double fontScale;
+  final MushafFont mushafFont;
   final Set<String> bookmarkedVerses;
   final void Function(int surah, int verse) onTapVerse;
   final void Function(int surah, int verse) onBookmarkVerse;
@@ -23,6 +25,7 @@ class MushafPage extends StatelessWidget {
     required this.tappedVerse,
     required this.isPlayingPage,
     required this.fontScale,
+    required this.mushafFont,
     required this.showTajwid,
     required this.bookmarkedVerses,
     required this.onTapVerse,
@@ -66,6 +69,7 @@ class MushafPage extends StatelessWidget {
                       tappedVerse: tappedVerse,
                       isPlayingPage: isPlayingPage,
                       fontScale: fontScale,
+                      mushafFont: mushafFont,
                       showTajwid: showTajwid,
                       bookmarkedVerses: bookmarkedVerses,
                       onTapVerse: onTapVerse,
@@ -79,6 +83,7 @@ class MushafPage extends StatelessWidget {
                       tappedVerse: tappedVerse,
                       isPlayingPage: isPlayingPage,
                       fontScale: fontScale,
+                      mushafFont: mushafFont,
                       showTajwid: showTajwid,
                       bookmarkedVerses: bookmarkedVerses,
                       onTapVerse: onTapVerse,
