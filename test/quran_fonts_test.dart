@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_quran_app/constants/quran_fonts.dart';
 import 'package:flutter_quran_app/models/settings_model.dart';
 import 'package:flutter_quran_app/services/settings_service.dart';
+import 'package:flutter_quran_app/widgets/mushaf/verse_number_ornament.dart';
 
 void main() {
   group('AppQuranFonts', () {
@@ -14,6 +15,27 @@ void main() {
         AppQuranFonts.styleFor(MushafFont.lpmqIsepMisbah).fontFamily,
         'lpmqIsepMisbah',
       );
+    });
+
+    test('uses compact metrics for naskh and LPMQ fonts', () {
+      expect(
+        AppQuranFonts.textScaleFor(MushafFont.naskh),
+        lessThan(AppQuranFonts.textScaleFor(MushafFont.hafs)),
+      );
+      expect(
+        AppQuranFonts.textScaleFor(MushafFont.lpmqIsepMisbah),
+        lessThan(AppQuranFonts.textScaleFor(MushafFont.naskh)),
+      );
+      expect(
+        AppQuranFonts.lineHeightFor(MushafFont.lpmqIsepMisbah),
+        lessThan(AppQuranFonts.lineHeightFor(MushafFont.hafs)),
+      );
+    });
+  });
+
+  group('VerseNumberOrnament', () {
+    test('uses the native end-of-ayah ornament with Arabic numerals', () {
+      expect(VerseNumberOrnament.textFor(97), '\u06DD\u0669\u0667');
     });
   });
 

@@ -9,6 +9,7 @@ import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
 import '../../utils/tajwid_utils.dart';
 import './page_elements.dart';
+import './verse_number_ornament.dart';
 
 class FatihahPage extends StatefulWidget {
   final PageData data;
@@ -41,11 +42,9 @@ class FatihahPage extends StatefulWidget {
 
 class _FatihahPageState extends State<FatihahPage> {
   TextStyle get _quranStyle => AppQuranFonts.styleFor(widget.mushafFont);
-
-  static String _ar(int n) {
-    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => d[int.parse(c)]).join();
-  }
+  double get _lineHeight =>
+      AppQuranFonts.lineHeightFor(widget.mushafFont, spacious: true);
+  double get _textScale => AppQuranFonts.textScaleFor(widget.mushafFont);
 
   void _showTajwidHint(String name, String desc, Color color) {
     if (name.isEmpty) return;
@@ -167,22 +166,30 @@ class _FatihahPageState extends State<FatihahPage> {
                   children: [
                     ..._buildTajwidSpans(
                       text,
-                      23 * widget.fontScale,
-                      2.2,
+                      23 * widget.fontScale * _textScale,
+                      _lineHeight,
                       active,
                       widget.showTajwid,
                       inkColor,
                     ),
                     TextSpan(
-                      text: ' ${_ar(v.verse)}',
+                      text: ' ',
                       style: _quranStyle.copyWith(
-                        fontSize: 15 * widget.fontScale,
+                        fontSize: 23 * widget.fontScale * _textScale,
+                        height: _lineHeight,
+                      ),
+                    ),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: VerseNumberOrnament(
+                        verse: v.verse,
+                        mushafFont: widget.mushafFont,
+                        fontSize: 18 * widget.fontScale,
                         color:
                             active
                                 ? (isDark ? Colors.white : AppColors.hl)
                                 : AppColors.gold,
-                        fontWeight: FontWeight.bold,
-                        height: 2.2,
+                        height: _lineHeight,
                       ),
                     ),
                   ],

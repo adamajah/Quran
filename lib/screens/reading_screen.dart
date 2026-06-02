@@ -16,6 +16,7 @@ import '../screens/translation_dialog.dart';
 import '../controllers/settings_controller.dart';
 import '../models/settings_model.dart';
 import '../widgets/mushaf/translation_panel.dart';
+import '../widgets/mushaf/verse_number_ornament.dart';
 import '../services/reciter_audio_service.dart';
 
 class ReadingScreen extends StatefulWidget {
@@ -479,19 +480,18 @@ class _HafsVerseArea extends StatelessWidget {
     required this.darkBrown,
   });
 
-  static String _toArabic(int n) {
-    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => d[int.parse(c)]).join();
-  }
-
   List<InlineSpan> _buildSpans(double fs) {
     final spans = <InlineSpan>[];
     final quranStyle = AppQuranFonts.styleFor(settings.mushafFont);
+    final textScale = AppQuranFonts.textScaleFor(settings.mushafFont);
+    final lineHeight =
+        settings.lineSpacing *
+        AppQuranFonts.readingLineHeightScaleFor(settings.mushafFont);
+    final scaledFs = fs * textScale;
     final verseStyle = quranStyle.copyWith(
-      fontSize: fs,
-      height: settings.lineSpacing,
+      fontSize: scaledFs,
+      height: lineHeight,
     );
-    final cs = (fs * 1.1).clamp(16.0, 30.0);
 
     final versesOnPage = quran_pkg.getVersesTextByPage(pageNum);
     for (int i = 0; i < versesOnPage.length; i++) {
@@ -514,27 +514,14 @@ class _HafsVerseArea extends StatelessWidget {
         spans.add(
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
-            child: Container(
-              width: cs,
-              height: cs,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color:
-                    active
-                        ? _hl.withValues(alpha: 0.12)
-                        : gold.withValues(alpha: 0.10),
-                border: Border.all(color: active ? _hl : gold, width: 1),
-              ),
-              child: Center(
-                child: Text(
-                  _toArabic(verseIdx),
-                  style: quranStyle.copyWith(
-                    fontSize: (fs * 0.42).clamp(7.0, 13.0),
-                    color: active ? _hl : darkBrown,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: VerseNumberOrnament(
+                verse: verseIdx,
+                mushafFont: settings.mushafFont,
+                fontSize: (scaledFs * 0.90).clamp(14.0, 24.0),
+                color: active ? _hl : gold,
+                height: lineHeight,
               ),
             ),
           ),
@@ -548,17 +535,25 @@ class _HafsVerseArea extends StatelessWidget {
 
   double _measureHeight(double fs, double maxW) {
     final quranStyle = AppQuranFonts.styleFor(settings.mushafFont);
+    final textScale = AppQuranFonts.textScaleFor(settings.mushafFont);
+    final lineHeight =
+        settings.lineSpacing *
+        AppQuranFonts.readingLineHeightScaleFor(settings.mushafFont);
+    final verses = quran_pkg.getVersesTextByPage(pageNum);
     final tp = TextPainter(
       text: TextSpan(
         children:
-            quran_pkg
-                .getVersesTextByPage(pageNum)
+            verses
+                .asMap()
+                .entries
                 .map(
-                  (t) => TextSpan(
-                    text: "${QuranUtils.cleanText(t)}  ",
+                  (entry) => TextSpan(
+                    text:
+                        '${QuranUtils.cleanText(entry.value)} '
+                        '${settings.showVerseNumbers ? VerseNumberOrnament.textFor(entry.key + 1) : ''} ',
                     style: quranStyle.copyWith(
-                      fontSize: fs,
-                      height: settings.lineSpacing,
+                      fontSize: fs * textScale,
+                      height: lineHeight,
                     ),
                   ),
                 )

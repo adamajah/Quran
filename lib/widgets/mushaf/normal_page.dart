@@ -9,6 +9,7 @@ import '../../models/verse_ref.dart';
 import '../../utils/quran_utils.dart';
 import '../../utils/tajwid_utils.dart';
 import './page_elements.dart';
+import './verse_number_ornament.dart';
 
 class NormalPage extends StatelessWidget {
   final PageData data;
@@ -104,22 +105,19 @@ class NormalBody extends StatelessWidget {
 
   static final Map<String, double> _fsCache = {};
 
-  static String _ar(int n) {
-    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => d[int.parse(c)]).join();
-  }
-
   static double _measureH(
     List<VerseRef> vv,
     double fs,
-    double lh,
     double maxW,
     Color inkColor,
     MushafFont mushafFont,
   ) {
-    final s = AppQuranFonts.styleFor(
-      mushafFont,
-    ).copyWith(fontSize: fs, height: lh, color: inkColor);
+    final scaledFs = fs * AppQuranFonts.textScaleFor(mushafFont);
+    final s = AppQuranFonts.styleFor(mushafFont).copyWith(
+      fontSize: scaledFs,
+      height: AppQuranFonts.lineHeightFor(mushafFont),
+      color: inkColor,
+    );
     final spans =
         vv.map((v) {
           final t = QuranUtils.getCleanVerse(
@@ -127,7 +125,10 @@ class NormalBody extends StatelessWidget {
             v.verse,
             verseEndSymbol: false,
           );
-          return TextSpan(text: '$t ${_ar(v.verse)} ', style: s);
+          return TextSpan(
+            text: '$t ${VerseNumberOrnament.textFor(v.verse)} ',
+            style: s,
+          );
         }).toList();
     final tp = TextPainter(
       text: TextSpan(children: spans),
@@ -157,7 +158,7 @@ class NormalBody extends StatelessWidget {
     double best = lo;
     for (int i = 0; i < 8; i++) {
       final mid = (lo + hi) / 2.0;
-      if (_measureH(vv, mid, 1.85, maxW, inkColor, mushafFont) <= maxH) {
+      if (_measureH(vv, mid, maxW, inkColor, mushafFont) <= maxH) {
         best = mid;
         lo = mid;
       } else {
@@ -293,15 +294,13 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
   int _hoveredVerse = 0;
 
   TextStyle get _quranStyle => AppQuranFonts.styleFor(widget.mushafFont);
-
-  static String _ar(int n) {
-    const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => d[int.parse(c)]).join();
-  }
+  double get _lineHeight => AppQuranFonts.lineHeightFor(widget.mushafFont);
+  double get _textScale => AppQuranFonts.textScaleFor(widget.mushafFont);
 
   List<InlineSpan> _buildSpans(Color inkColor, bool isDark) {
     final out = <InlineSpan>[];
-    final numFs = (widget.fs * 0.72).clamp(10.0, 16.0);
+    final verseFontSize = widget.fs * widget.fontScale * _textScale;
+    final ornamentFontSize = (widget.fs * 0.94).clamp(12.0, 20.0);
 
     for (final v in widget.group.verses) {
       final active =
@@ -321,8 +320,8 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       out.addAll(
         _buildTajwidSpans(
           text,
-          widget.fs * widget.fontScale,
-          1.85,
+          verseFontSize,
+          _lineHeight,
           active,
           widget.showTajwid,
           inkColor,
@@ -332,8 +331,8 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
         TextSpan(
           text: ' ',
           style: _quranStyle.copyWith(
-            fontSize: widget.fs * widget.fontScale,
-            height: 1.85,
+            fontSize: verseFontSize,
+            height: _lineHeight,
             color: inkColor,
           ),
         ),
@@ -361,17 +360,15 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
                         : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(
-                _ar(v.verse),
-                style: _quranStyle.copyWith(
-                  fontSize: numFs * widget.fontScale,
-                  color:
-                      active
-                          ? (isDark ? Colors.white : AppColors.hl)
-                          : AppColors.gold,
-                  fontWeight: FontWeight.bold,
-                  height: 1.85,
-                ),
+              child: VerseNumberOrnament(
+                verse: v.verse,
+                mushafFont: widget.mushafFont,
+                fontSize: ornamentFontSize * widget.fontScale,
+                color:
+                    active
+                        ? (isDark ? Colors.white : AppColors.hl)
+                        : AppColors.gold,
+                height: _lineHeight,
               ),
             ),
           ),
@@ -381,8 +378,8 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
         TextSpan(
           text: ' ',
           style: _quranStyle.copyWith(
-            fontSize: widget.fs * widget.fontScale,
-            height: 1.85,
+            fontSize: verseFontSize,
+            height: _lineHeight,
             color: inkColor,
           ),
         ),

@@ -84,9 +84,9 @@ class Basmalah extends StatelessWidget {
         textAlign: TextAlign.center,
         textDirection: TextDirection.rtl,
         style: AppQuranFonts.styleFor(mushafFont).copyWith(
-          fontSize: 18,
+          fontSize: 18 * AppQuranFonts.textScaleFor(mushafFont),
           color: isDark ? Colors.white : AppColors.dark,
-          height: 1.6,
+          height: AppQuranFonts.lineHeightFor(mushafFont) * 0.86,
         ),
       ),
     );
