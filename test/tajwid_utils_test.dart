@@ -197,6 +197,14 @@ void main() {
       expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Iqlab');
     });
 
+    test('detects idzhar halqi on nun sukun before a throat letter', () {
+      const text = 'مِنْ هَادٍ';
+      final index = text.indexOf('\u0646');
+
+      expect(index, isNonNegative);
+      expect(TajwidUtils.getTajwidInfo(text, index).$2, 'Idzhar Halqi');
+    });
+
     test('does not detect iqlab on vowelled nun before ba', () {
       const text = 'نَبَأ';
       final index = text.indexOf('ن');

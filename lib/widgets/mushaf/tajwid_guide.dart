@@ -37,6 +37,13 @@ class TajwidLegend extends StatelessWidget {
       'مِنْ بَعْدِ',
     ),
     (
+      'Idzhar Halqi',
+      'إِظْهَار حَلْقِي',
+      Color(0xFF00ACC1),
+      'Nun mati dibaca jelas ketika bertemu salah satu huruf halqi.',
+      'مِنْ هَادٍ',
+    ),
+    (
       'Qalqalah',
       'قَلْقَلَة',
       Color(0xFFC62828),

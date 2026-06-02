@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import 'tajwid_idzhar_helper.dart';
 import 'tajwid_mad_helper.dart';
 
 class TajwidUtils {
@@ -207,7 +208,16 @@ class TajwidUtils {
       }
     }
 
-    // 3. Iqlab: Nun followed by Ba
+    // 3. Idzhar Halqi: Nun sukun followed by a throat letter
+    if (TajwidIdzharHelper.isIdzharHalqiAt(text, index)) {
+      return (
+        AppColors.tajwidColors['idzharHalqi']!,
+        'Idzhar Halqi',
+        'Nun mati dibaca jelas ketika bertemu huruf halqi.',
+      );
+    }
+
+    // 4. Iqlab: Nun followed by Ba
     if (((char == 'ن' && _hasMarkAhead(text, index, 'ْ')) || _isTanwin(char)) &&
         nextMeaningfulChar != null &&
         'ب'.contains(nextMeaningfulChar)) {
@@ -218,7 +228,7 @@ class TajwidUtils {
       );
     }
 
-    // 4. Idgham: Nun followed by يرملون
+    // 5. Idgham: Nun followed by يرملون
     if (((char == 'ن' && _hasMarkAhead(text, index, 'ْ')) || _isTanwin(char)) &&
         nextMeaningfulChar != null &&
         _idghamLetters.contains(nextMeaningfulChar)) {
@@ -229,7 +239,7 @@ class TajwidUtils {
       );
     }
 
-    // 5. Ikhfa: Nun followed by 15 letters
+    // 6. Ikhfa: Nun followed by 15 letters
     if (((char == 'ن' && _hasMarkAhead(text, index, 'ْ')) || _isTanwin(char)) &&
         nextMeaningfulChar != null &&
         _ikhfaLetters.contains(nextMeaningfulChar)) {
@@ -240,7 +250,7 @@ class TajwidUtils {
       );
     }
 
-    // 6. Lam Syamsiyah: alif-lam assimilates into the next sun letter
+    // 7. Lam Syamsiyah: alif-lam assimilates into the next sun letter
     if (char == 'ل' &&
         nextMeaningfulChar != null &&
         _sunLetters.contains(nextMeaningfulChar) &&

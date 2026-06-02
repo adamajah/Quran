@@ -31,6 +31,7 @@ class AppColors {
     'idgham': Color(0xFF1976D2), // Blue
     'ikhfa': Color(0xFFE65100), // Orange
     'iqlab': Color(0xFF7B1FA2), // Purple
+    'idzharHalqi': Color(0xFF00ACC1), // Cyan
     'qalqalah': Color(0xFFC62828), // Red
     'madWajibMuttasil': Color(0xFFD81B60), // Deep Pink
     'madJaizMunfasil': Color(0xFF00897B), // Teal
