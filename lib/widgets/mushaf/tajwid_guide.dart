@@ -47,8 +47,8 @@ class TajwidLegend extends StatelessWidget {
       'Madd',
       'مَدّ',
       Color(0xFFFBC02D),
-      'Huruf mad dan tanda Uthmani seperti آ، ٰ، ٓ dibaca panjang 2–6 harakat sesuai jenis mad-nya.',
-      'قَالَ، قِيلَ، الرَّحْمَٰن',
+      "Huruf mad, tanda Uthmani seperti آ، ٰ، ٓ, dan huruf muqatta'ah pembuka surat dibaca panjang sesuai jenis mad-nya.",
+      'قَالَ، الرَّحْمَٰن، الم، يس',
     ),
     (
       'Lam Syamsiyah',

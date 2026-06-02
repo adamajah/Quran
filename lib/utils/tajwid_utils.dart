@@ -6,6 +6,25 @@ class TajwidUtils {
   static const _idghamLetters = 'يرملون';
   static const _ikhfaLetters = 'تثجدذزسشصضطظفقك';
   static const _maddSigns = 'آٰٓۥۦۧ';
+  static const _muqattaahAlphabet = 'المصركهيعطسحقن';
+  static const _muqattaahTokens = {
+    'الم',
+    'المص',
+    'الر',
+    'المر',
+    'كهيعص',
+    'طه',
+    'طسم',
+    'طس',
+    'يس',
+    'ص',
+    'حم',
+    'عسق',
+    'ق',
+    'ن',
+  };
+  static const _twoHarakatMuqattaahLetters = 'حيطهر';
+  static const _sixHarakatMuqattaahLetters = 'نقصسلكم';
   static const _maddBlockingMarks = {
     'َ',
     'ِ',
@@ -121,9 +140,50 @@ class TajwidUtils {
     return null;
   }
 
+  static (Color, String, String)? _getMuqattaahMaddInfo(
+    String text,
+    int index,
+  ) {
+    int tokenEnd = 0;
+    while (tokenEnd < text.length &&
+        _muqattaahAlphabet.contains(text[tokenEnd])) {
+      tokenEnd++;
+    }
+
+    final token = text.substring(0, tokenEnd);
+    final hasTokenBoundary =
+        tokenEnd == text.length ||
+        text[tokenEnd].trim().isEmpty ||
+        text[tokenEnd] == '۝';
+    if (!hasTokenBoundary ||
+        !_muqattaahTokens.contains(token) ||
+        index >= token.length) {
+      return null;
+    }
+
+    final char = text[index];
+    final String description;
+    if (_twoHarakatMuqattaahLetters.contains(char)) {
+      description = "Huruf muqatta'ah $char dibaca panjang 2 harakat.";
+    } else if (_sixHarakatMuqattaahLetters.contains(char)) {
+      description =
+          "Mad lazim harfi pada huruf muqatta'ah $char dibaca panjang 6 harakat.";
+    } else if (char == 'ع') {
+      description =
+          "Huruf muqatta'ah ع dibaca panjang 4 atau 6 harakat sesuai riwayat bacaan.";
+    } else {
+      return null;
+    }
+
+    return (AppColors.tajwidColors['madd']!, 'Mad Harfi', description);
+  }
+
   static (Color, String, String) getTajwidInfo(String text, int index) {
     final char = text[index];
     final nextMeaningfulChar = _nextMeaningfulChar(text, index + 1);
+    final muqattaahMaddInfo = _getMuqattaahMaddInfo(text, index);
+
+    if (muqattaahMaddInfo != null) return muqattaahMaddInfo;
 
     // 1. Ghunnah: Nun/Mim Tasydid
     if ((char == 'ن' || char == 'م') && _hasMarkAhead(text, index, 'ّ')) {
