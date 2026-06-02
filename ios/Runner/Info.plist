@@ -47,6 +47,10 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Digunakan untuk merekam bacaan hafalan Al-Quran</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Digunakan untuk menentukan jadwal sholat dan arah qiblat sesuai lokasi Anda</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Digunakan untuk menjaga jadwal sholat dan arah qiblat tetap sesuai lokasi Anda</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Digunakan untuk mendeteksi dan menilai bacaan hafalan Al-Quran</string>
 </dict>

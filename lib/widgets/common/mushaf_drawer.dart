@@ -8,6 +8,7 @@ import '../../screens/hafalan_screen.dart';
 import '../../screens/bookmarks_screen.dart';
 import '../../screens/offline_download_screen.dart';
 import '../../screens/settings_screen.dart';
+import '../../screens/prayer/prayer_schedule_screen.dart';
 
 class MushafDrawer extends StatefulWidget {
   final int curSurah, curPageIdx;
@@ -436,6 +437,19 @@ class _MushafDrawerState extends State<MushafDrawer> {
             nav.pop();
             Future.delayed(const Duration(milliseconds: 300), () {
               onTranslate();
+            });
+          },
+        ),
+        _MenuTile(
+          icon: Icons.access_time_rounded,
+          label: 'Jadwal Sholat',
+          onTap: () {
+            final nav = Navigator.of(context);
+            nav.pop();
+            Future.delayed(const Duration(milliseconds: 300), () {
+              nav.push(
+                MaterialPageRoute(builder: (_) => const PrayerScheduleScreen()),
+              );
             });
           },
         ),
