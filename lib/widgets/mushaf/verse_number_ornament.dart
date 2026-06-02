@@ -34,7 +34,11 @@ class VerseNumberOrnament extends StatelessWidget {
   }
 
   static bool usesNativeGlyph(MushafFont font) {
-    return font != MushafFont.naskh;
+    return font == MushafFont.lpmqIsepMisbah;
+  }
+
+  static String measurementTextFor(int verse, MushafFont font) {
+    return usesNativeGlyph(font) ? textFor(verse) : arabicNumeralsFor(verse);
   }
 
   @override
@@ -44,7 +48,7 @@ class VerseNumberOrnament extends StatelessWidget {
       return SizedBox.square(
         dimension: size,
         child: CustomPaint(
-          painter: _NaskhVerseOrnamentPainter(color),
+          painter: _VerseNumberOrnamentPainter(color),
           child: Center(
             child: Text(
               arabicNumeralsFor(verse),
@@ -73,10 +77,10 @@ class VerseNumberOrnament extends StatelessWidget {
   }
 }
 
-class _NaskhVerseOrnamentPainter extends CustomPainter {
+class _VerseNumberOrnamentPainter extends CustomPainter {
   final Color color;
 
-  const _NaskhVerseOrnamentPainter(this.color);
+  const _VerseNumberOrnamentPainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -117,7 +121,7 @@ class _NaskhVerseOrnamentPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_NaskhVerseOrnamentPainter oldDelegate) {
+  bool shouldRepaint(_VerseNumberOrnamentPainter oldDelegate) {
     return oldDelegate.color != color;
   }
 }

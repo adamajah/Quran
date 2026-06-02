@@ -132,7 +132,8 @@ class NormalBody extends StatelessWidget {
             verseEndSymbol: false,
           );
           return TextSpan(
-            text: '$t ${VerseNumberOrnament.textFor(v.verse)} ',
+            text:
+                '$t ${VerseNumberOrnament.measurementTextFor(v.verse, mushafFont)} ',
             style: s,
           );
         }).toList();

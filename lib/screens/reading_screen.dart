@@ -550,7 +550,7 @@ class _HafsVerseArea extends StatelessWidget {
                   (entry) => TextSpan(
                     text:
                         '${QuranUtils.cleanText(entry.value)} '
-                        '${settings.showVerseNumbers ? VerseNumberOrnament.textFor(entry.key + 1) : ''} ',
+                        '${settings.showVerseNumbers ? VerseNumberOrnament.measurementTextFor(entry.key + 1, settings.mushafFont) : ''} ',
                     style: quranStyle.copyWith(
                       fontSize: fs * textScale,
                       height: lineHeight,
