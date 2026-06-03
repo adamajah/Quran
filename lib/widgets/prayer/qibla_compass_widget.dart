@@ -233,7 +233,6 @@ class _CompassFace extends StatelessWidget {
                 headingDegrees == null
                     ? 'Kompas'
                     : '${headingDegrees!.round()}°',
-                key: ValueKey(headingDegrees?.round()),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: isLive ? 0.82 : 0.48),
                   fontSize: 13,
