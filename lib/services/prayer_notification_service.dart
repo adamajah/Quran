@@ -160,7 +160,7 @@ class PrayerNotificationService {
   static NotificationDetails _details(PrayerNotificationSound sound) {
     final playSound = sound != PrayerNotificationSound.silent;
     final channelId = switch (sound) {
-      PrayerNotificationSound.adhan => 'prayer_adhan_channel',
+      PrayerNotificationSound.adhan => 'prayer_adhan_channel_v2',
       PrayerNotificationSound.alarm => 'prayer_alarm_channel',
       PrayerNotificationSound.notification => 'prayer_notification_channel',
       PrayerNotificationSound.silent => 'prayer_silent_channel',
@@ -186,6 +186,10 @@ class PrayerNotificationService {
                 ? AndroidNotificationCategory.alarm
                 : AndroidNotificationCategory.reminder,
         playSound: playSound,
+        sound:
+            sound == PrayerNotificationSound.adhan
+                ? const RawResourceAndroidNotificationSound('adhan')
+                : null,
         enableVibration: true,
         showWhen: true,
       ),

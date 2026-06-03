@@ -101,12 +101,12 @@ class PrayerSettings {
     this.forceNotification = false,
     this.notifications = const {
       'imsak': PrayerNotificationSound.disabled,
-      'subuh': PrayerNotificationSound.notification,
+      'subuh': PrayerNotificationSound.adhan,
       'terbit': PrayerNotificationSound.disabled,
-      'dzuhur': PrayerNotificationSound.notification,
-      'ashar': PrayerNotificationSound.notification,
-      'maghrib': PrayerNotificationSound.notification,
-      'isya': PrayerNotificationSound.notification,
+      'dzuhur': PrayerNotificationSound.adhan,
+      'ashar': PrayerNotificationSound.adhan,
+      'maghrib': PrayerNotificationSound.adhan,
+      'isya': PrayerNotificationSound.adhan,
     },
     this.visible30DayColumns = const {
       'hijri': true,
