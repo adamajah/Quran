@@ -49,18 +49,7 @@ class PageHeader extends StatelessWidget {
                   color: textColor,
                 ),
               ),
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: AppColors.goldLt,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF252525) : AppColors.hdrBg,
-                    width: 1,
-                  ),
-                ),
-              ),
+              const SizedBox(width: 7, height: 7),
               Text(
                 _juzTxt(data.juz),
                 style: AppTextStyle.quranPageInfoStyle(
@@ -92,11 +81,6 @@ class HeaderFooterOrnamentPainter extends CustomPainter {
         Paint()
           ..color = AppColors.goldLt.withValues(alpha: isDark ? 0.46 : 0.62)
           ..strokeWidth = 0.65;
-    final softPaint =
-        Paint()
-          ..color = AppColors.gold.withValues(alpha: isDark ? 0.22 : 0.32)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.55;
     final accentPaint =
         Paint()
           ..color = AppColors.goldLt.withValues(alpha: 0.72)
@@ -122,22 +106,6 @@ class HeaderFooterOrnamentPainter extends CustomPainter {
     if (!compact) {
       for (final x in [edge + 8, size.width - edge - 8]) {
         canvas.drawCircle(Offset(x, cy), 1.6, accentPaint);
-      }
-      canvas.drawCircle(Offset(size.width / 2, cy), 10, softPaint);
-      canvas.drawCircle(Offset(size.width / 2, cy), 7, softPaint);
-      for (int i = 0; i < 8; i++) {
-        final angle = i * math.pi / 4;
-        canvas.drawLine(
-          Offset(
-            size.width / 2 + math.cos(angle) * 7,
-            cy + math.sin(angle) * 7,
-          ),
-          Offset(
-            size.width / 2 + math.cos(angle) * 10,
-            cy + math.sin(angle) * 10,
-          ),
-          softPaint,
-        );
       }
     } else {
       _drawDiamond(canvas, Offset(size.width / 2 - 22, cy), 2.4, accentPaint);

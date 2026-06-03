@@ -31,6 +31,18 @@ void main() {
     expect(schedules.last.date, DateTime(2026, 7, 2));
   });
 
+  test('nextEntry uses local wall-clock prayer times', () {
+    final schedule = service.scheduleForDate(
+      date: DateTime(2026, 6, 3),
+      location: PrayerLocation.defaultLocation,
+      settings: const PrayerSettings(),
+    );
+    final now = DateTime(2026, 6, 3, 13, 32);
+
+    expect(schedule.entryFor(PrayerTimeType.dzuhur).time.isBefore(now), true);
+    expect(schedule.nextEntry(now)?.type, PrayerTimeType.ashar);
+  });
+
   test(
     'automatic calculation ignores manual method for Indonesian location',
     () {

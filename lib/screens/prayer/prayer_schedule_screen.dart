@@ -32,6 +32,7 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
   PrayerDaySchedule? _schedule;
   DateTime _now = DateTime.now();
   bool _loading = true;
+  int _loadRequestId = 0;
 
   @override
   void initState() {
@@ -61,28 +62,33 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
   }
 
   Future<void> _load() async {
-    final locationResult = await _locationService.loadActiveLocation();
+    final requestId = ++_loadRequestId;
+    final savedLocation = await _locationService.loadLocation();
     final settings = await _timeService.loadSettings();
     final schedule = _timeService.scheduleForDate(
       date: DateTime.now(),
-      location: locationResult.location,
+      location: savedLocation,
       settings: settings,
     );
-    if (!mounted) return;
+    if (!mounted || requestId != _loadRequestId) return;
     setState(() {
-      _location = locationResult.location;
+      _location = savedLocation;
       _settings = settings;
       _schedule = schedule;
       _loading = false;
       _now = DateTime.now();
     });
-    if (locationResult.message != null) _snack(locationResult.message!);
-    unawaited(
-      _reschedulePrayerNotifications(
-        locationResult.location,
-        settings,
-      ).catchError((_) {}),
-    );
+
+    if (savedLocation.automatic) {
+      unawaited(_refreshAutomaticLocation(requestId, settings));
+    } else {
+      unawaited(
+        _reschedulePrayerNotifications(
+          savedLocation,
+          settings,
+        ).catchError((_) {}),
+      );
+    }
   }
 
   @override
@@ -243,6 +249,31 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
       schedule: upcomingSchedules.first,
       schedules: upcomingSchedules,
       settings: settings,
+    );
+  }
+
+  Future<void> _refreshAutomaticLocation(
+    int requestId,
+    PrayerSettings settings,
+  ) async {
+    final locationResult = await _locationService.useCurrentLocation();
+    if (!mounted || requestId != _loadRequestId) return;
+    final schedule = _timeService.scheduleForDate(
+      date: DateTime.now(),
+      location: locationResult.location,
+      settings: settings,
+    );
+    setState(() {
+      _location = locationResult.location;
+      _schedule = schedule;
+      _now = DateTime.now();
+    });
+    if (locationResult.message != null) _snack(locationResult.message!);
+    unawaited(
+      _reschedulePrayerNotifications(
+        locationResult.location,
+        settings,
+      ).catchError((_) {}),
     );
   }
 

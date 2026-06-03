@@ -184,6 +184,7 @@ class _CompassFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLocked = qiblaRotationDegrees <= 3 || qiblaRotationDegrees >= 357;
     return AspectRatio(
       aspectRatio: 1,
       child: Stack(
@@ -198,31 +199,121 @@ class _CompassFace extends StatelessWidget {
           ),
           Positioned(
             top: 8,
-            child: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Colors.white.withValues(alpha: 0.78),
-              size: 28,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: isLocked ? 1 : 0.52,
+              child: Icon(
+                isLocked
+                    ? Icons.lock_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                color: isLocked ? AppColors.goldLt : Colors.white70,
+                size: isLocked ? 22 : 28,
+              ),
             ),
           ),
           _AnimatedCompassRotation(
             degrees: qiblaRotationDegrees,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.navigation_rounded,
-                  size: 96,
-                  color: AppColors.goldLt,
-                ),
-                Container(
-                  width: 4,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.72),
-                    borderRadius: BorderRadius.circular(4),
+            child: SizedBox.square(
+              dimension: 210,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(top: 6, child: _KaabaTargetIcon(locked: isLocked)),
+                  Positioned(
+                    top: 52,
+                    child: Container(
+                      width: 4,
+                      height: 82,
+                      decoration: BoxDecoration(
+                        color:
+                            isLocked
+                                ? AppColors.goldLt
+                                : AppColors.gold.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.gold.withValues(alpha: 0.24),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 122,
+                    child: Icon(
+                      Icons.navigation_rounded,
+                      size: 38,
+                      color:
+                          isLocked
+                              ? AppColors.goldLt
+                              : Colors.white.withValues(alpha: 0.72),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 50,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: isLocked ? 1 : 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppColors.goldLt.withValues(alpha: 0.62),
                   ),
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.lock_rounded,
+                      size: 11,
+                      color: AppColors.goldLt,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Ka\'bah terkunci',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 62,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: isLocked ? 0.92 : 0.32,
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color:
+                        isLocked
+                            ? AppColors.goldLt
+                            : Colors.white.withValues(alpha: 0.5),
+                    width: 1.2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.my_location_rounded,
+                  size: 17,
+                  color: isLocked ? AppColors.goldLt : Colors.white70,
+                ),
+              ),
             ),
           ),
           Positioned(
@@ -253,6 +344,122 @@ class _CompassFace extends StatelessWidget {
       ),
     );
   }
+}
+
+class _KaabaTargetIcon extends StatelessWidget {
+  final bool locked;
+
+  const _KaabaTargetIcon({required this.locked});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: 50,
+      height: 50,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color:
+            locked
+                ? AppColors.gold.withValues(alpha: 0.18)
+                : Colors.black.withValues(alpha: 0.34),
+        border: Border.all(
+          color:
+              locked
+                  ? AppColors.goldLt
+                  : AppColors.gold.withValues(alpha: 0.55),
+          width: locked ? 1.8 : 1.1,
+        ),
+        boxShadow: [
+          if (locked)
+            BoxShadow(
+              color: AppColors.goldLt.withValues(alpha: 0.22),
+              blurRadius: 14,
+            ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const CustomPaint(size: Size.square(34), painter: _KaabaPainter()),
+          if (locked)
+            const Positioned(
+              right: 0,
+              bottom: 0,
+              child: Icon(Icons.lock_rounded, size: 12, color: Colors.white),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KaabaPainter extends CustomPainter {
+  const _KaabaPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final body = Rect.fromLTWH(
+      size.width * 0.18,
+      size.height * 0.22,
+      size.width * 0.64,
+      size.height * 0.58,
+    );
+    final shadow =
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.28)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        body.shift(const Offset(1, 2)),
+        const Radius.circular(2),
+      ),
+      shadow,
+    );
+
+    final black = Paint()..color = const Color(0xFF111111);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(body, const Radius.circular(2)),
+      black,
+    );
+
+    final side =
+        Path()
+          ..moveTo(body.right, body.top)
+          ..lineTo(size.width * 0.90, size.height * 0.32)
+          ..lineTo(size.width * 0.90, size.height * 0.85)
+          ..lineTo(body.right, body.bottom)
+          ..close();
+    canvas.drawPath(side, Paint()..color = const Color(0xFF252525));
+
+    final top =
+        Path()
+          ..moveTo(body.left, body.top)
+          ..lineTo(body.right, body.top)
+          ..lineTo(size.width * 0.90, size.height * 0.32)
+          ..lineTo(size.width * 0.30, size.height * 0.12)
+          ..close();
+    canvas.drawPath(top, Paint()..color = const Color(0xFF2F2A21));
+
+    final gold = Paint()..color = AppColors.goldLt;
+    canvas.drawRect(
+      Rect.fromLTWH(body.left, body.top + body.height * 0.22, body.width, 3),
+      gold,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(
+        body.left + body.width * 0.58,
+        body.top + body.height * 0.36,
+        4,
+        body.height * 0.42,
+      ),
+      Paint()..color = AppColors.gold.withValues(alpha: 0.88),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _AnimatedCompassRotation extends StatefulWidget {

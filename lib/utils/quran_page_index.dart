@@ -30,15 +30,7 @@ class QuranPageCatalog extends ListBase<PageData> {
   }
 
   PageData _buildPage(int pageNum) {
-    final verses = <VerseRef>[];
-    for (int s = 1; s <= quran.totalSurahCount; s++) {
-      final verseCount = quran.getVerseCount(s);
-      for (int v = 1; v <= verseCount; v++) {
-        if (quran.getPageNumber(s, v) == pageNum) {
-          verses.add(VerseRef(s, v));
-        }
-      }
-    }
+    final verses = QuranPageIndex.versesForPage(pageNum);
 
     final domSurah = verses.first.surah;
     final groups = <SurahGroup>[];
@@ -104,15 +96,17 @@ class QuranPageIndex {
     return _translationCache.putIfAbsent(key, () {
       return List<Map<String, dynamic>>.unmodifiable(
         versesForPage(pageNum).map(
-          (v) => {
-            'surah': v.surah,
-            'verse': v.verse,
-            'text': quran.getVerseTranslation(
-              v.surah,
-              v.verse,
-              translation: translation,
-            ),
-          } as Map<String, dynamic>,
+          (v) =>
+              {
+                    'surah': v.surah,
+                    'verse': v.verse,
+                    'text': quran.getVerseTranslation(
+                      v.surah,
+                      v.verse,
+                      translation: translation,
+                    ),
+                  }
+                  as Map<String, dynamic>,
         ),
       );
     });

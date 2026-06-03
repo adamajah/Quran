@@ -14,6 +14,7 @@ class PrayerNotificationService {
   static const _legacyNotificationBaseId = 7300;
   static const _notificationDays = 30;
   static bool _initialized = false;
+  static String? _lastAppliedSignature;
 
   static Future<void> init() async {
     if (_initialized) return;
@@ -84,6 +85,9 @@ class PrayerNotificationService {
 
     final upcomingSchedules =
         (schedules == null || schedules.isEmpty) ? [schedule] : schedules;
+    final signature = _scheduleSignature(upcomingSchedules, settings);
+    if (_lastAppliedSignature == signature) return;
+
     final now = tz.TZDateTime.now(tz.local);
     final activeTypes = <PrayerTimeType>[];
 
@@ -92,7 +96,10 @@ class PrayerNotificationService {
       if (settings.notificationFor(type.key).enabled) activeTypes.add(type);
     }
 
-    if (activeTypes.isEmpty) return;
+    if (activeTypes.isEmpty) {
+      _lastAppliedSignature = signature;
+      return;
+    }
 
     final allowed = await requestPermission();
     if (!allowed && !settings.forceNotification) {
@@ -117,6 +124,7 @@ class PrayerNotificationService {
         await _scheduleEntry(entry, sound, scheduledDate, dayIndex);
       }
     }
+    _lastAppliedSignature = signature;
   }
 
   static Future<void> cancelPrayer(PrayerTimeType type) async {
@@ -202,5 +210,40 @@ class PrayerNotificationService {
       9 => 'Asia/Jayapura',
       _ => 'UTC',
     };
+  }
+
+  static String _scheduleSignature(
+    List<PrayerDaySchedule> schedules,
+    PrayerSettings settings,
+  ) {
+    final buffer =
+        StringBuffer()
+          ..write(settings.forceNotification)
+          ..write('|')
+          ..write(settings.disableDhuhrOnFriday);
+    for (final type in PrayerTimeType.values) {
+      buffer
+        ..write('|')
+        ..write(type.key)
+        ..write(':')
+        ..write(settings.notificationFor(type.key).name);
+    }
+    for (final schedule in schedules.take(_notificationDays)) {
+      buffer
+        ..write('|')
+        ..write(schedule.date.year)
+        ..write('-')
+        ..write(schedule.date.month)
+        ..write('-')
+        ..write(schedule.date.day);
+      for (final entry in schedule.entries) {
+        buffer
+          ..write(',')
+          ..write(entry.type.key)
+          ..write('@')
+          ..write(entry.time.millisecondsSinceEpoch);
+      }
+    }
+    return buffer.toString();
   }
 }

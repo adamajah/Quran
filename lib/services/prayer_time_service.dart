@@ -44,44 +44,51 @@ class PrayerTimeService {
     final entries = [
       PrayerTimeEntry(
         type: PrayerTimeType.imsak,
-        time: prayerTimes.fajr.add(
-          Duration(minutes: -10 + settings.adjustmentFor('imsak')),
+        time: _localPrayerTime(
+          prayerTimes.fajr,
+          minutes: -10 + settings.adjustmentFor('imsak'),
         ),
       ),
       PrayerTimeEntry(
         type: PrayerTimeType.subuh,
-        time: prayerTimes.fajr.add(
-          Duration(minutes: settings.adjustmentFor('subuh')),
+        time: _localPrayerTime(
+          prayerTimes.fajr,
+          minutes: settings.adjustmentFor('subuh'),
         ),
       ),
       PrayerTimeEntry(
         type: PrayerTimeType.terbit,
-        time: prayerTimes.sunrise.add(
-          Duration(minutes: settings.adjustmentFor('terbit')),
+        time: _localPrayerTime(
+          prayerTimes.sunrise,
+          minutes: settings.adjustmentFor('terbit'),
         ),
       ),
       PrayerTimeEntry(
         type: PrayerTimeType.dzuhur,
-        time: prayerTimes.dhuhr.add(
-          Duration(minutes: settings.adjustmentFor('dzuhur')),
+        time: _localPrayerTime(
+          prayerTimes.dhuhr,
+          minutes: settings.adjustmentFor('dzuhur'),
         ),
       ),
       PrayerTimeEntry(
         type: PrayerTimeType.ashar,
-        time: prayerTimes.asr.add(
-          Duration(minutes: settings.adjustmentFor('ashar')),
+        time: _localPrayerTime(
+          prayerTimes.asr,
+          minutes: settings.adjustmentFor('ashar'),
         ),
       ),
       PrayerTimeEntry(
         type: PrayerTimeType.maghrib,
-        time: prayerTimes.maghrib.add(
-          Duration(minutes: settings.adjustmentFor('maghrib')),
+        time: _localPrayerTime(
+          prayerTimes.maghrib,
+          minutes: settings.adjustmentFor('maghrib'),
         ),
       ),
       PrayerTimeEntry(
         type: PrayerTimeType.isya,
-        time: prayerTimes.isha.add(
-          Duration(minutes: settings.adjustmentFor('isya')),
+        time: _localPrayerTime(
+          prayerTimes.isha,
+          minutes: settings.adjustmentFor('isya'),
         ),
       ),
     ];
@@ -91,6 +98,19 @@ class PrayerTimeService {
       hijriDate: hijriDateFor(date, settings),
       entries: entries,
     );
+  }
+
+  DateTime _localPrayerTime(DateTime time, {required int minutes}) {
+    return DateTime(
+      time.year,
+      time.month,
+      time.day,
+      time.hour,
+      time.minute,
+      time.second,
+      time.millisecond,
+      time.microsecond,
+    ).add(Duration(minutes: minutes));
   }
 
   List<PrayerDaySchedule> schedulesFor30Days({
