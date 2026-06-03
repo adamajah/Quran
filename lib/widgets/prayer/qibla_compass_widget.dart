@@ -191,6 +191,7 @@ class _CompassFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLocked = qiblaRotationDegrees <= 3 || qiblaRotationDegrees >= 357;
+    final palette = _CompassPalette.of(context);
     return AspectRatio(
       aspectRatio: 1,
       child: Stack(
@@ -200,7 +201,7 @@ class _CompassFace extends StatelessWidget {
             degrees: dialRotationDegrees,
             child: CustomPaint(
               size: const Size.square(280),
-              painter: _CompassPainter(),
+              painter: _CompassPainter(palette),
             ),
           ),
           Positioned(
@@ -212,7 +213,7 @@ class _CompassFace extends StatelessWidget {
                 isLocked
                     ? Icons.lock_rounded
                     : Icons.keyboard_arrow_down_rounded,
-                color: isLocked ? AppColors.goldLt : Colors.white70,
+                color: isLocked ? AppColors.goldLt : palette.subtleIcon,
                 size: isLocked ? 22 : 28,
               ),
             ),
@@ -257,9 +258,7 @@ class _CompassFace extends StatelessWidget {
                       Icons.navigation_rounded,
                       size: 38,
                       color:
-                          isLocked
-                              ? AppColors.goldLt
-                              : Colors.white.withValues(alpha: 0.72),
+                          isLocked ? AppColors.goldLt : palette.navigationIcon,
                     ),
                   ),
                 ],
@@ -292,7 +291,7 @@ class _CompassFace extends StatelessWidget {
                     Text(
                       'Ka\'bah terkunci',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.86),
+                        color: palette.lockedText,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                       ),
@@ -313,17 +312,14 @@ class _CompassFace extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color:
-                        isLocked
-                            ? AppColors.goldLt
-                            : Colors.white.withValues(alpha: 0.5),
+                    color: isLocked ? AppColors.goldLt : palette.locationRing,
                     width: 1.2,
                   ),
                 ),
                 child: Icon(
                   Icons.my_location_rounded,
                   size: 17,
-                  color: isLocked ? AppColors.goldLt : Colors.white70,
+                  color: isLocked ? AppColors.goldLt : palette.subtleIcon,
                 ),
               ),
             ),
@@ -337,7 +333,9 @@ class _CompassFace extends StatelessWidget {
                     ? 'Kompas'
                     : '${headingDegrees!.round()}°',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: isLive ? 0.82 : 0.48),
+                  color: palette.headingText.withValues(
+                    alpha: isLive ? 0.82 : 0.48,
+                  ),
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                 ),
@@ -347,8 +345,8 @@ class _CompassFace extends StatelessWidget {
           Container(
             width: 12,
             height: 12,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: palette.centerDot,
               shape: BoxShape.circle,
             ),
           ),
@@ -365,6 +363,7 @@ class _KaabaTargetIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CompassPalette.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       width: 72,
@@ -373,7 +372,7 @@ class _KaabaTargetIcon extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.62),
+            color: palette.kaabaShadow,
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -555,6 +554,7 @@ class _CompassWithMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CompassPalette.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -569,7 +569,7 @@ class _CompassWithMessage extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 220),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF121212).withValues(alpha: 0.84),
+                color: palette.messageSurface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: AppColors.gold.withValues(alpha: 0.26),
@@ -588,7 +588,7 @@ class _CompassWithMessage extends StatelessWidget {
                     message,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.78),
+                      color: palette.messageText,
                       height: 1.32,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -614,6 +614,10 @@ class _CompassWithMessage extends StatelessWidget {
 }
 
 class _CompassPainter extends CustomPainter {
+  final _CompassPalette palette;
+
+  _CompassPainter(this.palette);
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
@@ -621,16 +625,16 @@ class _CompassPainter extends CustomPainter {
 
     final fill =
         Paint()
-          ..color = const Color(0xFF202020)
+          ..color = palette.dialFill
           ..style = PaintingStyle.fill;
     final border =
         Paint()
-          ..color = AppColors.gold.withValues(alpha: 0.55)
+          ..color = palette.dialBorder
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.4;
     final tick =
         Paint()
-          ..color = Colors.white.withValues(alpha: 0.35)
+          ..color = palette.tick
           ..strokeWidth = 1.1;
 
     canvas.drawCircle(center, radius, fill);
@@ -674,7 +678,7 @@ class _CompassPainter extends CustomPainter {
       text: TextSpan(
         text: label,
         style: TextStyle(
-          color: label == 'N' ? AppColors.goldLt : Colors.white70,
+          color: label == 'N' ? AppColors.goldLt : palette.label,
           fontSize: 16,
           fontWeight: FontWeight.w800,
         ),
@@ -688,5 +692,75 @@ class _CompassPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CompassPainter oldDelegate) => false;
+  bool shouldRepaint(_CompassPainter oldDelegate) =>
+      oldDelegate.palette.dialFill != palette.dialFill;
+}
+
+class _CompassPalette {
+  final Color dialFill;
+  final Color dialBorder;
+  final Color tick;
+  final Color label;
+  final Color subtleIcon;
+  final Color navigationIcon;
+  final Color lockedText;
+  final Color locationRing;
+  final Color headingText;
+  final Color centerDot;
+  final Color messageSurface;
+  final Color messageText;
+  final Color kaabaShadow;
+
+  const _CompassPalette({
+    required this.dialFill,
+    required this.dialBorder,
+    required this.tick,
+    required this.label,
+    required this.subtleIcon,
+    required this.navigationIcon,
+    required this.lockedText,
+    required this.locationRing,
+    required this.headingText,
+    required this.centerDot,
+    required this.messageSurface,
+    required this.messageText,
+    required this.kaabaShadow,
+  });
+
+  factory _CompassPalette.of(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      return _CompassPalette(
+        dialFill: const Color(0xFF202020),
+        dialBorder: AppColors.gold.withValues(alpha: 0.55),
+        tick: Colors.white.withValues(alpha: 0.35),
+        label: Colors.white70,
+        subtleIcon: Colors.white70,
+        navigationIcon: Colors.white.withValues(alpha: 0.72),
+        lockedText: Colors.white.withValues(alpha: 0.86),
+        locationRing: Colors.white.withValues(alpha: 0.5),
+        headingText: Colors.white,
+        centerDot: Colors.white,
+        messageSurface: const Color(0xFF121212).withValues(alpha: 0.84),
+        messageText: Colors.white.withValues(alpha: 0.78),
+        kaabaShadow: Colors.black.withValues(alpha: 0.62),
+      );
+    }
+
+    return _CompassPalette(
+      dialFill: const Color(0xFFFFFBF0),
+      dialBorder: AppColors.gold.withValues(alpha: 0.48),
+      tick: AppColors.dark.withValues(alpha: 0.28),
+      label: AppColors.dark.withValues(alpha: 0.62),
+      subtleIcon: AppColors.dark.withValues(alpha: 0.52),
+      navigationIcon: AppColors.dark.withValues(alpha: 0.58),
+      lockedText: AppColors.dark.withValues(alpha: 0.74),
+      locationRing: AppColors.dark.withValues(alpha: 0.34),
+      headingText: AppColors.dark,
+      centerDot: AppColors.dark.withValues(alpha: 0.86),
+      messageSurface: const Color(0xFFFFFBF0).withValues(alpha: 0.94),
+      messageText: AppColors.dark.withValues(alpha: 0.72),
+      kaabaShadow: Colors.black.withValues(alpha: 0.24),
+    );
+  }
 }
