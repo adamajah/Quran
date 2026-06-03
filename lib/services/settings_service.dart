@@ -25,7 +25,7 @@ class SettingsService {
 
   AppSettings loadSettings() {
     return AppSettings(
-      arabicFontSize: _prefs.getDouble(_keyArabicFontSize) ?? 22.0,
+      arabicFontSize: _prefs.getDouble(_keyArabicFontSize) ?? 24.0,
       mushafFont: _loadMushafFont(),
       lineSpacing: _prefs.getDouble(_keyLineSpacing) ?? 2.2,
       showVerseNumbers: _prefs.getBool(_keyShowVerseNumbers) ?? true,

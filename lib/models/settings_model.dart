@@ -24,7 +24,7 @@ class AppSettings {
   final bool showTajwid;
 
   const AppSettings({
-    this.arabicFontSize = 22.0,
+    this.arabicFontSize = 24.0,
     this.mushafFont = MushafFont.hafs,
     this.lineSpacing = 2.2,
     this.showVerseNumbers = true,

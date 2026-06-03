@@ -71,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isAutoAdvancing = false;
   int? _pendingPageSurah;
   int? _pendingPageSurahIdx;
+  double _pageZoomScale = 1.0;
 
   @override
   void initState() {
@@ -183,6 +184,13 @@ class _HomeScreenState extends State<HomeScreen> {
       if (_pageCtrl.hasClients) {
         _pageCtrl.jumpToPage(QuranPageCatalog.totalPages * 500 + idx);
       }
+    });
+  }
+
+  void _togglePageZoom() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _pageZoomScale = _pageZoomScale == 1.0 ? 1.18 : 1.0;
     });
   }
 
@@ -624,7 +632,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final pg = _pages[_pgIdx];
         final textColor =
             Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.dark;
-        final fontScale = settings.arabicFontSize / 24.0;
+        final fontScale = (settings.arabicFontSize / 24.0) * _pageZoomScale;
 
         return Scaffold(
           key: _scaffoldKey,
@@ -646,16 +654,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onScaleUpdate: (details) {
-                    if (details.pointerCount >= 2) {
-                      controller.updateArabicFontSize(
-                        (settings.arabicFontSize * details.scale).clamp(
-                          18.0,
-                          40.0,
-                        ),
-                      );
-                    }
-                  },
+                  onDoubleTap: _togglePageZoom,
                   child: RepaintBoundary(
                     child: PageView.builder(
                       controller: _pageCtrl,
@@ -739,16 +738,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 playVerse: _playV,
                 onPlay: _togglePlay,
                 onStop: () => _stopPlayback(resetVerse: true),
-                fontScale: fontScale,
-                onZoomIn:
-                    () => controller.updateArabicFontSize(
-                      (settings.arabicFontSize + 2).clamp(18.0, 40.0),
-                    ),
-                onZoomOut:
-                    () => controller.updateArabicFontSize(
-                      (settings.arabicFontSize - 2).clamp(18.0, 40.0),
-                    ),
-                onZoomReset: () => controller.updateArabicFontSize(24.0),
+                zoomScale: _pageZoomScale,
                 showTajwid: settings.showTajwid,
                 onToggleTajwid:
                     () => controller.toggleTajwid(!settings.showTajwid),
