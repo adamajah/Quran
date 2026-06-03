@@ -43,6 +43,8 @@ class FatihahPage extends StatefulWidget {
 
 class _FatihahPageState extends State<FatihahPage> {
   static const _lineGuideBreathingRoom = 0.48;
+  static const _verseFontSize = 23.0;
+  static const _verseNumberFontSize = 16.0;
   static const _textHeightBehavior = TextHeightBehavior(
     leadingDistribution: TextLeadingDistribution.even,
   );
@@ -129,6 +131,7 @@ class _FatihahPageState extends State<FatihahPage> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inkColor = isDark ? Colors.white : AppColors.ink;
+    final verseFontSize = _verseFontSize * widget.fontScale * _textScale;
 
     return GestureDetector(
       onTap: () => widget.onTapVerse(v.surah, v.verse),
@@ -168,35 +171,32 @@ class _FatihahPageState extends State<FatihahPage> {
                 ),
               ),
             Expanded(
-              child: CustomPaint(
-                painter: MushafLineGuidePainter(
-                  isDark: isDark,
-                  rowHeight: 23 * widget.fontScale * _textScale * _lineHeight,
-                ),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      ..._buildTajwidSpans(
-                        text,
-                        23 * widget.fontScale * _textScale,
-                        _lineHeight,
-                        active,
-                        widget.showTajwid,
-                        inkColor,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    ..._buildTajwidSpans(
+                      text,
+                      verseFontSize,
+                      _lineHeight,
+                      active,
+                      widget.showTajwid,
+                      inkColor,
+                    ),
+                    TextSpan(
+                      text: ' ',
+                      style: _quranStyle.copyWith(
+                        fontSize: verseFontSize,
+                        height: _lineHeight,
                       ),
-                      TextSpan(
-                        text: ' ',
-                        style: _quranStyle.copyWith(
-                          fontSize: 23 * widget.fontScale * _textScale,
-                          height: _lineHeight,
-                        ),
-                      ),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
+                    ),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(start: 2),
                         child: VerseNumberOrnament(
                           verse: v.verse,
                           mushafFont: widget.mushafFont,
-                          fontSize: 18 * widget.fontScale,
+                          fontSize: _verseNumberFontSize * widget.fontScale,
                           color:
                               active
                                   ? (isDark ? Colors.white : AppColors.hl)
@@ -204,12 +204,12 @@ class _FatihahPageState extends State<FatihahPage> {
                           height: _lineHeight,
                         ),
                       ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                  textDirection: TextDirection.rtl,
-                  textHeightBehavior: _textHeightBehavior,
+                    ),
+                  ],
                 ),
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+                textHeightBehavior: _textHeightBehavior,
               ),
             ),
           ],

@@ -10,6 +10,9 @@ import '../models/prayer_time_model.dart';
 class PrayerNotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  static const _notificationBaseId = 7400;
+  static const _legacyNotificationBaseId = 7300;
+  static const _notificationDays = 30;
   static bool _initialized = false;
 
   static Future<void> init() async {
@@ -20,7 +23,8 @@ class PrayerNotificationService {
       final timeZoneName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (_) {
-      tz.setLocalLocation(tz.UTC);
+      final fallback = _fallbackTimezoneName(DateTime.now().timeZoneOffset);
+      tz.setLocalLocation(tz.getLocation(fallback));
     }
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -73,51 +77,76 @@ class PrayerNotificationService {
 
   static Future<void> scheduleDailyPrayers({
     required PrayerDaySchedule schedule,
+    List<PrayerDaySchedule>? schedules,
     required PrayerSettings settings,
   }) async {
+    await init();
+
+    final upcomingSchedules =
+        (schedules == null || schedules.isEmpty) ? [schedule] : schedules;
+    final now = tz.TZDateTime.now(tz.local);
+    final activeTypes = <PrayerTimeType>[];
+
+    for (final type in PrayerTimeType.values) {
+      await _cancelPrayerIds(type);
+      if (settings.notificationFor(type.key).enabled) activeTypes.add(type);
+    }
+
+    if (activeTypes.isEmpty) return;
+
     final allowed = await requestPermission();
     if (!allowed && !settings.forceNotification) {
       throw StateError('Izin notifikasi belum aktif.');
     }
 
-    for (final entry in schedule.entries) {
-      final sound = settings.notificationFor(entry.type.key);
-      await _notifications.cancel(id: _notificationId(entry.type));
-      if (!sound.enabled) continue;
-      if (settings.disableDhuhrOnFriday &&
-          entry.type == PrayerTimeType.dzuhur &&
-          entry.time.weekday == DateTime.friday) {
-        continue;
+    for (final type in activeTypes) {
+      final sound = settings.notificationFor(type.key);
+      for (
+        var dayIndex = 0;
+        dayIndex < upcomingSchedules.length && dayIndex < _notificationDays;
+        dayIndex++
+      ) {
+        final entry = upcomingSchedules[dayIndex].entryFor(type);
+        if (settings.disableDhuhrOnFriday &&
+            entry.type == PrayerTimeType.dzuhur &&
+            entry.time.weekday == DateTime.friday) {
+          continue;
+        }
+        final scheduledDate = tz.TZDateTime.from(entry.time, tz.local);
+        if (!scheduledDate.isAfter(now)) continue;
+        await _scheduleEntry(entry, sound, scheduledDate, dayIndex);
       }
-      await _scheduleEntry(entry, sound);
     }
   }
 
   static Future<void> cancelPrayer(PrayerTimeType type) async {
     await init();
-    await _notifications.cancel(id: _notificationId(type));
+    await _cancelPrayerIds(type);
   }
 
   static Future<void> _scheduleEntry(
     PrayerTimeEntry entry,
     PrayerNotificationSound sound,
+    tz.TZDateTime scheduledDate,
+    int dayIndex,
   ) async {
     await init();
-    var scheduledDate = tz.TZDateTime.from(entry.time, tz.local);
-    final now = tz.TZDateTime.now(tz.local);
-    if (!scheduledDate.isAfter(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
 
     await _notifications.zonedSchedule(
-      id: _notificationId(entry.type),
+      id: _notificationId(entry.type, dayIndex),
       title: 'Waktu ${entry.type.label}',
       body: 'Telah masuk waktu ${entry.type.label}.',
       scheduledDate: scheduledDate,
       notificationDetails: _details(sound),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
     );
+  }
+
+  static Future<void> _cancelPrayerIds(PrayerTimeType type) async {
+    await _notifications.cancel(id: _legacyNotificationId(type));
+    for (var dayIndex = 0; dayIndex < _notificationDays; dayIndex++) {
+      await _notifications.cancel(id: _notificationId(type, dayIndex));
+    }
   }
 
   static NotificationDetails _details(PrayerNotificationSound sound) {
@@ -160,5 +189,18 @@ class PrayerNotificationService {
     );
   }
 
-  static int _notificationId(PrayerTimeType type) => 7300 + type.index;
+  static int _notificationId(PrayerTimeType type, int dayIndex) =>
+      _notificationBaseId + type.index * _notificationDays + dayIndex;
+
+  static int _legacyNotificationId(PrayerTimeType type) =>
+      _legacyNotificationBaseId + type.index;
+
+  static String _fallbackTimezoneName(Duration offset) {
+    return switch (offset.inHours) {
+      7 => 'Asia/Jakarta',
+      8 => 'Asia/Makassar',
+      9 => 'Asia/Jayapura',
+      _ => 'UTC',
+    };
+  }
 }

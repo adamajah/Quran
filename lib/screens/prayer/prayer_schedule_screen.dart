@@ -77,6 +77,12 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
       _now = DateTime.now();
     });
     if (locationResult.message != null) _snack(locationResult.message!);
+    unawaited(
+      _reschedulePrayerNotifications(
+        locationResult.location,
+        settings,
+      ).catchError((_) {}),
+    );
   }
 
   @override
@@ -217,17 +223,27 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
     setState(() => _settings = updated);
 
     try {
-      final schedule = _schedule;
-      if (schedule != null) {
-        await PrayerNotificationService.scheduleDailyPrayers(
-          schedule: schedule,
-          settings: updated,
-        );
-      }
+      await _reschedulePrayerNotifications(_location, updated);
       if (mounted) _snack('Notifikasi ${entry.type.label} disimpan.');
     } catch (e) {
       if (mounted) _snack('Pengaturan tersimpan, tapi notifikasi belum aktif.');
     }
+  }
+
+  Future<void> _reschedulePrayerNotifications(
+    PrayerLocation location,
+    PrayerSettings settings,
+  ) async {
+    final upcomingSchedules = _timeService.schedulesFor30Days(
+      location: location,
+      settings: settings,
+      startDate: DateTime.now(),
+    );
+    await PrayerNotificationService.scheduleDailyPrayers(
+      schedule: upcomingSchedules.first,
+      schedules: upcomingSchedules,
+      settings: settings,
+    );
   }
 
   Future<void> _showLocationDialog() async {

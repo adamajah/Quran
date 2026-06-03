@@ -234,6 +234,7 @@ class NormalBody extends StatelessWidget {
               mushafFont: mushafFont,
 
               showTajwid: showTajwid,
+              showLineGuides: data.pageNum > 2,
               playSurah: playSurah,
               playVerse: playVerse,
 
@@ -272,7 +273,7 @@ class TappableVerseBlock extends StatefulWidget {
   final SurahGroup group;
   final double fs, fontScale;
   final MushafFont mushafFont;
-  final bool showTajwid, isPlayingPage;
+  final bool showTajwid, showLineGuides, isPlayingPage;
   final int playSurah, playVerse, tappedSurah, tappedVerse;
   final Set<String> bookmarkedVerses;
   final void Function(int, int) onTapVerse, onBookmarkVerse;
@@ -284,6 +285,7 @@ class TappableVerseBlock extends StatefulWidget {
     required this.fontScale,
     required this.mushafFont,
     required this.showTajwid,
+    required this.showLineGuides,
     required this.isPlayingPage,
     required this.playSurah,
     required this.playVerse,
@@ -311,7 +313,9 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
       AppQuranFonts.lineHeightFor(widget.mushafFont) + _lineGuideBreathingRoom;
   double get _textScale => AppQuranFonts.textScaleFor(widget.mushafFont);
   double get _ornamentCellDimension =>
-      (widget.fs * 0.94).clamp(12.0, 20.0) * widget.fontScale * 1.8;
+      (widget.fs * 0.94).clamp(12.0, 20.0) *
+      widget.fontScale *
+      (widget.showLineGuides ? 1.8 : 1.52);
 
   List<InlineSpan> _buildSpans(Color inkColor, bool isDark) {
     final out = <InlineSpan>[];
@@ -366,7 +370,10 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
             onTapCancel: () => setState(() => _hoveredVerse = 0),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.showLineGuides ? 3 : 1,
+                vertical: 1,
+              ),
               decoration: BoxDecoration(
                 color:
                     active
@@ -535,7 +542,7 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
             for (final _ in widget.group.verses)
               PlaceholderDimensions(
                 size: Size(
-                  _ornamentCellDimension + 6,
+                  _ornamentCellDimension + (widget.showLineGuides ? 6 : 2),
                   _ornamentCellDimension + 2,
                 ),
                 alignment: PlaceholderAlignment.middle,
@@ -550,20 +557,24 @@ class _TappableVerseBlockState extends State<TappableVerseBlock> {
                   2,
           ];
 
+          final text = Text.rich(
+            textSpan,
+            textAlign: TextAlign.justify,
+            textDirection: TextDirection.rtl,
+            overflow: TextOverflow.visible,
+            softWrap: true,
+            textHeightBehavior: _textHeightBehavior,
+          );
+
+          if (!widget.showLineGuides) return text;
+
           return CustomPaint(
             painter: MushafLineGuidePainter(
               isDark: isDark,
               rowHeight: rowHeight,
               linePositions: linePositions,
             ),
-            child: Text.rich(
-              textSpan,
-              textAlign: TextAlign.justify,
-              textDirection: TextDirection.rtl,
-              overflow: TextOverflow.visible,
-              softWrap: true,
-              textHeightBehavior: _textHeightBehavior,
-            ),
+            child: text,
           );
         },
       ),
