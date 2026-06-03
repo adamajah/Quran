@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../constants/app_colors.dart';
@@ -21,6 +23,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
   QiblaInfo? _info;
   bool _loading = true;
   bool _updatingLocation = false;
+  int _loadRequestId = 0;
 
   @override
   void initState() {
@@ -29,9 +32,25 @@ class _QiblaScreenState extends State<QiblaScreen> {
   }
 
   Future<void> _load() async {
-    final result = await _locationService.loadActiveLocation();
+    final requestId = ++_loadRequestId;
+    final savedLocation = await _locationService.loadLocation();
+    final info = _qiblaService.calculate(savedLocation);
+    if (!mounted || requestId != _loadRequestId) return;
+    setState(() {
+      _location = savedLocation;
+      _info = info;
+      _loading = false;
+    });
+
+    if (savedLocation.automatic) {
+      unawaited(_refreshAutomaticLocation(requestId));
+    }
+  }
+
+  Future<void> _refreshAutomaticLocation(int requestId) async {
+    final result = await _locationService.useCurrentLocation();
     final info = _qiblaService.calculate(result.location);
-    if (!mounted) return;
+    if (!mounted || requestId != _loadRequestId) return;
     setState(() {
       _location = result.location;
       _info = info;

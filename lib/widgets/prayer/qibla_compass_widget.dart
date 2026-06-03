@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
@@ -35,6 +36,11 @@ class _QiblaCompassWidgetState extends State<QiblaCompassWidget> {
         canReadCompass: false,
         message: 'Sensor kompas tidak tersedia di perangkat ini.',
       );
+      return;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      _setCompassAccess(canReadCompass: true, stream: stream);
       return;
     }
 
@@ -214,16 +220,22 @@ class _CompassFace extends StatelessWidget {
           _AnimatedCompassRotation(
             degrees: qiblaRotationDegrees,
             child: SizedBox.square(
-              dimension: 210,
+              dimension: 236,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Positioned(top: 6, child: _KaabaTargetIcon(locked: isLocked)),
                   Positioned(
-                    top: 52,
+                    top: 0,
+                    child: Transform.rotate(
+                      angle: -qiblaRotationDegrees * math.pi / 180,
+                      child: _KaabaTargetIcon(locked: isLocked),
+                    ),
+                  ),
+                  Positioned(
+                    top: 70,
                     child: Container(
                       width: 4,
-                      height: 82,
+                      height: 72,
                       decoration: BoxDecoration(
                         color:
                             isLocked
@@ -240,7 +252,7 @@ class _CompassFace extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: 122,
+                    top: 130,
                     child: Icon(
                       Icons.navigation_rounded,
                       size: 38,
@@ -355,15 +367,15 @@ class _KaabaTargetIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      width: 50,
-      height: 50,
-      padding: const EdgeInsets.all(5),
+      width: 76,
+      height: 82,
+      padding: const EdgeInsets.fromLTRB(7, 7, 7, 6),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(12),
         color:
             locked
-                ? AppColors.gold.withValues(alpha: 0.18)
-                : Colors.black.withValues(alpha: 0.34),
+                ? const Color(0xFF2B2417)
+                : const Color(0xFF151515).withValues(alpha: 0.94),
         border: Border.all(
           color:
               locked
@@ -379,16 +391,35 @@ class _KaabaTargetIcon extends StatelessWidget {
             ),
         ],
       ),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const CustomPaint(size: Size.square(34), painter: _KaabaPainter()),
-          if (locked)
-            const Positioned(
-              right: 0,
-              bottom: 0,
-              child: Icon(Icons.lock_rounded, size: 12, color: Colors.white),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              const CustomPaint(size: Size(54, 48), painter: _KaabaPainter()),
+              if (locked)
+                const Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Icon(
+                    Icons.lock_rounded,
+                    size: 13,
+                    color: Colors.white,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'KA\'BAH',
+            style: TextStyle(
+              color: locked ? AppColors.goldLt : Colors.white70,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
             ),
+          ),
         ],
       ),
     );
