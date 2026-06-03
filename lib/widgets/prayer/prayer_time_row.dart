@@ -23,8 +23,11 @@ class PrayerTimeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = active ? AppColors.goldLt : Colors.white;
-    final secondary = Colors.white.withValues(alpha: 0.62);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.dark;
+    final primary = active ? AppColors.goldLt : textColor;
+    final secondary = textColor.withValues(alpha: isDark ? 0.62 : 0.48);
     final formatter = DateFormat(use24HourFormat ? 'HH:mm' : 'hh:mm a');
     final notificationActive = notificationSound.enabled;
 
@@ -36,7 +39,12 @@ class PrayerTimeRow extends StatelessWidget {
                 ? AppColors.gold.withValues(alpha: 0.10)
                 : Colors.transparent,
         border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
+          bottom: BorderSide(
+            color:
+                isDark
+                    ? Colors.white.withValues(alpha: 0.07)
+                    : AppColors.gold.withValues(alpha: 0.14),
+          ),
         ),
       ),
       child: Row(

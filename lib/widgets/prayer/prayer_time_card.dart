@@ -21,14 +21,16 @@ class PrayerTimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1B1B),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.gold.withValues(alpha: 0.34)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.07),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),

@@ -77,8 +77,12 @@ class _QiblaScreenState extends State<QiblaScreen> {
   @override
   Widget build(BuildContext context) {
     final info = _info;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.dark;
+    final mutedText = textColor.withValues(alpha: isDark ? 0.68 : 0.60);
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Arah Qiblat'),
         actions: [
@@ -110,7 +114,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B1B1B),
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: AppColors.gold.withValues(alpha: 0.3),
@@ -121,8 +125,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
                         Text(
                           _location.displayName,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: textColor,
                             fontWeight: FontWeight.w800,
                             fontSize: 18,
                           ),
@@ -133,7 +137,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                               ? 'LOKASI PERANGKAT AKTIF'
                               : _location.country.toUpperCase(),
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.52),
+                            color: mutedText,
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2,
@@ -156,10 +160,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Jarak ke Ka\'bah ± ${info.distanceKm.round()} KM',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.68),
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: mutedText, fontSize: 14),
                         ),
                         const SizedBox(height: 14),
                         SizedBox(
@@ -219,7 +220,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           child: Text(
                             'Jauhkan perangkat dari objek berbahan besi atau logam agar lebih akurat.',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.74),
+                              color: textColor.withValues(
+                                alpha: isDark ? 0.74 : 0.68,
+                              ),
                               height: 1.35,
                             ),
                           ),

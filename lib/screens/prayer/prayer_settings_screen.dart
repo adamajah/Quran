@@ -41,7 +41,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: const Text('Pengaturan Jadwal Sholat')),
       body:
           _loading
@@ -75,12 +75,12 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                             _settings.automaticCalculation
                                 ? const Icon(
                                   Icons.lock_rounded,
-                                  color: Colors.white38,
+                                  color: AppColors.goldLt,
                                   size: 18,
                                 )
                                 : const Icon(
                                   Icons.chevron_right_rounded,
-                                  color: Colors.white54,
+                                  color: AppColors.goldLt,
                                 ),
                         onTap:
                             _settings.automaticCalculation
@@ -93,7 +93,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                         icon: Icons.wb_sunny_rounded,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
-                          color: Colors.white54,
+                          color: AppColors.goldLt,
                         ),
                         onTap: _pickAsrMethod,
                       ),
@@ -132,12 +132,12 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                             _settings.automaticHijri
                                 ? const Icon(
                                   Icons.lock_rounded,
-                                  color: Colors.white38,
+                                  color: AppColors.goldLt,
                                   size: 18,
                                 )
                                 : const Icon(
                                   Icons.chevron_right_rounded,
-                                  color: Colors.white54,
+                                  color: AppColors.goldLt,
                                 ),
                         onTap:
                             _settings.automaticHijri ? null : _pickHijriMethod,
@@ -357,20 +357,22 @@ class _AdjustmentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1B1B),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.gold.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Penyesuaian Personal',
             style: TextStyle(
-              color: Colors.white,
+              color: textColor,
               fontWeight: FontWeight.w800,
               fontSize: 14,
             ),
@@ -403,6 +405,8 @@ class _StepperRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor =
+        Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
@@ -410,7 +414,7 @@ class _StepperRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.82)),
+              style: TextStyle(color: textColor.withValues(alpha: 0.82)),
             ),
           ),
           IconButton(
@@ -424,10 +428,7 @@ class _StepperRow extends StatelessWidget {
             child: Text(
               '${value > 0 ? '+' : ''}$value m',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
             ),
           ),
           IconButton(
@@ -468,7 +469,11 @@ class _HijriAdjustmentRow extends StatelessWidget {
             child: Text(
               '${value > 0 ? '+' : ''}$value',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(
+                color:
+                    Theme.of(context).textTheme.bodyLarge?.color ??
+                    AppColors.dark,
+              ),
             ),
           ),
           IconButton(
@@ -491,6 +496,7 @@ class _VolumeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PrayerSettingTile(
       title: 'Volume Adzan',
       subtitle: '${(value * 100).round()}%',
@@ -500,7 +506,8 @@ class _VolumeRow extends StatelessWidget {
         child: Slider(
           value: value,
           activeColor: AppColors.goldLt,
-          inactiveColor: Colors.white24,
+          inactiveColor:
+              isDark ? Colors.white24 : AppColors.gold.withValues(alpha: 0.20),
           onChanged: onChanged,
         ),
       ),

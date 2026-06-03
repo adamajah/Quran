@@ -95,9 +95,13 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
   Widget build(BuildContext context) {
     final schedule = _schedule;
     final activeEntry = schedule?.activeEntry(_now);
+    final refreshBackground =
+        Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1B1B1B)
+            : Theme.of(context).cardColor;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Jadwal Sholat'),
         leading: IconButton(
@@ -140,7 +144,7 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
               )
               : RefreshIndicator(
                 color: AppColors.gold,
-                backgroundColor: const Color(0xFF1B1B1B),
+                backgroundColor: refreshBackground,
                 onRefresh: _load,
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(18, 10, 18, 28),
@@ -337,7 +341,8 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
                         Text(
                           '${location.region} - ${location.country}',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.58),
+                            color: Theme.of(context).textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.58),
                             fontSize: 12,
                           ),
                         ),
@@ -430,10 +435,16 @@ class _HeaderPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.dark;
+    final mutedText = textColor.withValues(alpha: isDark ? 0.72 : 0.66);
+    final cardColor = theme.cardColor;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1B1B),
+        color: cardColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.gold.withValues(alpha: 0.26)),
       ),
@@ -445,18 +456,12 @@ class _HeaderPanel extends StatelessWidget {
               Expanded(
                 child: Text(
                   hijriDate,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: mutedText, fontSize: 14),
                 ),
               ),
               Text(
                 gregorianDate,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: mutedText, fontSize: 14),
               ),
             ],
           ),
@@ -477,7 +482,7 @@ class _HeaderPanel extends StatelessWidget {
               ),
               FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: isDark ? Colors.black : AppColors.gold,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
@@ -512,7 +517,9 @@ class _HeaderPanel extends StatelessWidget {
                     Text(
                       location,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.74),
+                        color: textColor.withValues(
+                          alpha: isDark ? 0.74 : 0.76,
+                        ),
                         fontSize: 14,
                       ),
                     ),

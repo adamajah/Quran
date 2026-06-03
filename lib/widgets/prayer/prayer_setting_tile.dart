@@ -20,13 +20,19 @@ class PrayerSettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.dark;
+    final subtitleColor = textColor.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.58 : 0.62,
+    );
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: const Color(0xFF1B1B1B),
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.gold.withValues(alpha: 0.18)),
         ),
@@ -40,8 +46,8 @@ class PrayerSettingTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -50,10 +56,7 @@ class PrayerSettingTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.58),
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: subtitleColor, fontSize: 12),
                     ),
                   ],
                 ],

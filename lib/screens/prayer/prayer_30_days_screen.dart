@@ -62,8 +62,12 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.dark;
+    final mutedText = textColor.withValues(alpha: isDark ? 0.72 : 0.66);
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Jadwal 30 Hari'),
         actions: [
@@ -86,7 +90,7 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen>
               )
               : RefreshIndicator(
                 color: AppColors.gold,
-                backgroundColor: const Color(0xFF1B1B1B),
+                backgroundColor: theme.cardColor,
                 onRefresh: _load,
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
@@ -94,7 +98,7 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen>
                     Text(
                       _location.displayName,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: mutedText,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
@@ -110,7 +114,7 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen>
                     const SizedBox(height: 12),
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B1B1B),
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: AppColors.gold.withValues(alpha: 0.28),
@@ -123,7 +127,7 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen>
                             color: AppColors.goldLt,
                             fontWeight: FontWeight.w800,
                           ),
-                          dataTextStyle: const TextStyle(color: Colors.white),
+                          dataTextStyle: TextStyle(color: textColor),
                           dividerThickness: 0.4,
                           columns: _columns(),
                           rows: _rows(),
