@@ -66,13 +66,26 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                       ),
                       PrayerSettingTile(
                         title: 'Metode Perhitungan',
-                        subtitle: _settings.calculationMethod.label,
+                        subtitle:
+                            _settings.automaticCalculation
+                                ? 'Otomatis berdasarkan lokasi aktif'
+                                : _settings.calculationMethod.label,
                         icon: Icons.calculate_rounded,
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.white54,
-                        ),
-                        onTap: _pickCalculationMethod,
+                        trailing:
+                            _settings.automaticCalculation
+                                ? const Icon(
+                                  Icons.lock_rounded,
+                                  color: Colors.white38,
+                                  size: 18,
+                                )
+                                : const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white54,
+                                ),
+                        onTap:
+                            _settings.automaticCalculation
+                                ? null
+                                : _pickCalculationMethod,
                       ),
                       PrayerSettingTile(
                         title: 'Perhitungan Waktu Ashar',
@@ -110,21 +123,35 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                       ),
                       PrayerSettingTile(
                         title: 'Metode Perhitungan Hijriah',
-                        subtitle: _settings.hijriMethod.label,
+                        subtitle:
+                            _settings.automaticHijri
+                                ? 'Umm Al-Qura tanpa penyesuaian manual'
+                                : _settings.hijriMethod.label,
                         icon: Icons.calendar_month_rounded,
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.white54,
+                        trailing:
+                            _settings.automaticHijri
+                                ? const Icon(
+                                  Icons.lock_rounded,
+                                  color: Colors.white38,
+                                  size: 18,
+                                )
+                                : const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white54,
+                                ),
+                        onTap:
+                            _settings.automaticHijri ? null : _pickHijriMethod,
+                      ),
+                      if (!_settings.automaticHijri &&
+                          _settings.hijriMethod ==
+                              HijriCalculationMethod.localAdjustment)
+                        _HijriAdjustmentRow(
+                          value: _settings.hijriAdjustment,
+                          onChanged:
+                              (value) => _save(
+                                _settings.copyWith(hijriAdjustment: value),
+                              ),
                         ),
-                        onTap: _pickHijriMethod,
-                      ),
-                      _HijriAdjustmentRow(
-                        value: _settings.hijriAdjustment,
-                        onChanged:
-                            (value) => _save(
-                              _settings.copyWith(hijriAdjustment: value),
-                            ),
-                      ),
                     ],
                   ),
                   _Section(

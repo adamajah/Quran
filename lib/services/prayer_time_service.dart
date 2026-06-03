@@ -33,7 +33,7 @@ class PrayerTimeService {
     required PrayerSettings settings,
   }) {
     final coordinates = Coordinates(location.latitude, location.longitude);
-    final params = _parametersFor(settings);
+    final params = _parametersFor(location: location, settings: settings);
     final prayerTimes = PrayerTimes(
       coordinates,
       DateComponents.from(date),
@@ -110,14 +110,23 @@ class PrayerTimeService {
   }
 
   String hijriDateFor(DateTime date, PrayerSettings settings) {
-    final adjusted = date.add(Duration(days: settings.hijriAdjustment));
+    final adjustment =
+        settings.automaticHijri ||
+                settings.hijriMethod == HijriCalculationMethod.ummAlQura
+            ? 0
+            : settings.hijriAdjustment;
+    final adjusted = date.add(Duration(days: adjustment));
     HijriCalendar.setLocal('en');
     final hijri = HijriCalendar.fromDate(adjusted);
     return '${hijri.hDay} ${_indonesianHijriMonth(hijri.hMonth)} ${hijri.hYear} H';
   }
 
-  CalculationParameters _parametersFor(PrayerSettings settings) {
-    final params = switch (settings.calculationMethod) {
+  CalculationParameters _parametersFor({
+    required PrayerLocation location,
+    required PrayerSettings settings,
+  }) {
+    final method = _effectiveCalculationMethod(location, settings);
+    final params = switch (method) {
       PrayerCalculationMethod.kemenagIndonesia => CalculationParameters(
         fajrAngle: 20,
         ishaAngle: 18,
@@ -144,6 +153,59 @@ class PrayerTimeService {
             ? Madhab.hanafi
             : Madhab.shafi;
     return params;
+  }
+
+  PrayerCalculationMethod _effectiveCalculationMethod(
+    PrayerLocation location,
+    PrayerSettings settings,
+  ) {
+    if (!settings.automaticCalculation) return settings.calculationMethod;
+
+    final lat = location.latitude;
+    final lng = location.longitude;
+    if (_inBounds(
+      lat,
+      lng,
+      south: -11.2,
+      north: 6.4,
+      west: 94.6,
+      east: 141.1,
+    )) {
+      return PrayerCalculationMethod.kemenagIndonesia;
+    }
+    if (_inBounds(lat, lng, south: 1.1, north: 1.6, west: 103.5, east: 104.1)) {
+      return PrayerCalculationMethod.singapore;
+    }
+    if (_inBounds(lat, lng, south: 22.6, north: 26.3, west: 51.4, east: 56.5)) {
+      return PrayerCalculationMethod.dubai;
+    }
+    if (_inBounds(lat, lng, south: 24.4, north: 26.3, west: 50.7, east: 51.7)) {
+      return PrayerCalculationMethod.qatar;
+    }
+    if (_inBounds(lat, lng, south: 28.4, north: 30.2, west: 46.4, east: 48.6)) {
+      return PrayerCalculationMethod.kuwait;
+    }
+    if (_inBounds(lat, lng, south: 16.0, north: 32.5, west: 34.4, east: 55.7)) {
+      return PrayerCalculationMethod.ummAlQura;
+    }
+    if (_inBounds(lat, lng, south: 22.0, north: 31.8, west: 24.6, east: 36.9)) {
+      return PrayerCalculationMethod.egyptian;
+    }
+    if (_inBounds(lat, lng, south: 23.5, north: 37.2, west: 60.8, east: 77.2)) {
+      return PrayerCalculationMethod.karachi;
+    }
+    return PrayerCalculationMethod.muslimWorldLeague;
+  }
+
+  bool _inBounds(
+    double lat,
+    double lng, {
+    required double south,
+    required double north,
+    required double west,
+    required double east,
+  }) {
+    return lat >= south && lat <= north && lng >= west && lng <= east;
   }
 
   String _indonesianHijriMonth(int month) {

@@ -15,7 +15,8 @@ class Prayer30DaysScreen extends StatefulWidget {
   State<Prayer30DaysScreen> createState() => _Prayer30DaysScreenState();
 }
 
-class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
+class _Prayer30DaysScreenState extends State<Prayer30DaysScreen>
+    with WidgetsBindingObserver {
   final _timeService = PrayerTimeService();
   final _locationService = PrayerLocationService();
 
@@ -27,7 +28,19 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _load();
   }
 
   Future<void> _load() async {
@@ -54,6 +67,11 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
       appBar: AppBar(
         title: const Text('Jadwal 30 Hari'),
         actions: [
+          IconButton(
+            tooltip: 'Refresh lokasi dan jadwal',
+            onPressed: _load,
+            icon: const Icon(Icons.my_location_rounded),
+          ),
           TextButton.icon(
             onPressed: _showColumnDialog,
             icon: const Icon(Icons.view_column_rounded, size: 18),
@@ -66,40 +84,54 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
               ? const Center(
                 child: CircularProgressIndicator(color: AppColors.gold),
               )
-              : ListView(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
-                children: [
-                  Text(
-                    _location.displayName,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.66),
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1B1B1B),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.28),
+              : RefreshIndicator(
+                color: AppColors.gold,
+                backgroundColor: const Color(0xFF1B1B1B),
+                onRefresh: _load,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
+                  children: [
+                    Text(
+                      _location.displayName,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingTextStyle: const TextStyle(
-                          color: AppColors.goldLt,
-                          fontWeight: FontWeight.w800,
+                    const SizedBox(height: 3),
+                    Text(
+                      '${_location.modeLabel} - ${_dateRangeText()}',
+                      style: TextStyle(
+                        color: AppColors.goldLt.withValues(alpha: 0.70),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B1B1B),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.28),
                         ),
-                        dataTextStyle: const TextStyle(color: Colors.white),
-                        dividerThickness: 0.4,
-                        columns: _columns(),
-                        rows: _rows(),
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          headingTextStyle: const TextStyle(
+                            color: AppColors.goldLt,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          dataTextStyle: const TextStyle(color: Colors.white),
+                          dividerThickness: 0.4,
+                          columns: _columns(),
+                          rows: _rows(),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
     );
   }
@@ -226,6 +258,11 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
       'Des',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _dateRangeText() {
+    if (_schedules.isEmpty) return '30 hari ke depan';
+    return '${_shortDate(_schedules.first.date)} - ${_shortDate(_schedules.last.date)}';
   }
 
   void _snack(String message) {

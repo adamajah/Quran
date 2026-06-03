@@ -131,7 +131,7 @@ class PrayerLocationService {
       final location = PrayerLocation(
         city: 'Lokasi Saat Ini',
         region: 'Koordinat Perangkat',
-        country: 'Indonesia',
+        country: 'Lokasi Perangkat',
         latitude: position.latitude,
         longitude: position.longitude,
         automatic: true,

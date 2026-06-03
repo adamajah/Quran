@@ -23,7 +23,20 @@ class PrayerLocation {
     longitude: 106.4381,
   );
 
-  String get displayName => '$city, $region - $country';
+  String get coordinateText {
+    final latDirection = latitude >= 0 ? 'LU' : 'LS';
+    final lngDirection = longitude >= 0 ? 'BT' : 'BB';
+    return '${latitude.abs().toStringAsFixed(4)}°$latDirection, '
+        '${longitude.abs().toStringAsFixed(4)}°$lngDirection';
+  }
+
+  String get displayName {
+    if (automatic) return '$city - $coordinateText';
+    return '$city, $region - $country';
+  }
+
+  String get modeLabel =>
+      automatic ? 'Lokasi perangkat aktif' : 'Lokasi manual';
 
   Map<String, Object> toJson() => {
     'city': city,

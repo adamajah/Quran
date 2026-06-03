@@ -21,7 +21,8 @@ class PrayerScheduleScreen extends StatefulWidget {
   State<PrayerScheduleScreen> createState() => _PrayerScheduleScreenState();
 }
 
-class _PrayerScheduleScreenState extends State<PrayerScheduleScreen> {
+class _PrayerScheduleScreenState extends State<PrayerScheduleScreen>
+    with WidgetsBindingObserver {
   final _timeService = PrayerTimeService();
   final _locationService = PrayerLocationService();
   Timer? _timer;
@@ -35,16 +36,28 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      setState(() => _now = DateTime.now());
+      final now = DateTime.now();
+      if (_isDifferentDay(_now, now)) {
+        _load();
+      } else if (mounted) {
+        setState(() => _now = now);
+      }
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _load();
   }
 
   Future<void> _load() async {
@@ -124,6 +137,7 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen> {
                       gregorianDate: _gregorianDate(schedule.date),
                       hijriDate: schedule.hijriDate,
                       location: _location.displayName,
+                      locationMode: _location.modeLabel,
                       status: _statusText(schedule),
                       onQibla: () {
                         Navigator.push(
@@ -319,6 +333,12 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen> {
     return '$hours jam $minutes menit';
   }
 
+  bool _isDifferentDay(DateTime first, DateTime second) {
+    return first.year != second.year ||
+        first.month != second.month ||
+        first.day != second.day;
+  }
+
   String _gregorianDate(DateTime date) {
     const months = [
       'Januari',
@@ -348,6 +368,7 @@ class _HeaderPanel extends StatelessWidget {
   final String gregorianDate;
   final String hijriDate;
   final String location;
+  final String locationMode;
   final String status;
   final VoidCallback onQibla;
 
@@ -355,6 +376,7 @@ class _HeaderPanel extends StatelessWidget {
     required this.gregorianDate,
     required this.hijriDate,
     required this.location,
+    required this.locationMode,
     required this.status,
     required this.onQibla,
   });
@@ -437,12 +459,26 @@ class _HeaderPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  location,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    fontSize: 14,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      location,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.74),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      locationMode,
+                      style: TextStyle(
+                        color: AppColors.goldLt.withValues(alpha: 0.72),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
