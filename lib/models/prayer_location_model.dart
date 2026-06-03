@@ -31,7 +31,9 @@ class PrayerLocation {
   }
 
   String get displayName {
-    if (automatic) return '$city - $coordinateText';
+    if (automatic && country == 'Lokasi Perangkat') {
+      return '$city - $coordinateText';
+    }
     return '$city, $region - $country';
   }
 

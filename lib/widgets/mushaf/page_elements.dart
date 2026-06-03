@@ -465,8 +465,6 @@ class FramePainter extends CustomPainter {
       _corner(canvas, darkColor);
       canvas.restore();
     }
-    _pend(canvas, w / 2, 3.5, true, darkColor);
-    _pend(canvas, w / 2, h - 3.5, false, darkColor);
     _side(canvas, 3.5, h / 2, false, darkColor);
     _side(canvas, w - 3.5, h / 2, true, darkColor);
   }
@@ -614,39 +612,6 @@ class FramePainter extends CustomPainter {
     }
   }
 
-  void _pend(Canvas canvas, double cx, double y, bool top, Color darkColor) {
-    final sy = top ? 1.0 : -1.0;
-    final p =
-        Path()
-          ..moveTo(cx - 22, y)
-          ..lineTo(cx - 13, y + sy * 13)
-          ..arcToPoint(
-            Offset(cx + 13, y + sy * 13),
-            radius: const Radius.circular(13),
-            clockwise: !top,
-          )
-          ..lineTo(cx + 22, y)
-          ..close();
-    canvas.drawPath(p, Paint()..color = AppColors.gold);
-    canvas.drawPath(
-      p,
-      Paint()
-        ..color = darkColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-    canvas.drawCircle(
-      Offset(cx, y + sy * 8),
-      4.5,
-      Paint()..color = darkColor.withValues(alpha: 0.55),
-    );
-    canvas.drawCircle(
-      Offset(cx, y + sy * 8),
-      2.2,
-      Paint()..color = AppColors.gold,
-    );
-  }
-
   void _side(Canvas canvas, double x, double cy, bool right, Color darkColor) {
     const sz = 16.0;
     final ox = right ? x - sz : x + sz;
@@ -711,8 +676,6 @@ class FrameOverlayPainter extends CustomPainter {
       canvas.restore();
     }
 
-    _drawCenterCrest(canvas, Offset(w / 2, 10), gold, mutedGold, darkColor);
-    _drawCenterCrest(canvas, Offset(w / 2, h - 10), gold, mutedGold, darkColor);
     _drawSideFlourish(canvas, Offset(10, h / 2), false, gold, mutedGold);
     _drawSideFlourish(canvas, Offset(w - 10, h / 2), true, gold, mutedGold);
   }
@@ -833,43 +796,6 @@ class FrameOverlayPainter extends CustomPainter {
     }
     canvas.drawCircle(center, 1.6, Paint()..color = gold);
     canvas.drawCircle(center, 0.65, Paint()..color = darkColor);
-  }
-
-  void _drawCenterCrest(
-    Canvas canvas,
-    Offset center,
-    Color gold,
-    Color mutedGold,
-    Color darkColor,
-  ) {
-    final fill =
-        Paint()
-          ..color = darkColor.withValues(alpha: isDark ? 0.94 : 0.16)
-          ..style = PaintingStyle.fill;
-    final stroke =
-        Paint()
-          ..color = gold.withValues(alpha: 0.92)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.8;
-    final path = Path();
-    for (int i = 0; i < 8; i++) {
-      final angle = -math.pi / 2 + i * math.pi / 4;
-      final radius = i.isEven ? 18.0 : 12.0;
-      final point = Offset(
-        center.dx + math.cos(angle) * radius,
-        center.dy + math.sin(angle) * radius,
-      );
-      if (i == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, fill);
-    canvas.drawPath(path, stroke);
-    canvas.drawCircle(center, 7, stroke);
-    canvas.drawCircle(center, 2.4, Paint()..color = mutedGold);
   }
 
   void _drawSideFlourish(

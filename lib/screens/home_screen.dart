@@ -190,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _togglePageZoom() {
     HapticFeedback.selectionClick();
     setState(() {
-      _pageZoomScale = _pageZoomScale == 1.0 ? 1.18 : 1.0;
+      _pageZoomScale = _pageZoomScale == 1.0 ? 1.2 : 1.0;
     });
   }
 
@@ -738,7 +738,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 playVerse: _playV,
                 onPlay: _togglePlay,
                 onStop: () => _stopPlayback(resetVerse: true),
-                zoomScale: _pageZoomScale,
                 showTajwid: settings.showTajwid,
                 onToggleTajwid:
                     () => controller.toggleTajwid(!settings.showTajwid),

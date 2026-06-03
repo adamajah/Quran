@@ -6,7 +6,6 @@ class BottomBar extends StatelessWidget {
   final String reciter, surahName;
   final int pageNum, playVerse;
   final VoidCallback onPlay, onStop;
-  final double zoomScale;
   final VoidCallback onToggleTajwid;
   final VoidCallback onTajwidLongPress;
   final VoidCallback? onReciterTap;
@@ -20,7 +19,6 @@ class BottomBar extends StatelessWidget {
     required this.playVerse,
     required this.onPlay,
     required this.onStop,
-    required this.zoomScale,
     required this.showTajwid,
     required this.onToggleTajwid,
     required this.onTajwidLongPress,
@@ -59,10 +57,6 @@ class BottomBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           PlayerBtn(icon: Icons.stop_rounded, active: false, onTap: onStop),
-          const SizedBox(width: 8),
-          _ZoomBadge(zoomScale: zoomScale),
-          const SizedBox(width: 8),
-          const _BarDivider(),
           const SizedBox(width: 8),
           Tooltip(
             message:
@@ -150,55 +144,6 @@ class _BarDivider extends StatelessWidget {
     height: 24,
     color: AppColors.gold.withValues(alpha: 0.25),
   );
-}
-
-class _ZoomBadge extends StatelessWidget {
-  final double zoomScale;
-
-  const _ZoomBadge({required this.zoomScale});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final active = zoomScale != 1.0;
-    return Container(
-      constraints: const BoxConstraints(minWidth: 56),
-      height: 34,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color:
-            active
-                ? AppColors.gold.withValues(alpha: 0.12)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.grey.shade100),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color:
-              active
-                  ? AppColors.gold
-                  : (isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.grey.shade300),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        '${(zoomScale * 100).round()}%',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color:
-              active
-                  ? AppColors.gold
-                  : (isDark
-                      ? Colors.white.withValues(alpha: 0.7)
-                      : Colors.grey.shade600),
-        ),
-      ),
-    );
-  }
 }
 
 class PlayerBtn extends StatelessWidget {

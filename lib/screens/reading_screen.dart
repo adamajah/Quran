@@ -708,8 +708,6 @@ class FramePainter extends CustomPainter {
       _corner(canvas);
       canvas.restore();
     }
-    _pend(canvas, w, h, true);
-    _pend(canvas, w, h, false);
     _side(canvas, 0, h / 2, false);
     _side(canvas, w, h / 2, true);
   }
@@ -794,36 +792,6 @@ class FramePainter extends CustomPainter {
         p,
       );
     }
-  }
-
-  void _pend(Canvas canvas, double w, double h, bool top) {
-    final cx = w / 2;
-    final y = top ? 0.0 : h;
-    final sy = top ? 1.0 : -1.0;
-    final p =
-        Path()
-          ..moveTo(cx - 20, y)
-          ..lineTo(cx - 12, y + sy * 12)
-          ..arcToPoint(
-            Offset(cx + 12, y + sy * 12),
-            radius: const Radius.circular(12),
-            clockwise: !top,
-          )
-          ..lineTo(cx + 20, y)
-          ..close();
-    canvas.drawPath(p, Paint()..color = gold);
-    canvas.drawPath(
-      p,
-      Paint()
-        ..color = dark.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
-    );
-    canvas.drawCircle(
-      Offset(cx, y + sy * 8),
-      4,
-      Paint()..color = dark.withValues(alpha: 0.5),
-    );
   }
 
   void _side(Canvas canvas, double x, double y, bool right) {

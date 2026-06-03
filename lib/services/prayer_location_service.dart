@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -128,14 +130,8 @@ class PrayerLocationService {
           timeLimit: Duration(seconds: 12),
         ),
       );
-      final location = PrayerLocation(
-        city: 'Lokasi Saat Ini',
-        region: 'Koordinat Perangkat',
-        country: 'Lokasi Perangkat',
-        latitude: position.latitude,
-        longitude: position.longitude,
-        automatic: true,
-      );
+      final placemark = await _placemarkFor(position);
+      final location = _locationFromPosition(position, placemark);
       await saveLocation(location);
       return PrayerLocationResult(location: location);
     } catch (_) {
@@ -144,5 +140,85 @@ class PrayerLocationService {
         message: 'Gagal membaca lokasi. Menggunakan lokasi terakhir.',
       );
     }
+  }
+
+  Future<Placemark?> _placemarkFor(Position position) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      ).timeout(const Duration(seconds: 8));
+      if (placemarks.isEmpty) return null;
+      return placemarks.first;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  PrayerLocation _locationFromPosition(Position position, Placemark? place) {
+    if (place == null) {
+      return PrayerLocation(
+        city: 'Lokasi Saat Ini',
+        region: 'Koordinat Perangkat',
+        country: 'Lokasi Perangkat',
+        latitude: position.latitude,
+        longitude: position.longitude,
+        automatic: true,
+      );
+    }
+
+    final city = _firstFilled([
+      place.street,
+      place.name,
+      place.subLocality,
+      place.locality,
+      'Lokasi Saat Ini',
+    ]);
+    final region = _joinUnique([
+      place.subLocality,
+      place.locality,
+      place.subAdministrativeArea,
+      place.administrativeArea,
+    ], skip: city);
+    final country = _firstFilled([place.country, 'Lokasi Perangkat']);
+
+    return PrayerLocation(
+      city: city,
+      region: region.isEmpty ? 'Koordinat Perangkat' : region,
+      country: country,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      automatic: true,
+    );
+  }
+
+  String _firstFilled(List<String?> values) {
+    for (final value in values) {
+      final cleaned = _cleanPlacePart(value);
+      if (cleaned.isNotEmpty) return cleaned;
+    }
+    return '';
+  }
+
+  String _joinUnique(List<String?> values, {required String skip}) {
+    final parts = <String>[];
+    final skipped = skip.toLowerCase();
+    for (final value in values) {
+      final cleaned = _cleanPlacePart(value);
+      if (cleaned.isEmpty) continue;
+      if (cleaned.toLowerCase() == skipped) continue;
+      if (parts.any((part) => part.toLowerCase() == cleaned.toLowerCase())) {
+        continue;
+      }
+      parts.add(cleaned);
+    }
+    return parts.join(', ');
+  }
+
+  String _cleanPlacePart(String? value) {
+    final cleaned = value?.trim() ?? '';
+    if (cleaned.isEmpty) return '';
+    if (cleaned.toLowerCase() == 'unnamed road') return '';
+    return cleaned;
   }
 }
