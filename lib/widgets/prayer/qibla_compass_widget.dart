@@ -367,59 +367,33 @@ class _KaabaTargetIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      width: 76,
-      height: 82,
-      padding: const EdgeInsets.fromLTRB(7, 7, 7, 6),
+      width: 72,
+      height: 58,
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color:
-            locked
-                ? const Color(0xFF2B2417)
-                : const Color(0xFF151515).withValues(alpha: 0.94),
-        border: Border.all(
-          color:
-              locked
-                  ? AppColors.goldLt
-                  : AppColors.gold.withValues(alpha: 0.55),
-          width: locked ? 1.8 : 1.1,
-        ),
         boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.62),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
           if (locked)
             BoxShadow(
-              color: AppColors.goldLt.withValues(alpha: 0.22),
-              blurRadius: 14,
+              color: AppColors.goldLt.withValues(alpha: 0.34),
+              blurRadius: 18,
             ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              const CustomPaint(size: Size(54, 48), painter: _KaabaPainter()),
-              if (locked)
-                const Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Icon(
-                    Icons.lock_rounded,
-                    size: 13,
-                    color: Colors.white,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            'KA\'BAH',
-            style: TextStyle(
-              color: locked ? AppColors.goldLt : Colors.white70,
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
+          const CustomPaint(size: Size(64, 54), painter: _KaabaPainter()),
+          if (locked)
+            const Positioned(
+              right: 3,
+              bottom: 2,
+              child: Icon(Icons.lock_rounded, size: 13, color: Colors.white),
             ),
-          ),
         ],
       ),
     );
@@ -432,26 +406,26 @@ class _KaabaPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final body = Rect.fromLTWH(
-      size.width * 0.18,
-      size.height * 0.22,
-      size.width * 0.64,
-      size.height * 0.58,
+      size.width * 0.12,
+      size.height * 0.24,
+      size.width * 0.66,
+      size.height * 0.62,
     );
     final shadow =
         Paint()
-          ..color = Colors.black.withValues(alpha: 0.28)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+          ..color = Colors.black.withValues(alpha: 0.58)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        body.shift(const Offset(1, 2)),
-        const Radius.circular(2),
+        body.shift(const Offset(2, 4)),
+        const Radius.circular(3),
       ),
       shadow,
     );
 
-    final black = Paint()..color = const Color(0xFF111111);
+    final black = Paint()..color = const Color(0xFF050505);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(body, const Radius.circular(2)),
+      RRect.fromRectAndRadius(body, const Radius.circular(3)),
       black,
     );
 
@@ -462,7 +436,7 @@ class _KaabaPainter extends CustomPainter {
           ..lineTo(size.width * 0.90, size.height * 0.85)
           ..lineTo(body.right, body.bottom)
           ..close();
-    canvas.drawPath(side, Paint()..color = const Color(0xFF252525));
+    canvas.drawPath(side, Paint()..color = const Color(0xFF1E1E1E));
 
     final top =
         Path()
@@ -471,21 +445,50 @@ class _KaabaPainter extends CustomPainter {
           ..lineTo(size.width * 0.90, size.height * 0.32)
           ..lineTo(size.width * 0.30, size.height * 0.12)
           ..close();
-    canvas.drawPath(top, Paint()..color = const Color(0xFF2F2A21));
+    canvas.drawPath(top, Paint()..color = const Color(0xFF3B3528));
 
-    final gold = Paint()..color = AppColors.goldLt;
+    final edge =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.16)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.1;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(body, const Radius.circular(3)),
+      edge,
+    );
+
+    final gold = Paint()..color = const Color(0xFFE5C56B);
     canvas.drawRect(
-      Rect.fromLTWH(body.left, body.top + body.height * 0.22, body.width, 3),
+      Rect.fromLTWH(body.left, body.top + body.height * 0.24, body.width, 4.2),
       gold,
+    );
+    final sideGold = Paint()..color = const Color(0xFFC9A14E);
+    canvas.drawPath(
+      Path()
+        ..moveTo(body.right, body.top + body.height * 0.24)
+        ..lineTo(size.width * 0.90, size.height * 0.32 + body.height * 0.08)
+        ..lineTo(size.width * 0.90, size.height * 0.32 + body.height * 0.16)
+        ..lineTo(body.right, body.top + body.height * 0.24 + 4.2)
+        ..close(),
+      sideGold,
     );
     canvas.drawRect(
       Rect.fromLTWH(
         body.left + body.width * 0.58,
         body.top + body.height * 0.36,
-        4,
+        5,
         body.height * 0.42,
       ),
-      Paint()..color = AppColors.gold.withValues(alpha: 0.88),
+      Paint()..color = const Color(0xFFD8B85F),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(
+        body.left + body.width * 0.15,
+        body.bottom - body.height * 0.18,
+        body.width * 0.18,
+        body.height * 0.18,
+      ),
+      Paint()..color = Colors.white.withValues(alpha: 0.10),
     );
   }
 
