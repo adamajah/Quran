@@ -72,6 +72,12 @@ class PrayerLocationService {
     }
   }
 
+  Future<PrayerLocationResult> loadActiveLocation() async {
+    final saved = await loadLocation();
+    if (!saved.automatic) return PrayerLocationResult(location: saved);
+    return useCurrentLocation();
+  }
+
   Future<void> saveLocation(PrayerLocation location) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_storageKey, jsonEncode(location.toJson()));

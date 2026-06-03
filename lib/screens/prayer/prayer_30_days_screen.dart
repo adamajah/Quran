@@ -31,19 +31,20 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
   }
 
   Future<void> _load() async {
-    final location = await _locationService.loadLocation();
+    final locationResult = await _locationService.loadActiveLocation();
     final settings = await _timeService.loadSettings();
     final schedules = _timeService.schedulesFor30Days(
-      location: location,
+      location: locationResult.location,
       settings: settings,
     );
     if (!mounted) return;
     setState(() {
-      _location = location;
+      _location = locationResult.location;
       _settings = settings;
       _schedules = schedules;
       _loading = false;
     });
+    if (locationResult.message != null) _snack(locationResult.message!);
   }
 
   @override
@@ -225,5 +226,11 @@ class _Prayer30DaysScreenState extends State<Prayer30DaysScreen> {
       'Des',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

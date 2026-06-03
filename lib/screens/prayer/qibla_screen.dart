@@ -20,6 +20,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
   PrayerLocation _location = PrayerLocation.defaultLocation;
   QiblaInfo? _info;
   bool _loading = true;
+  bool _updatingLocation = false;
 
   @override
   void initState() {
@@ -28,14 +29,30 @@ class _QiblaScreenState extends State<QiblaScreen> {
   }
 
   Future<void> _load() async {
-    final location = await _locationService.loadLocation();
-    final info = _qiblaService.calculate(location);
+    final result = await _locationService.loadActiveLocation();
+    final info = _qiblaService.calculate(result.location);
     if (!mounted) return;
     setState(() {
-      _location = location;
+      _location = result.location;
       _info = info;
       _loading = false;
     });
+    if (result.message != null) _snack(result.message!);
+  }
+
+  Future<void> _useCurrentLocation() async {
+    if (_updatingLocation) return;
+    setState(() => _updatingLocation = true);
+    final result = await _locationService.useCurrentLocation();
+    final info = _qiblaService.calculate(result.location);
+    if (!mounted) return;
+    setState(() {
+      _location = result.location;
+      _info = info;
+      _updatingLocation = false;
+      _loading = false;
+    });
+    _snack(result.message ?? 'Lokasi perangkat aktif.');
   }
 
   @override
@@ -43,7 +60,26 @@ class _QiblaScreenState extends State<QiblaScreen> {
     final info = _info;
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(title: const Text('Arah Qiblat')),
+      appBar: AppBar(
+        title: const Text('Arah Qiblat'),
+        actions: [
+          IconButton(
+            tooltip: 'Gunakan lokasi saat ini',
+            icon:
+                _updatingLocation
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: AppColors.goldLt,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : const Icon(Icons.my_location_rounded),
+            onPressed: _updatingLocation ? null : _useCurrentLocation,
+          ),
+        ],
+      ),
       body:
           _loading || info == null
               ? const Center(
@@ -74,7 +110,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'INDONESIA',
+                          _location.automatic
+                              ? 'LOKASI PERANGKAT AKTIF'
+                              : _location.country.toUpperCase(),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.52),
                             fontSize: 12,
@@ -102,6 +140,38 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.68),
                             fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed:
+                                _updatingLocation ? null : _useCurrentLocation,
+                            icon:
+                                _updatingLocation
+                                    ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Icon(
+                                      Icons.my_location_rounded,
+                                      size: 18,
+                                    ),
+                            label: Text(
+                              _updatingLocation
+                                  ? 'Mengambil lokasi...'
+                                  : 'Gunakan Lokasi Saat Ini',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.goldLt,
+                              side: BorderSide(
+                                color: AppColors.gold.withValues(alpha: 0.42),
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -145,5 +215,11 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
   String _degrees(double value) {
     return '${value.toStringAsFixed(2).replaceAll('.', ',')}°';
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

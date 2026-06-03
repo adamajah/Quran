@@ -48,21 +48,22 @@ class _PrayerScheduleScreenState extends State<PrayerScheduleScreen> {
   }
 
   Future<void> _load() async {
-    final location = await _locationService.loadLocation();
+    final locationResult = await _locationService.loadActiveLocation();
     final settings = await _timeService.loadSettings();
     final schedule = _timeService.scheduleForDate(
       date: DateTime.now(),
-      location: location,
+      location: locationResult.location,
       settings: settings,
     );
     if (!mounted) return;
     setState(() {
-      _location = location;
+      _location = locationResult.location;
       _settings = settings;
       _schedule = schedule;
       _loading = false;
       _now = DateTime.now();
     });
+    if (locationResult.message != null) _snack(locationResult.message!);
   }
 
   @override
