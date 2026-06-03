@@ -43,13 +43,6 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateTheme(AppTheme theme) {
-    _settings = _settings.copyWith(theme: theme);
-    _service.saveSettings(_settings);
-    _hapticFeedback();
-    notifyListeners();
-  }
-
   void updateVolume(double volume) {
     _settings = _settings.copyWith(defaultVolume: volume);
     _service.saveSettings(_settings);
@@ -82,9 +75,9 @@ class SettingsController extends ChangeNotifier {
     _service.saveSettings(_settings);
 
     if (active && _settings.reminderTime != null) {
-      unawaited(NotificationService.scheduleReadingReminder(
-        _settings.reminderTime!,
-      ));
+      unawaited(
+        NotificationService.scheduleReadingReminder(_settings.reminderTime!),
+      );
     } else {
       unawaited(NotificationService.cancelAll());
     }

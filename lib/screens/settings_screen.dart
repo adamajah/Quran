@@ -56,10 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ]),
                     const SizedBox(height: 24),
-                    _buildSection('Tema Aplikasi', [
-                      _buildThemeSelector(context, controller),
-                    ]),
-                    const SizedBox(height: 24),
                     _buildSection('Audio & Qari', [
                       _buildSettingTile(
                         Icons.volume_up_rounded,
@@ -254,93 +250,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         value: value,
         onChanged: onChanged,
         activeTrackColor: AppColors.gold,
-      ),
-    );
-  }
-
-  Widget _buildThemeSelector(
-    BuildContext context,
-    SettingsController controller,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildThemeItem('Light', Colors.white, AppTheme.light, controller),
-          _buildThemeItem(
-            'Dark',
-            Colors.grey.shade900,
-            AppTheme.dark,
-            controller,
-          ),
-          _buildThemeItem(
-            'Gold',
-            const Color(0xFFFDF8E1),
-            AppTheme.gold,
-            controller,
-          ),
-          _buildThemeItem(
-            'Sepia',
-            const Color(0xFFF1E7D0),
-            AppTheme.sepia,
-            controller,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThemeItem(
-    String label,
-    Color color,
-    AppTheme theme,
-    SettingsController controller,
-  ) {
-    final active = controller.settings.theme == theme;
-    return GestureDetector(
-      onTap: () => controller.updateTheme(theme),
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: active ? AppColors.gold : Colors.grey.shade300,
-                width: active ? 3 : 1,
-              ),
-              boxShadow:
-                  active
-                      ? [
-                        BoxShadow(
-                          color: AppColors.gold.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                        ),
-                      ]
-                      : null,
-            ),
-            child:
-                active
-                    ? const Icon(
-                      Icons.check_rounded,
-                      color: AppColors.gold,
-                      size: 28,
-                    )
-                    : null,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: active ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }

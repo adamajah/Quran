@@ -57,7 +57,9 @@ class MyApp extends StatelessWidget {
           builder: (context, child) {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
-              theme: ThemeManager.getTheme(controller.settings.theme),
+              theme: ThemeManager.goldTheme,
+              darkTheme: ThemeManager.darkTheme,
+              themeMode: ThemeMode.system,
               home: const SplashScreen(),
             );
           },

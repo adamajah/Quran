@@ -10,7 +10,6 @@ class SettingsService {
   static const String _keyMushafFont = 'mushaf_font_v2';
   static const String _keyLineSpacing = 'line_spacing';
   static const String _keyShowVerseNumbers = 'show_verse_numbers';
-  static const String _keyTheme = 'app_theme';
   static const String _keyVolume = 'default_volume';
   static const String _keyAutoPlay = 'auto_play';
   static const String _keyPlaybackSpeed = 'playback_speed';
@@ -30,7 +29,6 @@ class SettingsService {
       mushafFont: _loadMushafFont(),
       lineSpacing: _prefs.getDouble(_keyLineSpacing) ?? 2.2,
       showVerseNumbers: _prefs.getBool(_keyShowVerseNumbers) ?? true,
-      theme: AppTheme.values[_prefs.getInt(_keyTheme) ?? 0],
       defaultVolume: _prefs.getDouble(_keyVolume) ?? 1.0,
       autoPlay: _prefs.getBool(_keyAutoPlay) ?? false,
       playbackSpeed: _prefs.getDouble(_keyPlaybackSpeed) ?? 1.0,
@@ -49,7 +47,6 @@ class SettingsService {
     await _prefs.setString(_keyMushafFont, settings.mushafFont.name);
     await _prefs.setDouble(_keyLineSpacing, settings.lineSpacing);
     await _prefs.setBool(_keyShowVerseNumbers, settings.showVerseNumbers);
-    await _prefs.setInt(_keyTheme, settings.theme.index);
     await _prefs.setDouble(_keyVolume, settings.defaultVolume);
     await _prefs.setBool(_keyAutoPlay, settings.autoPlay);
     await _prefs.setDouble(_keyPlaybackSpeed, settings.playbackSpeed);

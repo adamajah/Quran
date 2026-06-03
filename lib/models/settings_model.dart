@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 enum MushafFont { hafs, naskh, lpmqIsepMisbah }
 
-enum AppTheme { light, dark, gold, sepia }
-
 class AppSettings {
   // Display
   final double arabicFontSize;
@@ -12,9 +10,6 @@ class AppSettings {
   final bool showVerseNumbers;
   final bool showPageOrnaments;
   final String displayMode;
-
-  // Theme
-  final AppTheme theme;
 
   // Audio
   final double defaultVolume;
@@ -35,7 +30,6 @@ class AppSettings {
     this.showVerseNumbers = true,
     this.showPageOrnaments = true,
     this.displayMode = 'Single Page',
-    this.theme = AppTheme.light,
     this.defaultVolume = 0.8,
     this.autoPlay = false,
     this.playbackSpeed = 1.0,
@@ -53,7 +47,6 @@ class AppSettings {
     bool? showVerseNumbers,
     bool? showPageOrnaments,
     String? displayMode,
-    AppTheme? theme,
     double? defaultVolume,
     bool? autoPlay,
     double? playbackSpeed,
@@ -69,7 +62,6 @@ class AppSettings {
     showVerseNumbers: showVerseNumbers ?? this.showVerseNumbers,
     showPageOrnaments: showPageOrnaments ?? this.showPageOrnaments,
     displayMode: displayMode ?? this.displayMode,
-    theme: theme ?? this.theme,
     defaultVolume: defaultVolume ?? this.defaultVolume,
     autoPlay: autoPlay ?? this.autoPlay,
     playbackSpeed: playbackSpeed ?? this.playbackSpeed,
