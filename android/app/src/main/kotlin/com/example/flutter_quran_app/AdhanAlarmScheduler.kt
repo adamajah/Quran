@@ -5,11 +5,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import org.json.JSONObject
 
 object AdhanAlarmScheduler {
     const val CHANNEL_NAME = "com.example.flutter_quran_app/adhan_alarm"
 
+    private const val TAG = "AdhanAlarmScheduler"
     private const val PREFS_NAME = "adhan_alarm_schedule"
     private const val KEY_PREFIX = "alarm_"
     private const val JSON_ID = "id"
@@ -63,19 +65,20 @@ object AdhanAlarmScheduler {
     ) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pendingIntent = pendingIntent(context, id, title, body)
+        Log.d(TAG, "Scheduling adhan alarm id=$id at=$triggerAtMillis title=$title")
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            !alarmManager.canScheduleExactAlarms()
-        ) {
-            alarmManager.setAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            alarmManager.setAlarmClock(
+                AlarmManager.AlarmClockInfo(
+                    triggerAtMillis,
+                    openAppPendingIntent(context, id)
+                ),
                 pendingIntent
             )
             return
         }
 
-        alarmManager.setExactAndAllowWhileIdle(
+        alarmManager.setExact(
             AlarmManager.RTC_WAKEUP,
             triggerAtMillis,
             pendingIntent
@@ -124,6 +127,16 @@ object AdhanAlarmScheduler {
             putExtra(AdhanPlaybackService.EXTRA_NOTIFICATION_ID, id)
         }
         context.startService(intent)
+    }
+
+    private fun openAppPendingIntent(context: Context, id: Int): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+        return PendingIntent.getActivity(
+            context,
+            id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     private fun pendingIntent(

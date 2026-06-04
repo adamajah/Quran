@@ -9,10 +9,13 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 
 class AdhanPlaybackService : Service() {
     private var mediaPlayer: MediaPlayer? = null
+    private var wakeLock: PowerManager.WakeLock? = null
     private var notificationId: Int = DEFAULT_NOTIFICATION_ID
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -46,6 +49,7 @@ class AdhanPlaybackService : Service() {
 
     private fun playAdhan() {
         releasePlayer()
+        acquireWakeLock()
 
         val adhanFile = resources.openRawResourceFd(R.raw.adhan)
         mediaPlayer = MediaPlayer().apply {
@@ -70,6 +74,7 @@ class AdhanPlaybackService : Service() {
             }
             prepare()
             start()
+            Log.d(TAG, "Adhan playback started id=$notificationId")
         }
     }
 
@@ -85,6 +90,27 @@ class AdhanPlaybackService : Service() {
             release()
         }
         mediaPlayer = null
+        releaseWakeLock()
+    }
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "$packageName:AdhanPlayback"
+        ).apply {
+            setReferenceCounted(false)
+            acquire(10 * 60 * 1000L)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock?.let {
+            if (it.isHeld) it.release()
+        }
+        wakeLock = null
     }
 
     private fun buildNotification(title: String, body: String) =
@@ -138,6 +164,7 @@ class AdhanPlaybackService : Service() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"
 
+        private const val TAG = "AdhanPlaybackService"
         const val DEFAULT_NOTIFICATION_ID = 7499
         private const val PLAYBACK_CHANNEL_ID = "adhan_playback_channel_v1"
     }

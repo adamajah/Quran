@@ -4,16 +4,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 
 class AdhanAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        AdhanAlarmScheduler.complete(
-            context,
-            intent.getIntExtra(
-                AdhanPlaybackService.EXTRA_NOTIFICATION_ID,
-                AdhanPlaybackService.DEFAULT_NOTIFICATION_ID
-            )
+        val id = intent.getIntExtra(
+            AdhanPlaybackService.EXTRA_NOTIFICATION_ID,
+            AdhanPlaybackService.DEFAULT_NOTIFICATION_ID
         )
+        Log.d(TAG, "Adhan alarm received id=$id")
+        AdhanAlarmScheduler.complete(context, id)
 
         val serviceIntent = Intent(context, AdhanPlaybackService::class.java).apply {
             action = AdhanPlaybackService.ACTION_PLAY
@@ -25,5 +25,9 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         } else {
             context.startService(serviceIntent)
         }
+    }
+
+    companion object {
+        private const val TAG = "AdhanAlarmReceiver"
     }
 }
