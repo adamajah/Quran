@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  static const int _readingReminderId = 1;
   static Future<void>? _initFuture;
   static bool _initialized = false;
 
@@ -73,7 +74,7 @@ class NotificationService {
     }
 
     await _notifications.zonedSchedule(
-      id: 1,
+      id: _readingReminderId,
       title: 'Waktunya Membaca Al-Quran',
       body: 'Mari luangkan waktu sejenak untuk membaca kalam Allah hari ini.',
       scheduledDate: scheduledDate,
@@ -185,6 +186,10 @@ class NotificationService {
   static Future<void> cancel(int id) async {
     await _ensureInitialized();
     await _notifications.cancel(id: id);
+  }
+
+  static Future<void> cancelReadingReminder() async {
+    await cancel(_readingReminderId);
   }
 
   static Future<void> cancelAll() async {

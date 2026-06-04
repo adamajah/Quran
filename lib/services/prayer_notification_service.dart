@@ -13,6 +13,11 @@ class PrayerNotificationService {
   static const _notificationBaseId = 7400;
   static const _legacyNotificationBaseId = 7300;
   static const _notificationDays = 30;
+  static const _adhanChannelId = 'prayer_adhan_channel_v3';
+  static const _alarmChannelId = 'prayer_alarm_channel_v2';
+  static const _notificationChannelId = 'prayer_notification_channel_v2';
+  static const _silentChannelId = 'prayer_silent_channel_v2';
+  static const _disabledChannelId = 'prayer_disabled_channel_v2';
   static bool _initialized = false;
   static String? _lastAppliedSignature;
 
@@ -51,11 +56,6 @@ class PrayerNotificationService {
             >();
     if (androidPlugin != null) {
       allowed = await androidPlugin.requestNotificationsPermission() ?? true;
-      try {
-        await androidPlugin.requestExactAlarmsPermission();
-      } catch (e) {
-        debugPrint('Exact alarm permission request skipped: $e');
-      }
     }
 
     final iosPlugin =
@@ -105,6 +105,7 @@ class PrayerNotificationService {
     if (!allowed && !settings.forceNotification) {
       throw StateError('Izin notifikasi belum aktif.');
     }
+    final androidScheduleMode = await _resolveAndroidScheduleMode();
 
     for (final type in activeTypes) {
       final sound = settings.notificationFor(type.key);
@@ -121,7 +122,13 @@ class PrayerNotificationService {
         }
         final scheduledDate = tz.TZDateTime.from(entry.time, tz.local);
         if (!scheduledDate.isAfter(now)) continue;
-        await _scheduleEntry(entry, sound, scheduledDate, dayIndex);
+        await _scheduleEntry(
+          entry,
+          sound,
+          scheduledDate,
+          dayIndex,
+          androidScheduleMode,
+        );
       }
     }
     _lastAppliedSignature = signature;
@@ -137,17 +144,36 @@ class PrayerNotificationService {
     PrayerNotificationSound sound,
     tz.TZDateTime scheduledDate,
     int dayIndex,
+    AndroidScheduleMode androidScheduleMode,
   ) async {
     await init();
 
-    await _notifications.zonedSchedule(
-      id: _notificationId(entry.type, dayIndex),
-      title: 'Waktu ${entry.type.label}',
-      body: 'Telah masuk waktu ${entry.type.label}.',
-      scheduledDate: scheduledDate,
-      notificationDetails: _details(sound),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
+    final id = _notificationId(entry.type, dayIndex);
+    final details = _details(sound);
+    try {
+      await _notifications.zonedSchedule(
+        id: id,
+        title: 'Waktu ${entry.type.label}',
+        body: 'Telah masuk waktu ${entry.type.label}.',
+        scheduledDate: scheduledDate,
+        notificationDetails: details,
+        androidScheduleMode: androidScheduleMode,
+      );
+    } catch (e) {
+      if (androidScheduleMode == AndroidScheduleMode.exactAllowWhileIdle) {
+        debugPrint('Exact prayer notification failed, retrying inexact: $e');
+        await _notifications.zonedSchedule(
+          id: id,
+          title: 'Waktu ${entry.type.label}',
+          body: 'Telah masuk waktu ${entry.type.label}.',
+          scheduledDate: scheduledDate,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 
   static Future<void> _cancelPrayerIds(PrayerTimeType type) async {
@@ -158,13 +184,16 @@ class PrayerNotificationService {
   }
 
   static NotificationDetails _details(PrayerNotificationSound sound) {
-    final playSound = sound != PrayerNotificationSound.silent;
+    final playSound =
+        sound == PrayerNotificationSound.adhan ||
+        sound == PrayerNotificationSound.alarm ||
+        sound == PrayerNotificationSound.notification;
     final channelId = switch (sound) {
-      PrayerNotificationSound.adhan => 'prayer_adhan_channel_v2',
-      PrayerNotificationSound.alarm => 'prayer_alarm_channel',
-      PrayerNotificationSound.notification => 'prayer_notification_channel',
-      PrayerNotificationSound.silent => 'prayer_silent_channel',
-      PrayerNotificationSound.disabled => 'prayer_disabled_channel',
+      PrayerNotificationSound.adhan => _adhanChannelId,
+      PrayerNotificationSound.alarm => _alarmChannelId,
+      PrayerNotificationSound.notification => _notificationChannelId,
+      PrayerNotificationSound.silent => _silentChannelId,
+      PrayerNotificationSound.disabled => _disabledChannelId,
     };
     final channelName = switch (sound) {
       PrayerNotificationSound.adhan => 'Adzan Sholat',
@@ -182,7 +211,8 @@ class PrayerNotificationService {
         importance: Importance.max,
         priority: Priority.high,
         category:
-            sound == PrayerNotificationSound.alarm
+            sound == PrayerNotificationSound.adhan ||
+                    sound == PrayerNotificationSound.alarm
                 ? AndroidNotificationCategory.alarm
                 : AndroidNotificationCategory.reminder,
         playSound: playSound,
@@ -190,6 +220,11 @@ class PrayerNotificationService {
             sound == PrayerNotificationSound.adhan
                 ? const RawResourceAndroidNotificationSound('adhan')
                 : null,
+        audioAttributesUsage:
+            sound == PrayerNotificationSound.adhan ||
+                    sound == PrayerNotificationSound.alarm
+                ? AudioAttributesUsage.alarm
+                : AudioAttributesUsage.notification,
         enableVibration: true,
         showWhen: true,
       ),
@@ -206,6 +241,31 @@ class PrayerNotificationService {
 
   static int _legacyNotificationId(PrayerTimeType type) =>
       _legacyNotificationBaseId + type.index;
+
+  static Future<AndroidScheduleMode> _resolveAndroidScheduleMode() async {
+    final androidPlugin =
+        _notifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    if (androidPlugin == null) {
+      return AndroidScheduleMode.exactAllowWhileIdle;
+    }
+
+    try {
+      if (await androidPlugin.canScheduleExactNotifications() ?? false) {
+        return AndroidScheduleMode.exactAllowWhileIdle;
+      }
+      await androidPlugin.requestExactAlarmsPermission();
+      if (await androidPlugin.canScheduleExactNotifications() ?? false) {
+        return AndroidScheduleMode.exactAllowWhileIdle;
+      }
+    } catch (e) {
+      debugPrint('Exact alarm permission unavailable: $e');
+    }
+
+    return AndroidScheduleMode.inexactAllowWhileIdle;
+  }
 
   static String _fallbackTimezoneName(Duration offset) {
     return switch (offset.inHours) {

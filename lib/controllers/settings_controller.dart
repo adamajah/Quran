@@ -79,7 +79,7 @@ class SettingsController extends ChangeNotifier {
         NotificationService.scheduleReadingReminder(_settings.reminderTime!),
       );
     } else {
-      unawaited(NotificationService.cancelAll());
+      unawaited(NotificationService.cancelReadingReminder());
     }
 
     _hapticFeedback();
