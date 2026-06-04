@@ -7,6 +7,9 @@ import 'package:timezone/timezone.dart' as tz;
 import '../models/prayer_settings_model.dart';
 import '../models/prayer_time_model.dart';
 
+@pragma('vm:entry-point')
+void prayerNotificationTapBackground(NotificationResponse response) {}
+
 class PrayerNotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
@@ -18,6 +21,8 @@ class PrayerNotificationService {
   static const _notificationChannelId = 'prayer_notification_channel_v2';
   static const _silentChannelId = 'prayer_silent_channel_v2';
   static const _disabledChannelId = 'prayer_disabled_channel_v2';
+  static const _stopAdhanActionId = 'stop_adhan';
+  static const _flagInsistent = 4;
   static bool _initialized = false;
   static String? _lastAppliedSignature;
 
@@ -41,6 +46,8 @@ class PrayerNotificationService {
     );
     await _notifications.initialize(
       settings: const InitializationSettings(android: android, iOS: ios),
+      onDidReceiveBackgroundNotificationResponse:
+          prayerNotificationTapBackground,
     );
     _initialized = true;
   }
@@ -219,6 +226,23 @@ class PrayerNotificationService {
         sound:
             sound == PrayerNotificationSound.adhan
                 ? const RawResourceAndroidNotificationSound('adhan')
+                : null,
+        autoCancel: sound != PrayerNotificationSound.adhan,
+        ongoing: sound == PrayerNotificationSound.adhan,
+        additionalFlags:
+            sound == PrayerNotificationSound.adhan
+                ? Int32List.fromList(const [_flagInsistent])
+                : null,
+        actions:
+            sound == PrayerNotificationSound.adhan
+                ? const [
+                  AndroidNotificationAction(
+                    _stopAdhanActionId,
+                    'Stop Adzan',
+                    cancelNotification: true,
+                    semanticAction: SemanticAction.mute,
+                  ),
+                ]
                 : null,
         audioAttributesUsage:
             sound == PrayerNotificationSound.adhan ||
