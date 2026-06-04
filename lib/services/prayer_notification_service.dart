@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -13,6 +14,9 @@ void prayerNotificationTapBackground(NotificationResponse response) {}
 class PrayerNotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  static const MethodChannel _adhanAlarmChannel = MethodChannel(
+    'com.example.flutter_quran_app/adhan_alarm',
+  );
   static const _notificationBaseId = 7400;
   static const _legacyNotificationBaseId = 7300;
   static const _notificationDays = 30;
@@ -156,6 +160,16 @@ class PrayerNotificationService {
     await init();
 
     final id = _notificationId(entry.type, dayIndex);
+    if (_shouldUseNativeAdhan(sound)) {
+      final scheduled = await _scheduleNativeAdhan(
+        id: id,
+        title: 'Waktu ${entry.type.label}',
+        body: 'Telah masuk waktu ${entry.type.label}.',
+        scheduledDate: scheduledDate,
+      );
+      if (scheduled) return;
+    }
+
     final details = _details(sound);
     try {
       await _notifications.zonedSchedule(
@@ -186,7 +200,9 @@ class PrayerNotificationService {
   static Future<void> _cancelPrayerIds(PrayerTimeType type) async {
     await _notifications.cancel(id: _legacyNotificationId(type));
     for (var dayIndex = 0; dayIndex < _notificationDays; dayIndex++) {
-      await _notifications.cancel(id: _notificationId(type, dayIndex));
+      final id = _notificationId(type, dayIndex);
+      await _notifications.cancel(id: id);
+      await _cancelNativeAdhan(id);
     }
   }
 
@@ -289,6 +305,43 @@ class PrayerNotificationService {
     }
 
     return AndroidScheduleMode.inexactAllowWhileIdle;
+  }
+
+  static bool _shouldUseNativeAdhan(PrayerNotificationSound sound) {
+    return !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        sound == PrayerNotificationSound.adhan;
+  }
+
+  static Future<bool> _scheduleNativeAdhan({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+  }) async {
+    try {
+      await _adhanAlarmChannel.invokeMethod<bool>('scheduleAdhanAlarm', {
+        'id': id,
+        'title': title,
+        'body': body,
+        'triggerAtMillis': scheduledDate.millisecondsSinceEpoch,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Native adhan scheduling failed, falling back: $e');
+      return false;
+    }
+  }
+
+  static Future<void> _cancelNativeAdhan(int id) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      await _adhanAlarmChannel.invokeMethod<bool>('cancelAdhanAlarm', {
+        'id': id,
+      });
+    } catch (e) {
+      debugPrint('Native adhan cancel skipped: $e');
+    }
   }
 
   static String _fallbackTimezoneName(Duration offset) {
