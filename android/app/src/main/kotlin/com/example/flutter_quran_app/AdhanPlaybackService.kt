@@ -138,7 +138,7 @@ class AdhanPlaybackService : Service() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"
 
-        private const val DEFAULT_NOTIFICATION_ID = 7499
+        const val DEFAULT_NOTIFICATION_ID = 7499
         private const val PLAYBACK_CHANNEL_ID = "adhan_playback_channel_v1"
     }
 }

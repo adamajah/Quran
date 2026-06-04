@@ -7,6 +7,14 @@ import android.os.Build
 
 class AdhanAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        AdhanAlarmScheduler.complete(
+            context,
+            intent.getIntExtra(
+                AdhanPlaybackService.EXTRA_NOTIFICATION_ID,
+                AdhanPlaybackService.DEFAULT_NOTIFICATION_ID
+            )
+        )
+
         val serviceIntent = Intent(context, AdhanPlaybackService::class.java).apply {
             action = AdhanPlaybackService.ACTION_PLAY
             putExtras(intent)
