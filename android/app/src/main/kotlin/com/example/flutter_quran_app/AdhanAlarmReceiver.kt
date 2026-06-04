@@ -13,6 +13,12 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
             AdhanPlaybackService.DEFAULT_NOTIFICATION_ID
         )
         Log.d(TAG, "Adhan alarm received id=$id")
+        if (AdhanPlaybackService.isActiveOrRecentlyCompleted(context, id)) {
+            Log.d(TAG, "Ignoring duplicate active/recent adhan alarm id=$id")
+            AdhanAlarmScheduler.complete(context, id)
+            return
+        }
+
         AdhanAlarmScheduler.complete(context, id)
 
         val serviceIntent = Intent(context, AdhanPlaybackService::class.java).apply {

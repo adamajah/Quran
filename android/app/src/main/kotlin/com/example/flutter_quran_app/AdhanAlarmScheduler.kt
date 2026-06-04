@@ -26,6 +26,13 @@ object AdhanAlarmScheduler {
         body: String,
         triggerAtMillis: Long
     ) {
+        if (AdhanPlaybackService.isActiveOrRecentlyCompleted(context, id)) {
+            Log.d(TAG, "Skipping duplicate active/recent adhan alarm id=$id title=$title")
+            remove(context, id)
+            cancelAlarm(context, id)
+            return
+        }
+
         save(context, id, title, body, triggerAtMillis)
         scheduleAlarm(context, id, title, body, triggerAtMillis)
     }
@@ -47,7 +54,10 @@ object AdhanAlarmScheduler {
                 val title = json.getString(JSON_TITLE)
                 val body = json.getString(JSON_BODY)
                 val triggerAtMillis = json.getLong(JSON_TRIGGER_AT)
-                if (triggerAtMillis > now) {
+                if (AdhanPlaybackService.isActiveOrRecentlyCompleted(context, id)) {
+                    remove(context, id)
+                    cancelAlarm(context, id)
+                } else if (triggerAtMillis > now) {
                     scheduleAlarm(context, id, title, body, triggerAtMillis)
                 } else {
                     remove(context, id)

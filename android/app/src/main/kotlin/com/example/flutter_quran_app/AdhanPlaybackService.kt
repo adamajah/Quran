@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -28,10 +29,16 @@ class AdhanPlaybackService : Service() {
             }
 
             ACTION_PLAY -> {
-                notificationId = intent.getIntExtra(
+                val incomingNotificationId = intent.getIntExtra(
                     EXTRA_NOTIFICATION_ID,
                     DEFAULT_NOTIFICATION_ID
                 )
+                if (isActiveOrRecentlyCompleted(this, incomingNotificationId)) {
+                    Log.d(TAG, "Ignoring duplicate adhan playback id=$incomingNotificationId")
+                    return START_NOT_STICKY
+                }
+
+                notificationId = incomingNotificationId
                 val title = intent.getStringExtra(EXTRA_TITLE) ?: "Waktu Sholat"
                 val body = intent.getStringExtra(EXTRA_BODY) ?: "Telah masuk waktu sholat."
                 startForeground(notificationId, buildNotification(title, body))
@@ -74,12 +81,15 @@ class AdhanPlaybackService : Service() {
             }
             prepare()
             start()
+            markPlaying(this@AdhanPlaybackService, notificationId)
             Log.d(TAG, "Adhan playback started id=$notificationId")
         }
     }
 
     private fun stopAdhan() {
+        val stoppedNotificationId = notificationId
         releasePlayer()
+        markStopped(this, stoppedNotificationId)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -165,7 +175,49 @@ class AdhanPlaybackService : Service() {
         const val EXTRA_BODY = "body"
 
         private const val TAG = "AdhanPlaybackService"
+        private const val STATE_PREFS_NAME = "adhan_playback_state"
+        private const val KEY_ACTIVE_ID = "active_id"
+        private const val KEY_ACTIVE_SINCE = "active_since"
+        private const val KEY_COMPLETED_ID = "completed_id"
+        private const val KEY_COMPLETED_AT = "completed_at"
+        private const val MAX_ACTIVE_MS = 10 * 60 * 1000L
+        private const val COMPLETED_COOLDOWN_MS = 10 * 60 * 1000L
+
         const val DEFAULT_NOTIFICATION_ID = 7499
         private const val PLAYBACK_CHANNEL_ID = "adhan_playback_channel_v1"
+
+        fun isActiveOrRecentlyCompleted(context: Context, id: Int): Boolean {
+            val prefs = context.getSharedPreferences(STATE_PREFS_NAME, Context.MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            val activeId = prefs.getInt(KEY_ACTIVE_ID, -1)
+            val activeSince = prefs.getLong(KEY_ACTIVE_SINCE, 0L)
+            if (activeId == id && now - activeSince <= MAX_ACTIVE_MS) {
+                return true
+            }
+
+            val completedId = prefs.getInt(KEY_COMPLETED_ID, -1)
+            val completedAt = prefs.getLong(KEY_COMPLETED_AT, 0L)
+            return completedId == id && now - completedAt <= COMPLETED_COOLDOWN_MS
+        }
+
+        private fun markPlaying(context: Context, id: Int) {
+            context.getSharedPreferences(STATE_PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putInt(KEY_ACTIVE_ID, id)
+                .putLong(KEY_ACTIVE_SINCE, System.currentTimeMillis())
+                .remove(KEY_COMPLETED_ID)
+                .remove(KEY_COMPLETED_AT)
+                .apply()
+        }
+
+        private fun markStopped(context: Context, id: Int) {
+            context.getSharedPreferences(STATE_PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .remove(KEY_ACTIVE_ID)
+                .remove(KEY_ACTIVE_SINCE)
+                .putInt(KEY_COMPLETED_ID, id)
+                .putLong(KEY_COMPLETED_AT, System.currentTimeMillis())
+                .apply()
+        }
     }
 }
