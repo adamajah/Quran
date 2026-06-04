@@ -5,9 +5,7 @@ import 'package:flutter_quran_app/constants/app_text_style.dart';
 import 'package:flutter_quran_app/screens/home_screen.dart';
 
 import '../constants/app_strings.dart';
-import '../services/prayer_location_service.dart';
-import '../services/prayer_notification_service.dart';
-import '../services/prayer_time_service.dart';
+import '../services/prayer_notification_bootstrap_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -50,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     /// STARTING THE ANIMATION
     _controller.forward();
-    unawaited(_schedulePrayerNotificationsOnStartup());
+    unawaited(PrayerNotificationBootstrapService.reschedule(force: true));
 
     /// TIMER FOR SPLASH DURATION
     _navigationTimer = Timer(const Duration(seconds: 3), () {
@@ -61,28 +59,6 @@ class _SplashScreenState extends State<SplashScreen>
         context,
       ).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
     });
-  }
-
-  Future<void> _schedulePrayerNotificationsOnStartup() async {
-    try {
-      final locationService = PrayerLocationService();
-      final timeService = PrayerTimeService();
-      final location = await locationService.loadLocation();
-      final settings = await timeService.loadSettings();
-      final schedules = timeService.schedulesFor30Days(
-        location: location,
-        settings: settings,
-        startDate: DateTime.now(),
-      );
-      if (schedules.isEmpty) return;
-      await PrayerNotificationService.scheduleDailyPrayers(
-        schedule: schedules.first,
-        schedules: schedules,
-        settings: settings,
-      );
-    } catch (e) {
-      debugPrint('Prayer notification startup scheduling skipped: $e');
-    }
   }
 
   @override

@@ -92,13 +92,14 @@ class PrayerNotificationService {
     required PrayerDaySchedule schedule,
     List<PrayerDaySchedule>? schedules,
     required PrayerSettings settings,
+    bool force = false,
   }) async {
     await init();
 
     final upcomingSchedules =
         (schedules == null || schedules.isEmpty) ? [schedule] : schedules;
     final signature = _scheduleSignature(upcomingSchedules, settings);
-    if (_lastAppliedSignature == signature) return;
+    if (!force && _lastAppliedSignature == signature) return;
 
     final now = tz.TZDateTime.now(tz.local);
     final activeTypes = <PrayerTimeType>[];
