@@ -27,6 +27,7 @@ class PrayerNotificationService {
   static const _disabledChannelId = 'prayer_disabled_channel_v2';
   static const _stopAdhanActionId = 'stop_adhan';
   static const _flagInsistent = 4;
+  static const _missedPrayerGrace = Duration(minutes: 2);
   static bool _initialized = false;
   static String? _lastAppliedSignature;
 
@@ -131,8 +132,16 @@ class PrayerNotificationService {
             entry.time.weekday == DateTime.friday) {
           continue;
         }
-        final scheduledDate = tz.TZDateTime.from(entry.time, tz.local);
-        if (!scheduledDate.isAfter(now)) continue;
+        var scheduledDate = tz.TZDateTime.from(entry.time, tz.local);
+        if (!scheduledDate.isAfter(now)) {
+          final missedBy = now.difference(scheduledDate);
+          final canCatchUp =
+              dayIndex == 0 &&
+              _shouldUseNativeAdhan(sound) &&
+              missedBy <= _missedPrayerGrace;
+          if (!canCatchUp) continue;
+          scheduledDate = now.add(const Duration(seconds: 8));
+        }
         await _scheduleEntry(
           entry,
           sound,
